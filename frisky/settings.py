@@ -122,4 +122,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', None)
+
 django_heroku.settings(locals())
