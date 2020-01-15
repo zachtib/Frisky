@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def verify_slack_request(request):
     if request.method == 'POST':
-        request_body = request.body()
+        request_body = request.body
         logger.debug(request_body)
         slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
         logger.debug(slack_request_timestamp)
