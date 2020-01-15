@@ -33,7 +33,7 @@ def verify_slack_request(request):
 
 @csrf_exempt
 def event(request):
-    print(request.body)
+    print(request.POST)
     if verify_slack_request(request):
         return HttpResponse(request.POST['challenge'])
     return HttpResponse(request.POST['challenge'])
