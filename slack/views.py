@@ -4,10 +4,12 @@ import logging
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
 
 
+@csrf_exempt
 def verify_slack_request(request):
     if request.method == 'POST':
         request_body = request.body()
