@@ -1,24 +1,26 @@
-from django.conf import settings
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.conf import settings
-from datetime import time
+import hashlib
 import hmac
+
+from django.conf import settings
+from django.http import HttpResponse
+
+
+def verify_slack_request(request):
+    request_body = request.body()
+    slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
+    slack_signature = request.headers['X-Slack-Signature']
+
+    basestring = f"v0:{slack_request_timestamp}:{request_body}".encode('utf-8')
+    slack_signing_secret = bytes(settings.SLACK_SIGNING_SECRET, 'utf-8')
+
+    signature = 'v0=' + hmac.new(slack_signing_secret, basestring, hashlib.sha256).hexdigest()
+
+    if hmac.compare_digest(signature, slack_signature):
+        return True
+    else:
+        return False
 
 
 def event(request):
-    if request.method == 'POST':
-        request_body = request.body()
-        timestamp = request.headers['X-Slack-Request-Timestamp']
-        slack_signature = request.headers['X-Slack-Signature']
-        # if absolute_value(time.time() - timestamp) > 60 * 5:
-        #     # The request timestamp is more than five minutes from local time.
-        #     # It could be a replay attack, so let's ignore it.
-        #     return
-        sig_basestring = 'v0:' + timestamp + ':' + request_body
-        print(sig_basestring)
-        signature = 'v0=' + hmac.digest(settings.SLACK_SIGNING_SECRET, sig_basestring, 'sha256')
-        print(signature)
-        if signature == slack_signature:
-            return HttpResponse(request.POST['challenge'])
-    return HttpResponse()
+    if verify_slack_request(request):
+        return HttpResponse(request.POST['challenge'])
