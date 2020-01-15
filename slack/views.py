@@ -36,4 +36,4 @@ def event(request):
     print(request.body)
     if verify_slack_request(request):
         return HttpResponse(request.POST['challenge'])
-    return HttpResponse()
+    return HttpResponse(request.POST['challenge'])
