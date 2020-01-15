@@ -34,6 +34,8 @@ def event(request):
         if form_data['type'] == 'url_verification':
             return HttpResponse(form_data['challenge'])
 
-        return HttpResponse(500)
+        logger.info(form_data)
+
+        return HttpResponse(200)
     else:
         return HttpResponse('Unauthorized', status=401)
