@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def verify_slack_request(request):
     if request.method == 'POST':
         request_body = request.body
-        print(request_body)
+        print(request_body.decode())
         slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
         print(slack_request_timestamp)
         slack_signature = request.headers['X-Slack-Signature']
@@ -35,5 +35,5 @@ def verify_slack_request(request):
 def event(request):
     print(request.POST)
     if verify_slack_request(request):
-        return HttpResponse(request.POST['challenge'])
-    return HttpResponse(request.POST['challenge'])
+        return HttpResponse(request.body['challenge'])
+    return HttpResponse(request.body['challenge'])
