@@ -9,7 +9,6 @@ from django.views.decorators.csrf import csrf_exempt
 logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
 def verify_slack_request(request):
     if request.method == 'POST':
         request_body = request.body()
@@ -32,6 +31,7 @@ def verify_slack_request(request):
             return False
 
 
+@csrf_exempt
 def event(request):
     logger.debug(request.body)
     if verify_slack_request(request):
