@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import logging
 
 from django.conf import settings
@@ -11,8 +12,9 @@ logger = logging.getLogger(__name__)
 
 def verify_slack_request(request):
     if request.method == 'POST':
-        request_body = request.body
-        print(request_body.decode())
+        form_data = json.loads(request.body.decode())
+        request_body = '&'.join([f'{key}={value}' for key, value in form_data.items()])
+        logger.info(request_body)
         slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
         print(slack_request_timestamp)
         slack_signature = request.headers['X-Slack-Signature']
@@ -33,7 +35,8 @@ def verify_slack_request(request):
 
 @csrf_exempt
 def event(request):
-    print(request.POST)
+    form_data = json.loads(request.body.decode())
+    logger.info(f'form_data: {form_data}')
     if verify_slack_request(request):
-        return HttpResponse(request.body['challenge'])
-    return HttpResponse(request.body['challenge'])
+        return HttpResponse(form_data['challenge'])
+    return HttpResponse(form_data['challenge'])
