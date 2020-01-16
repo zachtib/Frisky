@@ -11,7 +11,7 @@ from django.conf import settings
 # }
 
 def post_message(channel, message, token):
-    if settings.DEBUG:
+    if settings.SLACK_ACCESS_TOKEN is None:
         pass
     else:
         headers = {'Authorization': f'Bearer {token}'}

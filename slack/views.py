@@ -30,6 +30,7 @@ def verify_slack_request(request):
 
 def handle_message(event):
     text = event['text']
+    logger.info(f'Message is: {text}')
     if text[0] == '?':
         channel = event['channel']
         if text == '?ping':
@@ -47,6 +48,7 @@ def handle_event(request):
         elif form_data['type'] == 'event_callback':
             # Handle an event
             event = form_data['event']
+            logger.info(f'Handling {event}')
             if event['type'] == 'message':
                 return handle_message(event)
             else:
