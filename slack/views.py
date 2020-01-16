@@ -38,6 +38,9 @@ def handle_message(event):
         if text == '?ping':
             post_message(channel, 'pong', settings.SLACK_ACCESS_TOKEN)
             return HttpResponse(status=200)
+        else:
+            post_message(channel, 'Oi, I dunno what ya want', settings.SLACK_ACCESS_TOKEN)
+            return HttpResponse(status=200)
     else:
         return HttpResponse(status=200)
 
