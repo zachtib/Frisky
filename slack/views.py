@@ -6,6 +6,7 @@ import logging
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from .webhooks import post_message
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 def verify_slack_request(request):
     if settings.DEBUG:
+        logger.info(f'Headers: {request.headers}')
         return True
     slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
     slack_signature = request.headers['X-Slack-Signature']
@@ -47,20 +49,27 @@ def handle_message(event):
 
 @csrf_exempt
 def handle_event(request):
-    if verify_slack_request(request):
-        form_data = json.loads(request.body.decode())
-        if form_data['type'] == 'url_verification':
-            return HttpResponse(form_data['challenge'])
-        elif form_data['type'] == 'event_callback':
-            # Handle an event
-            event = form_data['event']
-            logger.info(f'Handling {event}')
-            if event['type'] == 'message':
-                return handle_message(event)
-            else:
-                pass
-        logger.info(form_data)
+    if settings.DEBUG:
+        logger.debug(f'request={request}')
+        logger.debug(f'request.body={request.body})')
 
-        return HttpResponse(200)
+    if request.method == 'POST':
+        if verify_slack_request(request):
+            form_data = json.loads(request.body.decode())
+            if form_data['type'] == 'url_verification':
+                return HttpResponse(form_data['challenge'])
+            elif form_data['type'] == 'event_callback':
+                # Handle an event
+                event = form_data['event']
+                logger.info(f'Handling {event}')
+                if event['type'] == 'message':
+                    return handle_message(event)
+                else:
+                    pass
+            logger.info(form_data)
+
+            return HttpResponse(200)
+        else:
+            return HttpResponse(status=404)
     else:
-        return HttpResponse('Unauthorized', status=401)
+        return HttpResponse(status=404)
