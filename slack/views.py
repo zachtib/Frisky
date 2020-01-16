@@ -6,6 +6,7 @@ import logging
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from .webhooks import post_message
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +28,29 @@ def verify_slack_request(request):
         return False
 
 
+def handle_message(event):
+    text = event['text']
+    if text[0] == '?':
+        channel = event['channel']
+        if text == '?ping':
+            post_message(channel, 'pong', settings.SLACK_ACCESS_TOKEN)
+    else:
+        return HttpResponse(status=200)
+
+
 @csrf_exempt
-def event(request):
+def handle_event(request):
     if verify_slack_request(request):
         form_data = json.loads(request.body.decode())
         if form_data['type'] == 'url_verification':
             return HttpResponse(form_data['challenge'])
-
+        elif form_data['type'] == 'event_callback':
+            # Handle an event
+            event = form_data['event']
+            if event['type'] == 'message':
+                return handle_message(event)
+            else:
+                pass
         logger.info(form_data)
 
         return HttpResponse(200)
