@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 def verify_slack_request(request):
+    if settings.DEBUG:
+        return True
     slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
     slack_signature = request.headers['X-Slack-Signature']
 
