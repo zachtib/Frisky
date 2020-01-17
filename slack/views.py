@@ -47,6 +47,9 @@ def handle_message(event):
         return HttpResponse(status=200)
 
 
+event_cache = set()
+
+
 @csrf_exempt
 def handle_event(request):
     if settings.DEBUG:
@@ -59,9 +62,14 @@ def handle_event(request):
             if form_data['type'] == 'url_verification':
                 return HttpResponse(form_data['challenge'])
             elif form_data['type'] == 'event_callback':
+                event_id = form_data['event_id']
+                if event_id in event_cache:
+                    logger.debug(f'Skipping previously handled event: {event_id}')
+                    return HttpResponse(status=200)
                 # Handle an event
                 event = form_data['event']
                 logger.info(f'Handling {event}')
+                event_cache.add(event_id)
                 if event['type'] == 'message':
                     return handle_message(event)
                 else:
