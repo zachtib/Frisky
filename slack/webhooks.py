@@ -28,8 +28,6 @@ def conversations_info(channel_id):
         pass
     else:
         headers = {'Authorization': f'Bearer {settings.SLACK_ACCESS_TOKEN}'}
-        requests.post('')
-
         response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}', headers=headers)
         json = response.json()
         if json['ok']:
@@ -37,7 +35,7 @@ def conversations_info(channel_id):
 
 
 # This is for emergency debugging, and should not be used in a plugin, ever
-def slog(message):
+def log_to_slack(message):
     if settings.DEBUG:
         print(message)
         post_message('frisky-logs', f'```{message}```')
