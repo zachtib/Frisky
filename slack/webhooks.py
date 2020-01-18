@@ -22,6 +22,7 @@ def post_message(channel, message):
         requests.post('https://slack.com/api/chat.postMessage', json=payload, headers=headers)
 
 
+# This is for emergency debugging, and should not be used in a plugin, ever
 def slog(message):
     if settings.DEBUG:
         post_message('frisky-logs', f'```{message}```')
