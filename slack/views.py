@@ -17,18 +17,15 @@ def verify_slack_request(request):
     slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
     slack_signature = request.headers['X-Slack-Signature']
 
-    form_data = json.loads(request.body.decode())
-    request_body = '&'.join([f'{key}={value}' for key, value in form_data.items()])
+    req = str.encode('v0:' + str(slack_request_timestamp) + ':') + request.body
+    request_hash = 'v0=' + hmac.new(
+        str.encode(settings.SLACK_SIGNING_SECRET),
+        req, hashlib.sha256
+    ).hexdigest()
 
-    basestring = f"v0:{slack_request_timestamp}:{request_body}".encode('utf-8')
-    slack_signing_secret = bytes(settings.SLACK_SIGNING_SECRET, 'utf-8')
-    signature = 'v0=' + hmac.new(slack_signing_secret, basestring, hashlib.sha256).hexdigest()
-
-    if hmac.compare_digest(signature, slack_signature):
+    if hmac.compare_digest(request_hash, slack_signature):
         return True
     else:
-        if settings.DEBUG:
-            slog(f'Signature validation FAILED, continuing because DEBUG is set\nsignature: {signature}')
         return False
 
 
@@ -42,20 +39,23 @@ def handle_event(request) -> HttpResponse:
         slog(f'Body: {request.body}')
 
     if request.method == 'POST':
-        if verify_slack_request(request):
-            form_data = json.loads(request.body.decode())
-            if form_data['type'] == 'url_verification':
+        form_data = json.loads(request.body.decode())
+        if form_data['type'] == 'url_verification':
+            if verify_slack_request(request):
                 return HttpResponse(form_data['challenge'])
-            elif form_data['type'] == 'event_callback':
-                event_id = form_data['event_id']
-                if event_id in event_cache:
-                    logger.debug(f'Skipping previously handled event: {event_id}')
-                    return HttpResponse(status=200)
-                # Handle an event
-                event = form_data['event']
-                event_cache.add(event_id)
-                if event['type'] == 'message' and event['channel'] != 'frisky-logs':
-                    handle_message(event)
+            else:
+                return HttpResponse(status=401)
+
+        if form_data['type'] == 'event_callback':
+            event_id = form_data['event_id']
+            if event_id in event_cache:
+                logger.debug(f'Skipping previously handled event: {event_id}')
+                return HttpResponse(status=200)
+            # Handle an event
+            event = form_data['event']
+            event_cache.add(event_id)
+            if event['type'] == 'message' and event['channel'] != 'frisky-logs':
+                handle_message(event)
         else:
             return HttpResponse(status=404)
     else:
