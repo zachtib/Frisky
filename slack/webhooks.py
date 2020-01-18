@@ -25,4 +25,5 @@ def post_message(channel, message):
 # This is for emergency debugging, and should not be used in a plugin, ever
 def slog(message):
     if settings.DEBUG:
+        print(message)
         post_message('frisky-logs', f'```{message}```')
