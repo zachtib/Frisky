@@ -1,4 +1,4 @@
-from friskytest import FriskyTestCase
+from frisky.test import FriskyTestCase
 
 
 class PingTestCase(FriskyTestCase):
