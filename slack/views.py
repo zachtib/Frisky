@@ -54,7 +54,7 @@ def handle_event(request) -> HttpResponse:
                 # Handle an event
                 event = form_data['event']
                 event_cache.add(event_id)
-                if event['type'] == 'message':
+                if event['type'] == 'message' and event['channel'] != 'frisky-logs':
                     handle_message(event)
         else:
             return HttpResponse(status=404)
