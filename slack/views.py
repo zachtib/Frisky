@@ -7,14 +7,14 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from .webhooks import post_message
+from .bot import handle_message
+from .webhooks import slog
 
 logger = logging.getLogger(__name__)
 
 
 def verify_slack_request(request):
     if settings.DEBUG:
-        logger.info(f'Headers: {request.headers}')
         return True
     slack_request_timestamp = request.headers['X-Slack-Request-Timestamp']
     slack_signature = request.headers['X-Slack-Signature']
@@ -32,29 +32,14 @@ def verify_slack_request(request):
         return False
 
 
-def handle_message(event):
-    text = event['text']
-    logger.info(f'Message is: {text}')
-    if text[0] == '?':
-        channel = event['channel']
-        if text == '?ping':
-            post_message(channel, 'pong', settings.SLACK_ACCESS_TOKEN)
-            return HttpResponse(status=200)
-        else:
-            post_message(channel, 'Oi, I dunno what ya want', settings.SLACK_ACCESS_TOKEN)
-            return HttpResponse(status=200)
-    else:
-        return HttpResponse(status=200)
-
-
 event_cache = set()
 
 
 @csrf_exempt
-def handle_event(request):
+def handle_event(request) -> HttpResponse:
     if settings.DEBUG:
-        logger.debug(f'request={request}')
-        logger.debug(f'request.body={request.body})')
+        slog(f'Headers: {request.headers}')
+        slog(f'Body: {request.body}')
 
     if request.method == 'POST':
         if verify_slack_request(request):
@@ -68,16 +53,11 @@ def handle_event(request):
                     return HttpResponse(status=200)
                 # Handle an event
                 event = form_data['event']
-                logger.info(f'Handling {event}')
                 event_cache.add(event_id)
                 if event['type'] == 'message':
-                    return handle_message(event)
-                else:
-                    pass
-            logger.info(form_data)
-
-            return HttpResponse(200)
+                    handle_message(event)
         else:
             return HttpResponse(status=404)
     else:
         return HttpResponse(status=404)
+    return HttpResponse(200)
