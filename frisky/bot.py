@@ -1,7 +1,5 @@
 import importlib
 
-from slack.webhooks import post_message
-
 
 def parse_message_string(message):
     split = message.split()
@@ -19,11 +17,11 @@ def get_reply_from_plugin(message, channel):
             return handler(*arguments, channel=channel)
 
 
-def handle_message(event) -> None:
+def handle_message(event, reply_channel) -> None:
     text = event['text']
     if text[0] != '?':
         return
     channel = event['channel']
     reply = get_reply_from_plugin(text, channel)
     if reply is not None:
-        post_message(channel, reply)
+        reply_channel(reply)

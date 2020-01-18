@@ -7,8 +7,9 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from .bot import handle_message
-from .webhooks import slog
+from frisky.bot import handle_message
+from frisky.http import FriskyResponse
+from slack.webhooks import post_message
 
 logger = logging.getLogger(__name__)
 
@@ -32,19 +33,21 @@ def verify_slack_request(request):
 event_cache = set()
 
 
+def process_event(event):
+    channel = event['channel']
+    if event['type'] == 'message' and channel != 'frisky-logs':
+        handle_message(event, lambda reply: post_message(channel, reply))
+
+
 @csrf_exempt
 def handle_event(request) -> HttpResponse:
-    if settings.DEBUG:
-        slog(f'Headers: {request.headers}')
-        slog(f'Body: {request.body}')
-
     if request.method == 'POST':
         form_data = json.loads(request.body.decode())
         if form_data['type'] == 'url_verification':
             if verify_slack_request(request):
                 return HttpResponse(form_data['challenge'])
             else:
-                return HttpResponse(status=401)
+                return HttpResponse(status=404)
 
         if form_data['type'] == 'event_callback':
             event_id = form_data['event_id']
@@ -54,10 +57,8 @@ def handle_event(request) -> HttpResponse:
             # Handle an event
             event = form_data['event']
             event_cache.add(event_id)
-            if event['type'] == 'message' and event['channel'] != 'frisky-logs':
-                handle_message(event)
+            return FriskyResponse(lambda: process_event(event))
         else:
             return HttpResponse(status=404)
     else:
         return HttpResponse(status=404)
-    return HttpResponse(200)

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from slack.bot import get_reply_from_plugin
+from frisky.bot import get_reply_from_plugin
 
 
 class FriskyTestCase(TestCase):
