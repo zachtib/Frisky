@@ -19,7 +19,21 @@ def post_message(channel, message):
             'channel': channel,
             'text': message,
         }
+
         requests.post('https://slack.com/api/chat.postMessage', json=payload, headers=headers)
+
+
+def conversations_info(channel_id):
+    if settings.SLACK_ACCESS_TOKEN is None:
+        pass
+    else:
+        headers = {'Authorization': f'Bearer {settings.SLACK_ACCESS_TOKEN}'}
+        requests.post('')
+
+        response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}', headers=headers)
+        json = response.json()
+        if json['ok']:
+            return json['channel']
 
 
 # This is for emergency debugging, and should not be used in a plugin, ever

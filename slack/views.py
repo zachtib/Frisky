@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from frisky.bot import handle_message
 from frisky.http import FriskyResponse
-from slack.webhooks import post_message
+from slack.webhooks import post_message, conversations_info
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,9 @@ event_cache = set()
 
 
 def process_event(event):
-    channel = event['channel']
-    if event['type'] == 'message' and channel != 'frisky-logs':
-        handle_message(event, lambda reply: post_message(channel, reply))
+    channel = conversations_info(event['channel'])
+    if event['type'] == 'message' and channel['name'] != 'frisky-logs':
+        handle_message(channel['name'], '', event['text'], lambda reply: post_message(channel['id'], reply))
 
 
 @csrf_exempt
