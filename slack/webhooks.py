@@ -24,4 +24,4 @@ def post_message(channel, message):
 
 def slog(message):
     if settings.DEBUG:
-        post_message('frisky-logs', message)
+        post_message('frisky-logs', f'```message```')
