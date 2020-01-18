@@ -142,4 +142,6 @@ STATIC_URL = '/static/'
 SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', None)
 SLACK_ACCESS_TOKEN = os.environ.get('SLACK_ACCESS_TOKEN', None)
 
+FRISKY_BOT_NAME = '@frisky'
+
 django_heroku.settings(locals())
