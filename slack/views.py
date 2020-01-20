@@ -7,9 +7,9 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from frisky.bot import handle_message
+from frisky.bot import handle_message, handle_reaction
 from frisky.http import FriskyResponse
-from slack.webhooks import post_message, conversations_info, log_to_slack
+from slack.webhooks import post_message, conversations_info, log_to_slack, user_info
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,26 @@ def process_event(event):
             log_to_slack(str(event))
             event['text'] = event['text'][:-4].rstrip()
         handle_message(channel['name'], '', event['text'], lambda reply: post_message(channel['id'], reply))
+    elif event['type'] == 'reaction_added' or event['type'] == 'reaction_removed':
+        """
+            {
+                "type": "reaction_added",
+                "user": "U024BE7LH",
+                "reaction": "thumbsup",
+                "item_user": "U0G9QF9C6",
+                "item": {
+                    "type": "message",
+                    "channel": "C0G9QF9GZ",
+                    "ts": "1360782400.498405"
+                },
+                "event_ts": "1360782804.083113"
+            }
+        """
+        user = user_info(event['user'])  # The person that made the reaction
+        item_user = user_info(event['item_user'])  # The person that made the comment
+        added = event['type'] == 'reaction_added'
+        handle_reaction(event['reaction'], user['name'], item_user['name'], added,
+                        lambda reply: post_message(channel['id'], reply))
 
 
 @csrf_exempt
