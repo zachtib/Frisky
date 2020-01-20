@@ -60,7 +60,7 @@ def process_event(event):
         user = user_info(event['user'])  # The person that made the reaction
         item_user = user_info(event['item_user'])  # The person that made the comment
         added = event['type'] == 'reaction_added'
-        handle_reaction(event['reaction'], user['name'], item_user['name'], added,
+        handle_reaction(event['reaction'], user['name'], item_user['name'], '', added,
                         lambda reply: post_message(channel['id'], reply))
 
 
