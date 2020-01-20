@@ -1,7 +1,7 @@
 from votes.queries import get_votes_record, upvote, downvote
 
 
-def handle_reaction(reaction, reacting_user, commenting_user, added):
+def handle_reaction(reaction, reacting_user, commenting_user, comment, added):
     if reaction == 'upvote':
         if added:
             record = upvote(commenting_user)
