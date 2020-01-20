@@ -16,6 +16,6 @@ def upvote(label):
 
 def downvote(label):
     record = get_votes_record(label)
-    record.votes += 1
+    record.votes -= 1
     record.save()
     return record
