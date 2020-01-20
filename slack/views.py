@@ -34,13 +34,15 @@ event_cache = set()
 
 
 def process_event(event):
-    channel = conversations_info(event['channel'])
-    if event['type'] == 'message' and channel['name'] != 'frisky-logs':
-        if event['text'].endswith('!log'):
-            log_to_slack(str(event))
-            event['text'] = event['text'][:-4].rstrip()
-        handle_message(channel['name'], '', event['text'], lambda reply: post_message(channel['id'], reply))
+    if event['type'] == 'message':
+        channel = conversations_info(event['channel'])
+        if channel['name'] != 'frisky-logs':
+            if event['text'].endswith('!log'):
+                log_to_slack(str(event))
+                event['text'] = event['text'][:-4].rstrip()
+            handle_message(channel['name'], '', event['text'], lambda reply: post_message(channel['id'], reply))
     elif event['type'] == 'reaction_added' or event['type'] == 'reaction_removed':
+        channel = conversations_info(event['item']['channel'])
         """
             {
                 "type": "reaction_added",
