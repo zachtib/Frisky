@@ -91,6 +91,46 @@ def user_info(user_id):
             return json['user']
 
 
+def get_message(channel, timestamp):
+    """
+    {
+        "ok": true,
+        "messages": [
+            {
+                "type": "message",
+                "user": "U012AB3CDE",
+                "text": "I find you punny and would like to smell your nose letter",
+                "ts": "1512085950.000216"
+            },
+            {
+                "type": "message",
+                "user": "U061F7AUR",
+                "text": "What, you want to smell my shoes better?",
+                "ts": "1512104434.000490"
+            }
+        ],
+        "has_more": true,
+        "pin_count": 0,
+        "response_metadata": {
+            "next_cursor": "bmV4dF90czoxNTEyMDg1ODYxMDAwNTQz"
+        }
+    }
+    :param channel:
+    :param timestamp:
+    :return:
+    """
+    if settings.SLACK_ACCESS_TOKEN is None:
+        pass
+    else:
+        headers = {'Authorization': f'Bearer {settings.SLACK_ACCESS_TOKEN}'}
+        response = requests.get(f'https://slack.com/api/conversations.history?channel=' +
+                                f'{channel}&oldest={timestamp}&latest={timestamp}&inclusive=true&limit=1',
+                                headers=headers)
+        json = response.json()
+        if json['ok']:
+            return json['messages'][0]
+
+
 # This is for emergency debugging, and should not be used in a plugin, ever
 def log_to_slack(message):
     if settings.DEBUG:

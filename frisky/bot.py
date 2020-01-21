@@ -59,6 +59,7 @@ def handle_reaction(reaction, reacting_user, commenting_user, comment, added, re
 
     This function is EXPERIMENTAL. Please don't base your plugins on it at this time
 
+    :param comment:
     :param reaction:
     :param reacting_user:
     :param commenting_user:
