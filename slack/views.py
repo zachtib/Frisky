@@ -12,6 +12,7 @@ from frisky.http import FriskyResponse
 from slack.webhooks import post_message, conversations_info, log_to_slack, user_info, get_message
 
 logger = logging.getLogger(__name__)
+logger.info('This is a test message')
 
 
 def verify_slack_request(request):
