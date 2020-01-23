@@ -25,11 +25,15 @@ def handle_message(*args, **kwargs) -> str:
             index = int(args[1])
             return get_learn_indexed(label, index).content
         except ValueError:
-            add_learn(label, args[1])
-            return f'Okay, learned {args[0]}'
+            if args[1].startswith('?'):
+                return "DON'T HURT ME AGAIN"
+            if add_learn(label, args[1]):
+                return f'Okay, learned {args[0]}'
         except IndexError:
             return 'NO SUCH THING'
     elif len(args) > 2:
         new_learn = ' '.join(args[1:])
+        if new_learn.startswith('?'):
+            return "DON'T HURT ME AGAIN"
         if add_learn(label, new_learn):
             return f'Okay, learned {args[0]}'
