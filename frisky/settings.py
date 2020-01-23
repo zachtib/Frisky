@@ -157,11 +157,12 @@ LOGGING = {
 
 STATIC_URL = '/static/'
 
-
 SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', None)
 SLACK_ACCESS_TOKEN = os.environ.get('SLACK_ACCESS_TOKEN', None)
 
 FRISKY_BOT_NAME = '@frisky'
+
+print(os.environ)
 
 if 'heroku' in os.environ['PYTHONHOME']:
     import django_heroku
