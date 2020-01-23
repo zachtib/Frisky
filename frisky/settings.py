@@ -159,7 +159,6 @@ STATIC_URL = '/static/'
 
 # Extra places for collectstatic to find static files.
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
 )
 
 SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', None)
