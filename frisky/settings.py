@@ -162,9 +162,8 @@ SLACK_ACCESS_TOKEN = os.environ.get('SLACK_ACCESS_TOKEN', None)
 
 FRISKY_BOT_NAME = '@frisky'
 
-print(os.environ)
 
-if 'heroku' in os.environ['PYTHONHOME']:
+if 'heroku' in os.environ.get('HOME', '') == '/app':
     import django_heroku
 
     django_heroku.settings(locals())
