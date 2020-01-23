@@ -3,8 +3,8 @@ from learns.queries import add_learn, get_random_learn, get_learn_indexed
 
 def handle_reaction(reaction, reacting_user, commenting_user, original_message, added) -> str:
     if reaction == 'brain' and added:
-        add_learn(commenting_user, original_message)
-        return f'Okay, learned {commenting_user}'
+        if add_learn(commenting_user, original_message):
+            return f'Okay, learned {commenting_user}'
 
 
 def handle_message(*args, **kwargs) -> str:
