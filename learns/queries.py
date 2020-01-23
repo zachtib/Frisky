@@ -21,5 +21,14 @@ def get_random_learn(label):
     return learns[random_index]
 
 
-def add_learn(label, content):
-    Learn.objects.create(label=label, content=content)
+def add_learn(label, content) -> bool:
+    """
+
+    :param label:
+    :param content:
+    :return: True if the record was created
+    """
+    if not Learn.objects.filter(label=label, content=content).exists():
+        Learn.objects.create(label=label, content=content)
+        return True
+    return False

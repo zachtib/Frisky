@@ -31,5 +31,5 @@ def handle_message(*args, **kwargs) -> str:
             return 'NO SUCH THING'
     elif len(args) > 2:
         new_learn = ' '.join(args[1:])
-        add_learn(label, new_learn)
-        return f'Okay, learned {args[0]}'
+        if add_learn(label, new_learn):
+            return f'Okay, learned {args[0]}'
