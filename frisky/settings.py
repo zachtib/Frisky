@@ -154,14 +154,18 @@ LOGGING = {
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
+
+# Extra places for collectstatic to find static files.
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)
 
 SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', None)
 SLACK_ACCESS_TOKEN = os.environ.get('SLACK_ACCESS_TOKEN', None)
 
 FRISKY_BOT_NAME = '@frisky'
-
 
 if 'heroku' in os.environ.get('HOME', '') == '/app':
     import django_heroku
