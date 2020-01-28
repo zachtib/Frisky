@@ -33,6 +33,21 @@ def verify_slack_request(request):
 event_cache = set()
 
 
+def get_user_name(user):
+    profile = user.get('profile', None)
+    if profile is not None:
+        name = profile.get('display_name_normalized', None)
+        if name is not None and name != '':
+            return name
+        name = profile.get('real_name_normalized', None)
+        if name is not None and name != '':
+            return name
+    name = user.get('name', None)
+    if name is not None and name != '':
+        return name
+    return 'unknown'
+        
+
 def process_event(event):
     if event['type'] == 'message':
         channel = conversations_info(event['channel'])
@@ -61,7 +76,9 @@ def process_event(event):
         item_user = user_info(event['item_user'])  # The person that made the comment
         added = event['type'] == 'reaction_added'
         message = get_message(event['item']['channel'], event['item']['ts'])
-        handle_reaction(event['reaction'], user['name'], item_user['name'], message['text'], added,
+        user_name = get_user_name(user)
+        item_user_name = get_user_name(item_user)
+        handle_reaction(event['reaction'], user_name, item_user_name, message['text'], added,
                         lambda reply: post_message(channel['id'], reply))
 
 
