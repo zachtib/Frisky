@@ -30,9 +30,6 @@ def verify_slack_request(request):
         return False
 
 
-event_cache = set()
-
-
 def get_user_name(user):
     profile = user.get('profile', None)
     if profile is not None:
@@ -94,13 +91,7 @@ def handle_event(request) -> HttpResponse:
         if 'X-Slack-Retry-Num' in request.headers:
             return HttpResponse(status=200)
         if form_data['type'] == 'event_callback':
-            event_id = form_data['event_id']
-            if event_id in event_cache:
-                logger.debug(f'Skipping previously handled event: {event_id}')
-                return HttpResponse(status=200)
-            # Handle an event
             event = form_data['event']
-            event_cache.add(event_id)
             return FriskyResponse(lambda: process_event(event))
         else:
             return HttpResponse(status=404)
