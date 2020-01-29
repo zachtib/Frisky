@@ -28,7 +28,8 @@ def get_reply_from_plugin(message, sender, channel):
         if hasattr(plugin, 'handle_message'):
             handler = getattr(plugin, 'handle_message')
             if callable(handler):
-                return handler(command)
+                args = [command] + arguments
+                return handler(*args, channel=channel, sender=sender)
 
 
 def get_reply_for_reaction(reaction, reacting_user, commenting_user, comment, added):
