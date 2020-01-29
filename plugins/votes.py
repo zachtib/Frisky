@@ -1,6 +1,10 @@
 from votes.queries import get_votes_record, upvote, downvote
 
 
+def help_text(*args, **kwargs):
+    return 'Usage: `?votes <thing>` to get the vote count for `thing`, :upvote: and :downvote: to vote'
+
+
 def handle_reaction(reaction, reacting_user, commenting_user, comment, added):
     if reaction == 'upvote':
         if reacting_user == commenting_user and added:
