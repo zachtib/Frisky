@@ -91,7 +91,8 @@ def handle_event(request) -> HttpResponse:
                 return HttpResponse(form_data['challenge'])
             else:
                 return HttpResponse(status=404)
-
+        if 'X-Slack-Retry-Num' in request.headers:
+            return HttpResponse(status=200)
         if form_data['type'] == 'event_callback':
             event_id = form_data['event_id']
             if event_id in event_cache:
