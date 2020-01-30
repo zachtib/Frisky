@@ -10,9 +10,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from frisky.bot import handle_message, handle_reaction
 from frisky.http import FriskyResponse
-from slack.webhooks import post_message, conversations_info, log_to_slack, user_info, get_message
+from slack.api import SlackApi
 
 logger = logging.getLogger(__name__)
+api = SlackApi(settings.SLACK_ACCESS_TOKEN)
 
 
 class SlackEvent(View):
@@ -29,8 +30,7 @@ class SlackEvent(View):
         elif 'X-Slack-Retry-Num' in request.headers:
             return HttpResponse(status=200)
         elif form_data['type'] == 'event_callback':
-            event = form_data['event']
-            return FriskyResponse(lambda: self.process_event(event))
+            return FriskyResponse(lambda: self.process_event(form_data))
         else:
             return HttpResponse(status=404)
 
@@ -50,34 +50,35 @@ class SlackEvent(View):
         else:
             return False
 
-    @staticmethod
-    def get_user_name(user):
-        profile = user.get('profile', None)
-        if profile is not None:
-            name = profile.get('display_name_normalized', None)
-            if name is not None and name != '':
-                return name
-            name = profile.get('real_name_normalized', None)
-            if name is not None and name != '':
-                return name
-        name = user.get('name', None)
-        if name is not None and name != '':
-            return name
-        return 'unknown'
-
-    def process_event(self, event):
+    def process_event(self, form_data):
+        event = form_data['event']
+        workspace = api.get_workspace(form_data['team_id'])
         if event['type'] == 'message':
-            user = user_info(event['user'])
-            user_name = self.get_user_name(user)
-            channel = conversations_info(event['channel'])
-            if channel['name'] != 'frisky-logs':
+            """ Example Event:
+            "event": {
+                "type": "message",
+                "channel": "C024BE91L",
+                "user": "U2147483697",
+                "text": "Live long and prospect.",
+                "ts": "1355517523.000005",
+                "event_ts": "1355517523.000005",
+                "channel_type": "channel"
+            }
+            """
+            user = api.get_user(event['user'])
+            channel = api.get_channel(workspace, event['channel'])
+            if channel.name != 'frisky-logs':
                 if event['text'].endswith('!log'):
-                    log_to_slack(str(event))
+                    api.log(event)
                     event['text'] = event['text'][:-4].rstrip()
-                handle_message(channel['name'], user_name, event['text'],
-                               lambda reply: post_message(channel['id'], reply))
+                handle_message(
+                    channel.name,
+                    user.name,
+                    event['text'],
+                    lambda reply: api.post_message(channel, reply)
+                )
         elif event['type'] == 'reaction_added' or event['type'] == 'reaction_removed':
-            channel = conversations_info(event['item']['channel'])
+            channel = api.get_channel(workspace, event['item']['channel'])
             """
                 {
                     "type": "reaction_added",
@@ -92,11 +93,15 @@ class SlackEvent(View):
                     "event_ts": "1360782804.083113"
                 }
             """
-            user = user_info(event['user'])  # The person that made the reaction
-            item_user = user_info(event['item_user'])  # The person that made the comment
+            user = api.get_user(event['user'])  # The person that made the reaction
+            item_user = api.get_user(event['item_user'])  # The person that made the comment
             added = event['type'] == 'reaction_added'
-            message = get_message(event['item']['channel'], event['item']['ts'])
-            user_name = self.get_user_name(user)
-            item_user_name = self.get_user_name(item_user)
-            handle_reaction(event['reaction'], user_name, item_user_name, message['text'], added,
-                            lambda reply: post_message(channel['id'], reply))
+            message = api.get_message(event['item']['channel'], event['item']['ts'])
+            handle_reaction(
+                event['reaction'],
+                user.name,
+                item_user.name,
+                message.text,
+                added,
+                lambda reply: api.post_message(channel, reply)
+            )
