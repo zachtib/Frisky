@@ -86,6 +86,7 @@ DATABASES = {
     }
 }
 
+REDIS_URL = os.environ.get('REDIS_URL', None)
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
