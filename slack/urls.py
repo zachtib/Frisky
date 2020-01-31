@@ -1,8 +1,7 @@
 from django.urls import path
 
-from .views import SlackEvent, test_celery
+from .views import SlackEvent
 
 urlpatterns = [
     path('events/', SlackEvent.as_view()),
-    path('celery/', test_celery),
 ]
