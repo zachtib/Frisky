@@ -109,5 +109,5 @@ class SlackEvent(View):
 
 def test_celery(request):
     from app.celery import debug_task
-    debug_task.delay(request)
+    debug_task.delay()
     return HttpResponse('OK')
