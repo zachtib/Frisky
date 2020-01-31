@@ -105,3 +105,9 @@ class SlackEvent(View):
                 added,
                 lambda reply: api.post_message(channel, reply)
             )
+
+
+def test_celery(request):
+    from app.celery import debug_task
+    debug_task.delay(request)
+    return HttpResponse('OK')
