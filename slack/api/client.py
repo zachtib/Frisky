@@ -2,10 +2,10 @@ import datetime
 
 import requests
 
-from .models import Workspace, Channel, User, Message
+from slack.models import Workspace, Channel, User, Message
 
 
-class SlackApi(object):
+class SlackApiClient(object):
     __access_token: str
     __cache_timeout: datetime.timedelta
     __user_cache: dict

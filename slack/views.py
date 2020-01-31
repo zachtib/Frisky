@@ -10,10 +10,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from frisky.bot import handle_message, handle_reaction
 from frisky.http import FriskyResponse
-from slack.api import SlackApi
+from slack.api.client import SlackApiClient
 
 logger = logging.getLogger(__name__)
-api = SlackApi(settings.SLACK_ACCESS_TOKEN)
+slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
 
 
 class SlackEvent(View):
@@ -52,7 +52,7 @@ class SlackEvent(View):
 
     def process_event(self, form_data):
         event = form_data['event']
-        workspace = api.get_workspace(form_data['team_id'])
+        workspace = slack_api_client.get_workspace(form_data['team_id'])
         if event['type'] == 'message':
             """ Example Event:
             "event": {
@@ -65,20 +65,20 @@ class SlackEvent(View):
                 "channel_type": "channel"
             }
             """
-            user = api.get_user(event['user'])
-            channel = api.get_channel(workspace, event['channel'])
+            user = slack_api_client.get_user(event['user'])
+            channel = slack_api_client.get_channel(workspace, event['channel'])
             if channel.name != 'frisky-logs':
                 if event['text'].endswith('!log'):
-                    api.log(event)
+                    slack_api_client.log(event)
                     event['text'] = event['text'][:-4].rstrip()
                 handle_message(
                     channel.name,
                     user.name,
                     event['text'],
-                    lambda reply: api.post_message(channel, reply)
+                    lambda reply: slack_api_client.post_message(channel, reply)
                 )
         elif event['type'] == 'reaction_added' or event['type'] == 'reaction_removed':
-            channel = api.get_channel(workspace, event['item']['channel'])
+            channel = slack_api_client.get_channel(workspace, event['item']['channel'])
             """
                 {
                     "type": "reaction_added",
@@ -93,15 +93,15 @@ class SlackEvent(View):
                     "event_ts": "1360782804.083113"
                 }
             """
-            user = api.get_user(event['user'])  # The person that made the reaction
-            item_user = api.get_user(event['item_user'])  # The person that made the comment
+            user = slack_api_client.get_user(event['user'])  # The person that made the reaction
+            item_user = slack_api_client.get_user(event['item_user'])  # The person that made the comment
             added = event['type'] == 'reaction_added'
-            message = api.get_message(event['item']['channel'], event['item']['ts'])
+            message = slack_api_client.get_message(event['item']['channel'], event['item']['ts'])
             handle_reaction(
                 event['reaction'],
                 user.name,
                 item_user.name,
                 message.text,
                 added,
-                lambda reply: api.post_message(channel, reply)
+                lambda reply: slack_api_client.post_message(channel, reply)
             )
