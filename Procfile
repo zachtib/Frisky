@@ -1,3 +1,3 @@
 release: python manage.py migrate
-worker: celery -A app worker -l info
+worker: celery worker --app=frisky.celery.app
 web: gunicorn app.wsgi
