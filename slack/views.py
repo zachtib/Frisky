@@ -8,8 +8,9 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-logger = logging.getLogger(__name__)
 from slack.tasks import process_event
+
+logger = logging.getLogger(__name__)
 
 
 class SlackEvent(View):
