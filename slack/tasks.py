@@ -11,11 +11,8 @@ def process_event(data):
     slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
     try:
         event_wrapper = Event.from_dict(data)
-        slack_api_client.emergency_log(event_wrapper)
         event = event_wrapper.get_event()
-        print(event)
         team = slack_api_client.get_workspace(data['team_id'])
-        print(team)
         if isinstance(event, ReactionAdded):
             user = slack_api_client.get_user(event.user)
             channel = slack_api_client.get_channel(event.item.channel)
