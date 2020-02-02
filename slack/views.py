@@ -8,6 +8,8 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from slack.api.client import SlackApiClient
+
 logger = logging.getLogger(__name__)
 from slack.tasks import process_event
 
@@ -18,7 +20,6 @@ class SlackEvent(View):
     @csrf_exempt
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
-        print(form_data)
         if form_data['type'] == 'url_verification':
             if self.verify_slack_request(request):
                 return HttpResponse(form_data['challenge'])
@@ -27,6 +28,8 @@ class SlackEvent(View):
         elif 'X-Slack-Retry-Num' in request.headers:
             return HttpResponse(status=200)
         elif form_data['type'] == 'event_callback':
+            slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
+            slack_api_client.emergency_log(form_data)
             process_event.delay(form_data)
             return HttpResponse(status=200)
         else:
