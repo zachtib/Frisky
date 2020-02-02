@@ -86,6 +86,13 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+    }
+}
+
 REDIS_URL = os.environ.get('REDIS_URL', None)
 
 # Password validation
