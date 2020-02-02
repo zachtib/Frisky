@@ -4,6 +4,120 @@ from typing import List, Dict
 from dataclasses_json import dataclass_json
 
 
+class BaseModel(object):
+    def key(self):
+        if hasattr(self, 'id'):
+            return self.create_key(self.id)
+        return self.create_key(hash(self))
+
+    @classmethod
+    def create_key(cls, *args):
+        return cls.__name__ + ':' + ':'.join(args)
+
+
+@dataclass_json
+@dataclass
+class Profile(object):
+    """ Example Profile
+    {
+        "avatar_hash": "ge3b51ca72de",
+        "status_text": "Print is dead",
+        "status_emoji": ":books:",
+        "real_name": "Egon Spengler",
+        "display_name": "spengler",
+        "real_name_normalized": "Egon Spengler",
+        "display_name_normalized": "spengler",
+        "email": "spengler@ghostbusters.example.com",
+        "image_original": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "image_24": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "image_32": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "image_48": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "image_72": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "image_192": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+        "team": "T012AB3C4"
+    }
+    """
+    real_name: str
+    display_name: str
+    real_name_normalized: str
+    display_name_normalized: str
+    team: str
+
+
+@dataclass_json
+@dataclass
+class User(BaseModel):
+    """ Example API User:
+    {
+        "id": "W012A3CDE",
+        "team_id": "T012AB3C4",
+        "name": "spengler",
+        "deleted": false,
+        "color": "9f69e7",
+        "real_name": "Egon Spengler",
+        "tz": "America/Los_Angeles",
+        "tz_label": "Pacific Daylight Time",
+        "tz_offset": -25200,
+        "profile": {
+            "avatar_hash": "ge3b51ca72de",
+            "status_text": "Print is dead",
+            "status_emoji": ":books:",
+            "real_name": "Egon Spengler",
+            "display_name": "spengler",
+            "real_name_normalized": "Egon Spengler",
+            "display_name_normalized": "spengler",
+            "email": "spengler@ghostbusters.example.com",
+            "image_original": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "image_24": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "image_32": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "image_48": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "image_72": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "image_192": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+            "team": "T012AB3C4"
+        },
+        "is_admin": true,
+        "is_owner": false,
+        "is_primary_owner": false,
+        "is_restricted": false,
+        "is_ultra_restricted": false,
+        "is_bot": false,
+        "updated": 1502138686,
+        "is_app_user": false,
+        "has_2fa": false
+    }
+    """
+    id: str
+    name: str
+    real_name: str
+    team_id: str
+    profile: Profile
+
+
+@dataclass_json
+@dataclass
+class Conversation(BaseModel):
+    id: str
+    name: str
+
+
+@dataclass_json
+@dataclass
+class Team(BaseModel):
+    id: str
+    name: str
+    domain: str
+
+
+@dataclass_json
+@dataclass
+class Message(BaseModel):
+    user: str
+    text: str
+    ts: str
+
+
 @dataclass_json
 @dataclass
 class RateLimitedEvent(object):
@@ -64,8 +178,11 @@ class Event(object):
 
     def get_event(self):
         event_type = self.event.get('type', None)
-        if event_type == 'reaction_added':
+        if event_type == 'reaction_added' or event_type == 'reaction_removed':
             return ReactionAdded.from_dict(self.event)
+        elif event_type == 'message':
+            return MessageSent.from_dict(self.event)
+
         return None
 
 
@@ -107,3 +224,25 @@ class ReactionAdded(object):
     reaction: str
     item_user: str
     event_ts: str
+
+
+@dataclass_json
+@dataclass
+class MessageSent:
+    """ Example Event:
+    {
+        "type": "message",
+        "channel": "C024BE91L",
+        "user": "U2147483697",
+        "text": "Live long and prospect.",
+        "ts": "1355517523.000005",
+        "event_ts": "1355517523.000005",
+        "channel_type": "channel"
+    }
+    """
+    channel: str
+    user: str
+    text: str
+    ts: str
+    event_ts: str
+    channel_type: str

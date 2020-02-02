@@ -1,26 +1,24 @@
 import datetime
+from typing import Optional
 
 import requests
+from django.core.cache import cache
 
-from slack.models import Workspace, Channel, User, Message
+from slack.api.models import User, Conversation, Team, Message
 
 
 class SlackApiClient(object):
     __access_token: str
     __cache_timeout: datetime.timedelta
-    __user_cache: dict
-    __channel_cache: dict
 
     def __init__(self, access_token, cache_timeout=86400):
         self.__access_token = access_token
         self.__cache_timeout = datetime.timedelta(seconds=cache_timeout)
-        self.__user_cache = dict()
-        self.__channel_cache = dict()
 
     def __headers(self):
         return {'Authorization': f'Bearer {self.__access_token}'}
 
-    def __api_user_info(self, user_id):
+    def __api_user_info(self, user_id) -> Optional[User]:
         response = requests.get(f'https://slack.com/api/users.info?user={user_id}', headers=self.__headers())
         """
         Example API Response:
@@ -69,153 +67,89 @@ class SlackApiClient(object):
         json = response.json()
         if json['ok']:
             user = json['user']
-            return user
+            return User.from_dict(user)
         return None
 
-    @staticmethod
-    def __get_username_from_api_user(user) -> str:
-        profile = user.get('profile', None)
-        if profile is not None:
-            name = profile.get('display_name_normalized', None)
-            if name is not None and name != '':
-                return name
-            name = profile.get('real_name_normalized', None)
-            if name is not None and name != '':
-                return name
-        name = user.get('name', None)
-        if name is not None and name != '':
-            return name
-        return 'unknown'
-
-    def get_message(self, channel: Channel, timestamp: str) -> Message:
+    def __api_conversations_info(self, conversation_id) -> Optional[Conversation]:
         """
-        {
-            "ok": true,
-            "messages": [
-                {
-                    "type": "message",
-                    "user": "U012AB3CDE",
-                    "text": "I find you punny and would like to smell your nose letter",
-                    "ts": "1512085950.000216"
-                },
-                {
-                    "type": "message",
-                    "user": "U061F7AUR",
-                    "text": "What, you want to smell my shoes better?",
-                    "ts": "1512104434.000490"
-                }
-            ],
-            "has_more": true,
-            "pin_count": 0,
-            "response_metadata": {
-                "next_cursor": "bmV4dF90czoxNTEyMDg1ODYxMDAwNTQz"
-            }
-        }
-        :param channel:
-        :param timestamp:
+        https://api.slack.com/methods/conversations.info
+        :param conversation_id:
         :return:
         """
-        response = requests.get(f'https://slack.com/api/conversations.history?channel=' +
-                                f'{channel.slack_id}&oldest={timestamp}&latest={timestamp}&inclusive=true&limit=1',
-                                headers=self.__headers())
-        json = response.json()
-        if json['ok']:
-            message = json['messages'][0]
-            return Message(
-                channel=channel,
-                user=self.get_user(message['user']),
-                text=message['text']
-            )
 
-    def get_channel(self, workspace: Workspace, channel_id) -> Channel:
-        """
-        {
-            "ok": true,
-            "channel": {
-                "id": "C012AB3CD",
-                "name": "general",
-                "is_channel": true,
-                "is_group": false,
-                "is_im": false,
-                "created": 1449252889,
-                "creator": "W012A3BCD",
-                "is_archived": false,
-                "is_general": true,
-                "unlinked": 0,
-                "name_normalized": "general",
-                "is_read_only": false,
-                "is_shared": false,
-                "parent_conversation": null,
-                "is_ext_shared": false,
-                "is_org_shared": false,
-                "pending_shared": [],
-                "is_pending_ext_shared": false,
-                "is_member": true,
-                "is_private": false,
-                "is_mpim": false,
-                "last_read": "1502126650.228446",
-                "topic": {
-                    "value": "For public discussion of generalities",
-                    "creator": "W012A3BCD",
-                    "last_set": 1449709364
-                },
-                "purpose": {
-                    "value": "This part of the workspace is for fun. Make fun here.",
-                    "creator": "W012A3BCD",
-                    "last_set": 1449709364
-                },
-                "previous_names": [
-                    "specifics",
-                    "abstractions",
-                    "etc"
-                ],
-                "locale": "en-US"
-            }
-        }
-        :param workspace:
-        :param channel_id:
-        :return:
-        """
-        response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}',
+        response = requests.get(f'https://slack.com/api/conversations.info?channel={conversation_id}',
                                 headers=self.__headers())
         json = response.json()
         if json['ok']:
             channel = json['channel']
-            return Channel(
-                workspace=workspace,
-                name=channel['name'],
-                slack_id=channel['id']
-            )
+            return Conversation.from_dict(channel)
+        return None
 
-    def get_workspace(self, team_id) -> Workspace:
-        obj, created = Workspace.objects.get_or_create(slack_id=team_id, defaults={'name': ''})
-        return obj
+    def __api_team_info(self, team_id) -> Optional[Team]:
+        """
+        https://slack.com/api/team.info
+        :param team_id:
+        :return:
+        """
 
-    def get_user(self, user_id) -> User:
-        try:
-            result = User.objects.get(slack_id=user_id)
-            elapsed = datetime.datetime.now() - result.last_update
-            if elapsed > self.__cache_timeout:
-                user_info = self.__api_user_info(result.slack_id)
-                result.name = self.__get_username_from_api_user(user_info)
-                result.save()
-        except User.DoesNotExist:
-            user_info = self.__api_user_info(user_id)
-            result = User.objects.create(
-                name=self.__get_username_from_api_user(user_info),
-                workspace=self.get_workspace(user_info['team_id'])
-            )
-        return result
+        response = requests.get(f'https://slack.com/api/team.info?team={team_id}',
+                                headers=self.__headers())
+        json = response.json()
+        if json['ok']:
+            team = json['team']
+            return Team.from_dict(team)
+        return None
 
-    def post_message(self, channel: Channel, message: str) -> bool:
+    def __api_get_single_message(self, conversation_id, timestamp):
+        response = requests.get(f'https://slack.com/api/conversations.history?channel=' +
+                                f'{conversation_id}&oldest={timestamp}&latest={timestamp}&inclusive=true&limit=1',
+                                headers=self.__headers())
+        json = response.json()
+        if json['ok']:
+            message = json['messages'][0]
+            return Message.from_dict(message)
+        return None
+
+    @staticmethod
+    def __get_username_from_api_user(user: User) -> str:
+        if user.profile is not None:
+            name = user.profile.display_name_normalized
+            if name is not None and name != '':
+                return name
+            name = user.profile.real_name_normalized
+            if name is not None and name != '':
+                return name
+        if user.name is not None and user.name != '':
+            return user.name
+        return 'unknown'
+
+    def get_message(self, conversation: Conversation, timestamp: str) -> Optional[Message]:
+        return cache.get_or_set(Message.create_key(conversation.id, timestamp),
+                                lambda: self.__api_get_single_message(conversation.id, timestamp))
+
+    def get_user(self, user_id) -> Optional[User]:
+        return cache.get_or_set(User.create_key(user_id), lambda: self.__api_user_info(user_id))
+
+    def get_channel(self, channel_id) -> Optional[Conversation]:
+        return cache.get_or_set(Conversation.create_key(channel_id), lambda: self.__api_conversations_info(channel_id))
+
+    def get_workspace(self, workspace_id) -> Optional[Team]:
+        return cache.get_or_set(Team.create_key(workspace_id), lambda: self.__api_team_info(workspace_id))
+
+    def post_message(self, channel: Conversation, message: str) -> bool:
         requests.post(
             'https://slack.com/api/chat.postMessage',
-            json={'channel': channel.slack_id, 'text': message},
+            json={'channel': channel.id, 'text': message},
             headers=self.__headers()
         )
         return True
 
-    def log(self, message):
+    def emergency_log(self, message):
+        """
+        DO NOT USE!
+        :param message:
+        :return:
+        """
         requests.post(
             'https://slack.com/api/chat.postMessage',
             json={'channel': 'frisky-logs', 'text': f'```{message}```'},

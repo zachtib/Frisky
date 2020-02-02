@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from frisky.bot import handle_message, handle_reaction
 from frisky.http import FriskyResponse
 from slack.api.client import SlackApiClient
+from slack.api.models import Event, ReactionAdded, MessageSent
 
 logger = logging.getLogger(__name__)
 slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
@@ -51,57 +52,38 @@ class SlackEvent(View):
             return False
 
     def process_event(self, form_data):
-        event = form_data['event']
-        workspace = slack_api_client.get_workspace(form_data['team_id'])
-        if event['type'] == 'message':
-            """ Example Event:
-            "event": {
-                "type": "message",
-                "channel": "C024BE91L",
-                "user": "U2147483697",
-                "text": "Live long and prospect.",
-                "ts": "1355517523.000005",
-                "event_ts": "1355517523.000005",
-                "channel_type": "channel"
-            }
-            """
-            user = slack_api_client.get_user(event['user'])
-            channel = slack_api_client.get_channel(workspace, event['channel'])
-            if channel.name != 'frisky-logs':
-                if event['text'].endswith('!log'):
-                    slack_api_client.log(event)
-                    event['text'] = event['text'][:-4].rstrip()
-                handle_message(
-                    channel.name,
+        try:
+            event_wrapper = Event.from_dict(form_data)
+            event = event_wrapper.get_event()
+            team = slack_api_client.get_workspace(form_data['team_id'])
+            if isinstance(event, ReactionAdded):
+                user = slack_api_client.get_user(event.user)
+                channel = slack_api_client.get_channel(event.item.channel)
+                item_user = slack_api_client.get_user(event.item_user)
+                added = event.type == 'reaction_added'
+                message = slack_api_client.get_message(channel, event.item.ts)
+
+                handle_reaction(
+                    event.reaction,
                     user.name,
-                    event['text'],
+                    item_user.name,
+                    message.text,
+                    added,
                     lambda reply: slack_api_client.post_message(channel, reply)
                 )
-        elif event['type'] == 'reaction_added' or event['type'] == 'reaction_removed':
-            channel = slack_api_client.get_channel(workspace, event['item']['channel'])
-            """
-                {
-                    "type": "reaction_added",
-                    "user": "U024BE7LH",
-                    "reaction": "thumbsup",
-                    "item_user": "U0G9QF9C6",
-                    "item": {
-                        "type": "message",
-                        "channel": "C0G9QF9GZ",
-                        "ts": "1360782400.498405"
-                    },
-                    "event_ts": "1360782804.083113"
-                }
-            """
-            user = slack_api_client.get_user(event['user'])  # The person that made the reaction
-            item_user = slack_api_client.get_user(event['item_user'])  # The person that made the comment
-            added = event['type'] == 'reaction_added'
-            message = slack_api_client.get_message(event['item']['channel'], event['item']['ts'])
-            handle_reaction(
-                event['reaction'],
-                user.name,
-                item_user.name,
-                message.text,
-                added,
-                lambda reply: slack_api_client.post_message(channel, reply)
-            )
+            elif isinstance(event, MessageSent):
+                user = slack_api_client.get_user(event.user)
+                channel = slack_api_client.get_channel(event.channel)
+                if channel.name != 'frisky-logs':
+                    if event.text.endswith('!log'):
+                        slack_api_client.emergency_log(event)
+                        event.text = event.text[:-4].rstrip()
+
+                    handle_message(
+                        channel.name,
+                        user.name,
+                        event.text,
+                        lambda reply: slack_api_client.post_message(channel, reply)
+                    )
+        except Exception as e:
+            print(e)
