@@ -18,6 +18,9 @@ class SlackEvent(View):
     http_method_names = ('post',)
 
     @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         form_data = json.loads(request.body.decode())
         if form_data['type'] == 'url_verification':
