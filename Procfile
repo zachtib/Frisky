@@ -1,2 +1,3 @@
-release: python manage.py migrate
-web: gunicorn frisky.wsgi --log-file=-
+release: python manage.py migrate && python manage.py createcachetable
+worker: celery -A app worker -l info
+web: gunicorn app.wsgi

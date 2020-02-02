@@ -10,6 +10,9 @@ django = "~=3.0"
 django-heroku = "*"
 gunicorn = "*"
 requests = "~=2.22"
+celery = "~=4.4"
+redis = "==3.3.11"
+dataclasses-json = "~=0.3"
 
 [requires]
 python_version = "3.8"
