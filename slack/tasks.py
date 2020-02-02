@@ -7,7 +7,7 @@ from slack.api.models import Event, ReactionAdded, MessageSent
 
 
 @shared_task
-def process_event(self, data):
+def process_event(data):
     slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
     try:
         event_wrapper = Event.from_dict(data)
