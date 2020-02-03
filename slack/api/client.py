@@ -19,87 +19,7 @@ class SlackApiClient(object):
     def __headers(self):
         return {'Authorization': f'Bearer {self.__access_token}'}
 
-    def __api_user_info(self, user_id) -> Optional[User]:
-        response = requests.get(f'https://slack.com/api/users.info?user={user_id}', headers=self.__headers())
-        """
-        Example API Response:
-            {
-                "ok": true,
-                "user": {
-                    "id": "W012A3CDE",
-                    "team_id": "T012AB3C4",
-                    "name": "spengler",
-                    "deleted": false,
-                    "color": "9f69e7",
-                    "real_name": "Egon Spengler",
-                    "tz": "America/Los_Angeles",
-                    "tz_label": "Pacific Daylight Time",
-                    "tz_offset": -25200,
-                    "profile": {
-                        "avatar_hash": "ge3b51ca72de",
-                        "status_text": "Print is dead",
-                        "status_emoji": ":books:",
-                        "real_name": "Egon Spengler",
-                        "display_name": "spengler",
-                        "real_name_normalized": "Egon Spengler",
-                        "display_name_normalized": "spengler",
-                        "email": "spengler@ghostbusters.example.com",
-                        "image_original": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "image_24": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "image_32": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "image_48": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "image_72": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "image_192": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
-                        "team": "T012AB3C4"
-                    },
-                    "is_admin": true,
-                    "is_owner": false,
-                    "is_primary_owner": false,
-                    "is_restricted": false,
-                    "is_ultra_restricted": false,
-                    "is_bot": false,
-                    "updated": 1502138686,
-                    "is_app_user": false,
-                    "has_2fa": false
-                }
-            }
-        """
-        json = response.json()
-        if json['ok']:
-            user = json['user']
-            return User.from_dict(user)
-        return None
 
-    def __api_conversations_info(self, conversation_id) -> Optional[Conversation]:
-        """
-        https://api.slack.com/methods/conversations.info
-        :param conversation_id:
-        :return:
-        """
-
-        response = requests.get(f'https://slack.com/api/conversations.info?channel={conversation_id}',
-                                headers=self.__headers())
-        json = response.json()
-        if json['ok']:
-            channel = json['channel']
-            return Conversation.from_dict(channel)
-        return None
-
-    def __api_team_info(self, team_id) -> Optional[Team]:
-        """
-        https://slack.com/api/team.info
-        :param team_id:
-        :return:
-        """
-
-        response = requests.get(f'https://slack.com/api/team.info?team={team_id}',
-                                headers=self.__headers())
-        json = response.json()
-        if json['ok']:
-            team = json['team']
-            return Team.from_dict(team)
-        return None
 
     def __api_get_single_message(self, conversation_id, timestamp):
         response = requests.get(f'https://slack.com/api/conversations.history?channel=' +
@@ -115,11 +35,65 @@ class SlackApiClient(object):
         return cache.get_or_set(Message.create_key(conversation.id, timestamp),
                                 lambda: self.__api_get_single_message(conversation.id, timestamp))
 
+    def __api_request(self, path, key=None):
+        response = requests.get(f'https://slack.com/api/{path}', headers=self.__headers())
+        json = response.json()
+        if json['ok']:
+            if key:
+                return json[key]
+            else:
+                return json
+        else:
+            return None
+
+    def __cast(self, cls, obj):
+        if obj is None:
+            return None
+        elif isinstance(obj, dict):
+            return cls.from_dict(obj)
+        elif isinstance(obj, str):
+            return cls.from_json(obj)
+        elif isinstance(obj, list):
+            return [self.__cast(cls, item) for item in obj]
+        else:
+            return None
+
+    def __api(self, cls, method, key, **kwargs):
+        if len(kwargs) > 0:
+            method += '?' + '&'.join([f'{key}={value}' for key, value in kwargs.items()])
+        return self.__cast(cls, self.__api_request(method, key))
+
+    def __api_user_info(self, user_id) -> Optional[User]:
+        return self.__api('users.info', 'user', User, user_id=user_id)
+        # return self.__cast(User, self.__api_request(f'users.info?user={user_id}', 'user'))
+
     def get_user(self, user_id) -> Optional[User]:
         return cache.get_or_set(User.create_key(user_id), lambda: self.__api_user_info(user_id))
 
+    def __api_conversations_info(self, conversation_id) -> Optional[Conversation]:
+        """
+        https://api.slack.com/methods/conversations.info
+        :param conversation_id:
+        :return:
+        """
+        json = self.__api_request(f'conversations.info?channel={conversation_id}')
+        if json:
+            return Conversation.from_dict(json['channel'])
+        return None
+
     def get_channel(self, channel_id) -> Optional[Conversation]:
         return cache.get_or_set(Conversation.create_key(channel_id), lambda: self.__api_conversations_info(channel_id))
+
+    def __api_team_info(self, team_id) -> Optional[Team]:
+        """
+        https://slack.com/api/team.info
+        :param team_id:
+        :return:
+        """
+        json = self.__api_request(f'team.info?team={team_id}')
+        if json:
+            return Team.from_dict(json['team'])
+        return None
 
     def get_workspace(self, workspace_id) -> Optional[Team]:
         return cache.get_or_set(Team.create_key(workspace_id), lambda: self.__api_team_info(workspace_id))

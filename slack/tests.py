@@ -64,6 +64,14 @@ class SlackApiModelsTestCase(TestCase):
         event = event_wrapper.get_event()
         self.assertTrue(isinstance(event, ReactionAdded))
 
+    def test_user_deserialization_from_null(self):
+        with self.assertRaises(AttributeError):
+            user = User.from_dict(None)
+
+    def test_user_deserialization_from_empty(self):
+        with self.assertRaises(KeyError):
+            user = User.from_dict({})
+
     def test_user_deserialization(self):
         user_obj: User = User.from_json(user_json)
         self.assertEqual('displaynamenormalized', user_obj.profile.display_name_normalized)
