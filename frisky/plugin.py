@@ -1,5 +1,6 @@
-from typing import List
+from typing import Tuple
 
+import requests
 from django.core.cache import cache as default_cache, BaseCache
 
 
@@ -21,8 +22,16 @@ class FriskyPlugin(object):
         def get_or_set(self, key, default):
             return self.cache.get_or_set(self.__get_key(key), default)
 
+    class HttpWrapper(object):
+        def get(self, *args, **kwargs):
+            return requests.get(*args, **kwargs)
+
+        def post(self, *args, **kwargs):
+            return requests.post(*args, **kwargs)
+
     def __init__(self) -> None:
         self.__cache_wrapper = None
+        self.__http_wrapper = None
 
     @property
     def cache(self) -> CacheWrapper:
@@ -30,18 +39,20 @@ class FriskyPlugin(object):
             self.__cache_wrapper = FriskyPlugin.CacheWrapper(type(self).__name__, default_cache)
         return self.__cache_wrapper
 
-    def register_emoji(self) -> List:
+    @property
+    def http(self):
+        if self.__http_wrapper is None:
+            self.__http_wrapper = FriskyPlugin.HttpWrapper()
+        return self.__http_wrapper
+
+    def register_emoji(self) -> Tuple:
+        return ()
+
+    def register_commands(self) -> Tuple:
+        return ()
+
+    def handle_message(self, message):
         pass
 
-    def register_commands(self):
+    def handle_reaction(self, reaction):
         pass
-
-
-class PingPlugin(FriskyPlugin):
-    def ping(self, *args, **kwargs):
-        return self.cache.get_or_set('ping', 'pong')
-
-    def register_commands(self):
-        return {
-            'ping': lambda *args, **kwargs: 'pong'
-        }
