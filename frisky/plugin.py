@@ -1,7 +1,9 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import requests
 from django.core.cache import cache as default_cache, BaseCache
+
+from frisky.events import MessageEvent, ReactionEvent
 
 
 class FriskyPlugin(object):
@@ -51,8 +53,47 @@ class FriskyPlugin(object):
     def register_commands(self) -> Tuple:
         return ()
 
-    def handle_message(self, message):
+    def handle_message(self, message: MessageEvent) -> Optional[str]:
         pass
 
-    def handle_reaction(self, reaction):
+    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         pass
+
+
+class FunctionPlugin(FriskyPlugin):
+    def __init__(self, name, handle_message=None, handle_reaction=None, help_text=None):
+        super().__init__()
+        self.name = name
+        self.__handle_message = handle_message
+        self.__handle_reaction = handle_reaction
+        self.__help_text = help_text
+
+    def register_commands(self) -> Tuple:
+        return self.name,
+
+    def handle_message(self, message: MessageEvent) -> Optional[str]:
+        return self.__handle_message(*message.tokens)
+
+    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
+        return self.__handle_reaction(reaction.emoji,
+                                      reaction.username,
+                                      reaction.message.username,
+                                      reaction.message.text,
+                                      reaction.added)
+
+
+PLUGINS = dict()
+
+
+def register(cls):
+    PLUGINS[cls.__name__] = cls
+    return cls
+
+
+def load_plugins():
+    import pkgutil
+    result = []
+    loader = pkgutil.get_loader('plugin')
+    for sub_module in pkgutil.walk_packages([loader.filename]):
+        _, name, _ = sub_module
+        result.append(name)
