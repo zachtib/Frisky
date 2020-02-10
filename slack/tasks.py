@@ -3,7 +3,7 @@ from django.conf import settings
 
 from frisky.bot import handle_reaction, handle_message
 from slack.api.client import SlackApiClient
-from slack.api.models import Event, ReactionAdded, MessageSent
+from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
 
 
 @shared_task
@@ -33,8 +33,9 @@ def process_event(data):
         elif isinstance(event, MessageSent):
             user = slack_api_client.get_user(event.user)
             if event.channel_type == 'im':
+                channel = Conversation(id=event.channel, name=user.name)
                 handle_message(
-                    user.name,
+                    channel.name,
                     user.name,
                     event.text,
                     lambda reply: slack_api_client.post_message(channel, reply)
