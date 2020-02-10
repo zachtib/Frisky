@@ -32,18 +32,25 @@ def process_event(data):
             )
         elif isinstance(event, MessageSent):
             user = slack_api_client.get_user(event.user)
-            channel = slack_api_client.get_channel(event.channel)
-            if channel.name != 'frisky-logs':
-                if event.text.endswith('!log'):
-                    slack_api_client.emergency_log(event)
-                    event.text = event.text[:-4].rstrip()
-
+            if event.channel_type == 'im':
                 handle_message(
-                    channel.name,
+                    user.name,
                     user.name,
                     event.text,
                     lambda reply: slack_api_client.post_message(channel, reply)
                 )
+            elif event.channel_type == 'channel':
+                channel = slack_api_client.get_channel(event.channel)
+                if channel.name != 'frisky-logs':
+                    if event.text.endswith('!log'):
+                        slack_api_client.emergency_log(event)
+                        event.text = event.text[:-4].rstrip()
+                    handle_message(
+                        channel.name,
+                        user.name,
+                        event.text,
+                        lambda reply: slack_api_client.post_message(channel, reply)
+                    )
     except Exception as e:
         slack_api_client.emergency_log(e)
         print(e)
