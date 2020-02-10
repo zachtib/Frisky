@@ -10,8 +10,10 @@ from slack.api.models import Event, ReactionAdded, MessageSent
 def process_event(data):
     slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
     try:
+        slack_api_client.emergency_log(data)
         event_wrapper = Event.from_dict(data)
         event = event_wrapper.get_event()
+        slack_api_client.emergency_log(event)
         team = slack_api_client.get_workspace(data['team_id'])
         if isinstance(event, ReactionAdded):
             user = slack_api_client.get_user(event.user)
@@ -43,4 +45,5 @@ def process_event(data):
                     lambda reply: slack_api_client.post_message(channel, reply)
                 )
     except Exception as e:
+        slack_api_client.emergency_log(e)
         print(e)
