@@ -1,3 +1,5 @@
+import traceback
+
 from celery import shared_task
 from django.conf import settings
 
@@ -51,5 +53,6 @@ def process_event(data):
                         lambda reply: slack_api_client.post_message(channel, reply)
                     )
     except Exception as e:
-        slack_api_client.emergency_log(e)
-        print(e)
+        error = traceback.format_exc()
+        slack_api_client.emergency_log(error)
+        print(error)
