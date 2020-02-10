@@ -7,10 +7,12 @@ from learns.queries import add_learn, get_random_learn, get_learn_indexed
 
 class LearnPlugin(FriskyPlugin):
 
-    def register_emoji(self) -> Tuple:
+    @classmethod
+    def register_emoji(cls) -> Tuple:
         return 'brain',
 
-    def register_commands(self) -> Tuple:
+    @classmethod
+    def register_commands(cls) -> Tuple:
         return 'learn',
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
@@ -19,32 +21,32 @@ class LearnPlugin(FriskyPlugin):
                 return f'Okay, learned {reaction.message.username}'
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
-        if len(message.tokens) == 0:
+        if len(message.args) == 0:
             return
-        label = message.tokens[0]
-        if len(message.tokens) == 1:
+        label = message.args[0]
+        if len(message.args) == 1:
             # Return a random learn
             # ?learn foobar
             try:
                 return get_random_learn(label).content
             except:
                 return 'I got nothing, boss'
-        elif len(message.tokens) == 2:
+        elif len(message.args) == 2:
             # First, see if it's an int index
             # ?learn foobar 2
             try:
-                index = int(message.tokens[1])
+                index = int(message.args[1])
                 return get_learn_indexed(label, index).content
             except ValueError:
-                if message.tokens[1].startswith('?'):
+                if message.args[1].startswith('?'):
                     return "DON'T HURT ME AGAIN"
-                if add_learn(label, message.tokens[1]):
-                    return f'Okay, learned {message.tokens[0]}'
+                if add_learn(label, message.args[1]):
+                    return f'Okay, learned {message.args[0]}'
             except IndexError:
                 return 'NO SUCH THING'
-        elif len(message.tokens) > 2:
-            new_learn = ' '.join(message.tokens[1:])
+        elif len(message.args) > 2:
+            new_learn = ' '.join(message.args[1:])
             if new_learn.startswith('?'):
                 return "DON'T HURT ME AGAIN"
             if add_learn(label, new_learn):
-                return f'Okay, learned {message.tokens[0]}'
+                return f'Okay, learned {message.args[0]}'

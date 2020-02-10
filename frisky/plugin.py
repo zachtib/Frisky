@@ -47,53 +47,20 @@ class FriskyPlugin(object):
             self.__http_wrapper = FriskyPlugin.HttpWrapper()
         return self.__http_wrapper
 
-    def register_emoji(self) -> Tuple:
+    @classmethod
+    def register_emoji(cls) -> Tuple:
         return ()
 
-    def register_commands(self) -> Tuple:
+    @classmethod
+    def register_commands(cls) -> Tuple:
         return ()
+
+    @classmethod
+    def help_text(cls) -> Optional[str]:
+        return None
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         pass
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         pass
-
-
-class FunctionPlugin(FriskyPlugin):
-    def __init__(self, name, handle_message=None, handle_reaction=None, help_text=None):
-        super().__init__()
-        self.name = name
-        self.__handle_message = handle_message
-        self.__handle_reaction = handle_reaction
-        self.__help_text = help_text
-
-    def register_commands(self) -> Tuple:
-        return self.name,
-
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
-        return self.__handle_message(*message.tokens)
-
-    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
-        return self.__handle_reaction(reaction.emoji,
-                                      reaction.username,
-                                      reaction.message.username,
-                                      reaction.message.text,
-                                      reaction.added)
-
-
-PLUGINS = dict()
-
-
-def register(cls):
-    PLUGINS[cls.__name__] = cls
-    return cls
-
-
-def load_plugins():
-    import pkgutil
-    result = []
-    loader = pkgutil.get_loader('plugin')
-    for sub_module in pkgutil.walk_packages([loader.filename]):
-        _, name, _ = sub_module
-        result.append(name)

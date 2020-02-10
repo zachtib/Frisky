@@ -1,7 +1,10 @@
-from unittest import TestCase
+from django.test import TestCase
+
+from frisky.bot import get_plugin
 
 
 class PluginLoaderTestCase(TestCase):
     def test_loading_plugins(self):
-        from frisky.plugin import PLUGINS
-        print(PLUGINS)
+        print('Trying to load plugins')
+        ping = get_plugin('ping')
+        print(ping)

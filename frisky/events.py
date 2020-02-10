@@ -7,7 +7,8 @@ class MessageEvent(object):
     username: str
     channel_name: str
     text: str
-    tokens: Tuple[str]
+    command: str
+    args: Tuple[str]
 
 
 @dataclass
