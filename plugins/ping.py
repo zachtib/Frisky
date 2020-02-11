@@ -5,7 +5,8 @@ from frisky.plugin import FriskyPlugin
 
 class PingPlugin(FriskyPlugin):
 
-    def register_commands(self) -> Tuple:
+    @classmethod
+    def register_commands(cls) -> Tuple:
         return 'ping',
 
     def handle_message(self, message) -> Optional[str]:

@@ -49,8 +49,8 @@ def get_plugin_for_reaction(reaction):
 
 def get_reply_from_plugin(message, sender, channel):
     command, arguments = parse_message_string(message)
-    try:
-        plugin = get_plugin(command)
+    plugin = get_plugin(command)
+    if plugin is not None:
         if isinstance(plugin, FriskyPlugin):
             return plugin.handle_message(MessageEvent(
                 username=sender,
@@ -63,13 +63,16 @@ def get_reply_from_plugin(message, sender, channel):
             handler = getattr(plugin, 'handle_message')
             if callable(handler):
                 return handler(*arguments, channel=channel, sender=sender)
-    except ModuleNotFoundError:
-        plugin = importlib.import_module(f'plugins.learn')
-        if hasattr(plugin, 'handle_message'):
-            handler = getattr(plugin, 'handle_message')
-            if callable(handler):
-                args = [command] + arguments
-                return handler(*args, channel=channel, sender=sender)
+    else:
+        plugin: FriskyPlugin = get_plugin('learn')
+        args = [command] + arguments
+        return plugin.handle_message(MessageEvent(
+            username=sender,
+            channel_name=channel,
+            text=message,
+            command=command,
+            args=args
+        ))
 
 
 def get_reply_for_reaction(reaction, reacting_user, commenting_user, comment, added):

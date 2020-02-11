@@ -61,11 +61,11 @@
         },
         "dataclasses-json": {
             "hashes": [
-                "sha256:8e7b68ee574bd67e305cbe06acac74137e978529fd1ea85184baedbf47ff0d49",
-                "sha256:a11bda62235094cc8385357a125be28233a20d4296274c44bb766b2f9f1e5d98"
+                "sha256:4f22d698e1326e02863e513dda52a4760a5ffedf1a2c22cd2a15840d1cae82ae",
+                "sha256:6c0582aecce40c48bddb03d577ed20980eeae6d84bff1880a6cd730f6daf4294"
             ],
             "index": "pypi",
-            "version": "==0.3.7"
+            "version": "==0.3.8"
         },
         "dj-database-url": {
             "hashes": [
