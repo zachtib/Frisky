@@ -1,11 +1,58 @@
 import importlib
 import inspect
+import logging
 import pkgutil
+from typing import Dict, List
 
 from django.conf import settings
 
 from frisky.events import MessageEvent, ReactionEvent
 from frisky.plugin import FriskyPlugin
+
+logger = logging.getLogger(__name__)
+
+
+class PluginLoader(object):
+    __loaded_plugins: List[FriskyPlugin]
+    __message_handlers: Dict[str, List[FriskyPlugin]]
+    __reaction_handlers: Dict[str, List[FriskyPlugin]]
+
+    def __init__(self, modules=('plugins',)) -> None:
+        super().__init__()
+        self.__loaded_plugins = list()
+        self.__message_handlers = dict()
+        self.__reaction_handlers = dict()
+        self.load_plugins(modules)
+
+    def load_plugins(self, modules) -> None:
+        for module in modules:
+            module_iterator = pkgutil.iter_modules(importlib.import_module(module).__path__)
+            for _, name, _ in module_iterator:
+                submodule = importlib.import_module(f'{module}.{name}')
+                for item_name, item in inspect.getmembers(submodule):
+                    if inspect.isclass(item) and item is not FriskyPlugin and issubclass(item, FriskyPlugin):
+                        self.__load_plugin_from_class(item)
+
+    def __load_plugin_from_class(self, cls) -> None:
+        try:
+            plugin = cls()
+            self.__loaded_plugins.append(plugin)
+            for command in cls.register_commands():
+                handlers = self.__message_handlers.get(command, list())
+                handlers.append(plugin)
+                self.__message_handlers[command] = handlers
+            for reaction in cls.register_emoji():
+                handlers = self.__reaction_handlers.get(reaction, list())
+                handlers.append(plugin)
+                self.__reaction_handlers[reaction] = handlers
+        except TypeError as err:
+            logger.warning(f'Error instantiating plugin {cls}', exc_info=err)
+
+    def get_plugins_for_command(self, command) -> List[FriskyPlugin]:
+        return self.__message_handlers.get(command, list())
+
+    def get_plugins_for_reaction(self, reaction) -> List[FriskyPlugin]:
+        return self.__reaction_handlers.get(reaction, list())
 
 
 def parse_message_string(message):
