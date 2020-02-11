@@ -59,6 +59,10 @@ class FriskyPlugin(object):
     def help_text(cls) -> Optional[str]:
         return None
 
+    def cacheify(self, fn, *args):
+        key = ':'.join([fn.__name__] + [str(x) for x in args])
+        return self.cache.get_or_set(key, lambda: fn(*args))
+
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         pass
 

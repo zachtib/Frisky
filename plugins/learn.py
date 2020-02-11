@@ -13,7 +13,7 @@ class LearnPlugin(FriskyPlugin):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return 'learn',
+        return 'learn', '*'
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.emoji == 'brain':
@@ -21,6 +21,8 @@ class LearnPlugin(FriskyPlugin):
                 return f'Okay, learned {reaction.message.username}'
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
+        if message.command != 'learn':
+            message.args = (message.command,) + message.args
         if len(message.args) == 0:
             return
         label = message.args[0]

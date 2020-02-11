@@ -1,10 +1,11 @@
 from django.test import TestCase
 
-from frisky.bot import get_plugin
+from frisky.bot import Frisky
+from plugins.ping import PingPlugin
 
 
 class PluginLoaderTestCase(TestCase):
     def test_loading_plugins(self):
-        print('Trying to load plugins')
-        ping = get_plugin('ping')
-        print(ping)
+        frisky = Frisky('frisky')
+        ping = frisky.get_plugins_for_command('ping')[0]
+        self.assertIsInstance(ping, PingPlugin)
