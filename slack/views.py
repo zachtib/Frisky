@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 import json
-import logging
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -9,8 +8,6 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from slack.tasks import process_event
-
-logger = logging.getLogger(__name__)
 
 
 class SlackEvent(View):
