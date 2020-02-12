@@ -44,10 +44,11 @@ class LearnPlugin(FriskyPlugin):
                 index = int(message.args[1])
                 return get_learn_indexed(label, index).content
             except ValueError:
-                if message.args[1].startswith('?'):
-                    return "DON'T HURT ME AGAIN"
-                if add_learn(label, message.args[1]):
-                    return f'Okay, learned {message.args[0]}'
+                if message.command == 'learn':
+                    if message.args[1].startswith('?'):
+                        return "DON'T HURT ME AGAIN"
+                    if add_learn(label, message.args[1]):
+                        return f'Okay, learned {message.args[0]}'
             except IndexError:
                 return 'NO SUCH THING'
         elif len(message.args) > 2:
