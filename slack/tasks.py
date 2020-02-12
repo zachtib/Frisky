@@ -68,6 +68,8 @@ def process_event(data):
                 reply_channel=lambda reply: slack_api_client.post_message(channel, reply)
             )
     except KeyError as err:
+        stacktrace = traceback.format_exc()
+        slack_api_client.emergency_log(stacktrace)
         slack_api_client.emergency_log(f'Trouble deserializing this event:\n{str(data)}')
         logger.warning('KeyError thrown deserializing event', exc_info=err)
     except Exception as err:
