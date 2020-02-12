@@ -1,125 +1,114 @@
 import importlib
 import inspect
+import logging
 import pkgutil
-
-from django.conf import settings
+from typing import Dict, List, Tuple, Callable
 
 from frisky.events import MessageEvent, ReactionEvent
 from frisky.plugin import FriskyPlugin
 
-
-def parse_message_string(message):
-    if message[0] == '?':
-        message = message[1:]
-    elif message.startswith(settings.FRISKY_BOT_NAME):
-        message = message[len(settings.FRISKY_BOT_NAME):]
-    message.strip()
-    split = message.split()
-    command = split[0]
-    arguments = split[1:]
-    return command, arguments
+logger = logging.getLogger(__name__)
 
 
-def get_plugin(command):
-    try:
-        plugin = importlib.import_module(f'plugins.{command}')
-        for k, v in inspect.getmembers(plugin):
-            if inspect.isclass(v) and v is not FriskyPlugin and issubclass(v, FriskyPlugin):
-                return v()
-        return plugin
-    except ModuleNotFoundError as e:
-        for _, name, _ in pkgutil.iter_modules(importlib.import_module('plugins').__path__):
-            plugin = importlib.import_module(f'plugins.{name}')
-            for k, v in inspect.getmembers(plugin):
-                if inspect.isclass(v) and v is not FriskyPlugin and issubclass(v, FriskyPlugin):
-                    if command in v.register_commands():
-                        return v()
+class Frisky(object):
+    name: str
+    prefix: str
+    __loaded_plugins: List[FriskyPlugin]
+    __message_handlers: Dict[str, List[FriskyPlugin]]
+    __reaction_handlers: Dict[str, List[FriskyPlugin]]
 
+    def __init__(self, name, prefix='?', ignored_channels=tuple(), plugin_modules=('plugins',)) -> None:
+        super().__init__()
+        self.name = name
+        self.prefix = prefix
+        self.__loaded_plugins = list()
+        self.__message_handlers = dict()
+        self.__reaction_handlers = dict()
+        self.ignored_channels = ignored_channels
+        if plugin_modules is not None:
+            self.load_plugins(plugin_modules)
 
-def get_plugin_for_reaction(reaction):
-    temp = pkgutil.iter_modules(importlib.import_module('plugins').__path__)
-    for _, name, _ in temp:
-        plugin = importlib.import_module(f'plugins.{name}')
-        members = inspect.getmembers(plugin)
-        for k, v in members:
-            if inspect.isclass(v) and v is not FriskyPlugin and issubclass(v, FriskyPlugin):
-                if reaction in v.register_emoji():
-                    return v()
+    def load_plugins(self, modules) -> None:
+        for module in modules:
+            module_iterator = pkgutil.iter_modules(importlib.import_module(module).__path__)
+            for _, name, _ in module_iterator:
+                submodule = importlib.import_module(f'{module}.{name}')
+                for item_name, item in inspect.getmembers(submodule):
+                    if inspect.isclass(item) and item is not FriskyPlugin and issubclass(item, FriskyPlugin):
+                        self.__load_plugin_from_class(item)
 
+    def __load_plugin_from_class(self, cls) -> None:
+        try:
+            plugin = cls()
+            self.__loaded_plugins.append(plugin)
+            for command in cls.register_commands():
+                handlers = self.__message_handlers.get(command, list())
+                handlers.append(plugin)
+                self.__message_handlers[command] = handlers
+            for reaction in cls.register_emoji():
+                handlers = self.__reaction_handlers.get(reaction, list())
+                handlers.append(plugin)
+                self.__reaction_handlers[reaction] = handlers
+        except TypeError as err:
+            logger.warning(f'Error instantiating plugin {cls}', exc_info=err)
 
-def get_reply_from_plugin(message, sender, channel):
-    command, arguments = parse_message_string(message)
-    plugin = get_plugin(command)
-    if plugin is not None:
-        if isinstance(plugin, FriskyPlugin):
-            return plugin.handle_message(MessageEvent(
-                username=sender,
-                channel_name=channel,
-                text=message,
-                command=command,
-                args=arguments
-            ))
-        elif hasattr(plugin, 'handle_message'):
-            handler = getattr(plugin, 'handle_message')
-            if callable(handler):
-                return handler(*arguments, channel=channel, sender=sender)
-    else:
-        plugin: FriskyPlugin = get_plugin('learn')
-        args = [command] + arguments
-        return plugin.handle_message(MessageEvent(
-            username=sender,
-            channel_name=channel,
-            text=message,
-            command=command,
-            args=args
-        ))
+    def get_plugins_for_command(self, command: str) -> List[FriskyPlugin]:
+        result = self.__message_handlers.get(command, list())
+        if len(result) == 0:
+            result = self.__message_handlers.get('*', list())
+        return result
 
+    def get_plugins_for_reaction(self, reaction: str) -> List[FriskyPlugin]:
+        return self.__reaction_handlers.get(reaction, list())
 
-def get_reply_for_reaction(reaction, reacting_user, commenting_user, comment, added):
-    plugin = get_plugin_for_reaction(reaction)
-    if plugin is None:
-        return
-    if isinstance(plugin, FriskyPlugin):
-        return plugin.handle_reaction(ReactionEvent(
-            emoji=reaction,
-            username=reacting_user,
-            added=added,
-            message=MessageEvent(
-                username=commenting_user,
-                channel_name='',
-                text=comment,
-                command='',
-                args=tuple(),
-            )
-        ))
-    elif hasattr(plugin, 'handle_reaction'):
-        # TODO: This should be dead code now
-        handler = getattr(plugin, 'handle_reaction')
-        if callable(handler):
-            return handler(reaction, reacting_user, commenting_user, comment, added)
+    def __show_help_text(self, args: Tuple[str], reply_channel: Callable[[str], bool]) -> None:
+        if len(args) == 1:
+            command = args[0]
+            if command == 'help':
+                reply_channel('Usage: `?help` or `?help <plugin_name>`')
+                return
+            help_texts = []
+            for plugin in self.get_plugins_for_command(command):
+                help_texts.append(plugin.help_text())
+            if len(help_texts) > 0:
+                reply_channel('\n'.join(help_texts))
+            else:
+                reply_channel(f'No help found for {command}')
+        else:
+            commands = self.__message_handlers.keys()
+            joined_string = ', '.join(commands)
+            reply_channel(f'Available plugins: {joined_string}')
 
+    def handle_message(self, message: MessageEvent, reply_channel: Callable[[str], bool]) -> None:
+        if message.channel_name in self.ignored_channels:
+            return
+        message.command, message.args = self.parse_message_string(message.text)
+        if message.command == 'help':
+            return self.__show_help_text(message.args, reply_channel)
+        for plugin in self.get_plugins_for_command(message.command):
+            reply = plugin.handle_message(message)
+            if reply is not None:
+                reply_channel(reply)
 
-def handle_message(channel_name, sender, message, reply_channel) -> None:
-    if message[0] != '?' and not message.startswith(settings.FRISKY_BOT_NAME):
-        return
-    reply = get_reply_from_plugin(message, sender, channel_name)
-    if reply is not None:
-        reply_channel(reply)
+    def handle_reaction(self, reaction: ReactionEvent, reply_channel: Callable[[str], bool]) -> None:
+        if reaction.message.channel_name in self.ignored_channels:
+            return
+        for plugin in self.get_plugins_for_reaction(reaction.emoji):
+            reply = plugin.handle_reaction(reaction)
+            if reply is not None:
+                reply_channel(reply)
 
-
-def handle_reaction(reaction, reacting_user, commenting_user, comment, added, reply_channel):
-    """
-
-    This function is EXPERIMENTAL. Please don't base your plugins on it at this time
-
-    :param comment:
-    :param reaction:
-    :param reacting_user:
-    :param commenting_user:
-    :param added:
-    :param reply_channel:
-    :return:
-    """
-    reply = get_reply_for_reaction(reaction, reacting_user, commenting_user, comment, added)
-    if reply is not None:
-        reply_channel(reply)
+    def parse_message_string(self, message: str) -> Tuple[str, Tuple[str]]:
+        if message is None or len(message) == 0:
+            return '', tuple()
+        if message.startswith(self.prefix):
+            message = message[len(self.prefix):]
+        elif message.startswith(f'@{self.name}'):
+            message = message[len(self.name) + 1:]
+        else:
+            return '', tuple()
+        message = message.strip()
+        tokens = message.split(' ')
+        command = tokens[0]
+        args = tuple(tokens[1:])
+        return command, args

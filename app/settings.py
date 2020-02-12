@@ -135,8 +135,15 @@ STATIC_URL = '/static/'
 SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', None)
 SLACK_ACCESS_TOKEN = os.environ.get('SLACK_ACCESS_TOKEN', None)
 
-FRISKY_BOT_NAME = '@frisky'
+FRISKY_NAME = os.environ.get('FRISKY_NAME', 'frisky')
+FRISKY_PREFIX = os.environ.get('FRISKY_PREFIX', '?')
+FRISKY_LOGGING_CHANNEL = os.environ.get('FRISKY_LOGGING_CHANNEL', 'frisky-logs')
+
+FRISKY_IGNORED_CHANNELS = (
+    FRISKY_LOGGING_CHANNEL,
+)
 
 if 'HEROKU' in os.environ:
     import django_heroku
+
     django_heroku.settings(locals())
