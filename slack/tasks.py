@@ -20,7 +20,11 @@ def process_event(data):
         event_wrapper: Event = Event.from_dict(data)
         event = event_wrapper.get_event()
         # team = slack_api_client.get_workspace(data['team_id'])
-        frisky = Frisky(settings.FRISKY_NAME, settings.FRISKY_PREFIX)
+        frisky = Frisky(
+            name=settings.FRISKY_NAME,
+            prefix=settings.FRISKY_PREFIX,
+            ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
+        )
 
         if isinstance(event, ReactionAdded):
             user = slack_api_client.get_user(event.user)

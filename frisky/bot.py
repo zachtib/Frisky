@@ -17,13 +17,14 @@ class Frisky(object):
     __message_handlers: Dict[str, List[FriskyPlugin]]
     __reaction_handlers: Dict[str, List[FriskyPlugin]]
 
-    def __init__(self, name, prefix='?', plugin_modules=('plugins',)) -> None:
+    def __init__(self, name, prefix='?', ignored_channels=tuple(), plugin_modules=('plugins',)) -> None:
         super().__init__()
         self.name = name
         self.prefix = prefix
         self.__loaded_plugins = list()
         self.__message_handlers = dict()
         self.__reaction_handlers = dict()
+        self.ignored_channels = ignored_channels
         if plugin_modules is not None:
             self.load_plugins(plugin_modules)
 
@@ -79,6 +80,8 @@ class Frisky(object):
             reply_channel(f'Available plugins: {joined_string}')
 
     def handle_message(self, message: MessageEvent, reply_channel: Callable[[str], bool]) -> None:
+        if message.channel_name in self.ignored_channels:
+            return
         message.command, message.args = self.parse_message_string(message.text)
         if message.command == 'help':
             return self.__show_help_text(message.args, reply_channel)
@@ -88,6 +91,8 @@ class Frisky(object):
                 reply_channel(reply)
 
     def handle_reaction(self, reaction: ReactionEvent, reply_channel: Callable[[str], bool]) -> None:
+        if reaction.message.channel_name in self.ignored_channels:
+            return
         for plugin in self.get_plugins_for_reaction(reaction.emoji):
             reply = plugin.handle_reaction(reaction)
             if reply is not None:

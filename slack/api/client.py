@@ -2,6 +2,7 @@ import datetime
 from typing import Optional
 
 import requests
+from django.conf import settings
 from django.core.cache import cache
 
 from slack.api.models import User, Conversation, Team, Message
@@ -152,6 +153,6 @@ class SlackApiClient(object):
         """
         requests.post(
             'https://slack.com/api/chat.postMessage',
-            json={'channel': 'frisky-logs', 'text': f'```{message}```'},
+            json={'channel': settings.FRISKY_LOGGING_CHANNEL, 'text': f'```{message}```'},
             headers=self.__headers()
         )
