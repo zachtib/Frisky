@@ -17,14 +17,15 @@ class VotesPlugin(FriskyPlugin):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return 'votes',
+        return ('votes', 'upvote', 'downvote)
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
-        response = []
-        for arg in message.args:
-            record = get_votes_record(arg)
-            response.append(f'{record.label} has {record.votes} {"vote" if record.votes == 1 else "votes"}')
-        return '\n'.join(response)
+        if message.command == 'votes':
+            response = []
+            for arg in message.args:
+                record = get_votes_record(arg)
+                response.append(f'{record.label} has {record.votes} {"vote" if record.votes == 1 else "votes"}')
+            return '\n'.join(response)
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.emoji == 'upvote':
