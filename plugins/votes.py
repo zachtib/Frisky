@@ -17,7 +17,7 @@ class VotesPlugin(FriskyPlugin):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return ('votes', 'upvote', 'downvote)
+        return ('votes', 'upvote', 'downvote')
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         if message.command == 'votes':
