@@ -21,3 +21,12 @@ class LearnTestCase(FriskyTestCase):
         result = self.send_message("?test 0")
 
         self.assertEqual(result, "foobar")
+
+    def test_negative_indexing(self):
+        self.send_message('?learn test thing1')
+        self.send_message('?learn test thing2')
+        self.send_message('?learn test thing3')
+
+        result = self.send_message('?test -1')
+
+        self.assertEqual(result, 'thing3')
