@@ -32,6 +32,10 @@ class LearnPlugin(FriskyPlugin):
             try:
                 return get_random_learn(label).content
             except:
+                pass
+            try:
+                return get_random_learn('error').content
+            except:
                 return 'I got nothing, boss'
         elif len(message.args) == 2:
             # First, see if it's an int index
