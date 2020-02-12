@@ -16,31 +16,42 @@ Because Frisky is event driven, you will need to emulate events coming from Slac
 end-to-end. However, a test case class is provided to more easily test simple plugins.
 
 ## Writing a plugin
-To create a plugin, add a python file underneath the `plugins/` directory. Inside this file, add a function called
-`handle_message` with the signature: `handle_message(*args, **kwargs) -> str:`. The name of your file determines the
-command name that will invoke it via Slack, so sending a `?ping` command in Slack would be handled by `ping.py`.
+To create a plugin, add a python file underneath the `plugins/` directory. Inside this file, import and extend the base
+frisky plugin `frisky.plugins.FriskyPlugin`.  This class contains the base functionality you'll need for a new plugin.
 
-The Slack event handler will parse incoming messages in the form `?command foo bar xyzzy` and pass everything after the 
-command name to the plugin as a list to the `*args` parameter. The `**kwargs` parameter will be used for any extra 
-context to pass along to the bot, currently this is just the channel name as `channel`.
+Additionally you'll notice several unimplemented functions:
+
+* `register_emoji(cls)` - this no argument class method should define the emoji your plugin will react to, if any
+* `register_commands(cls)` - this no argument class method should define the commands your plugin will react to, if any
+* `help_text(cls)` - this no argument class method should return helpful information about how to use your plugin in 
+   slack
+* `handle_message(self, message)` - this method implements handling a message, ie one of the 'commands' you registered
+   in the `register_commands` class method above. The `message` argument is a MessageEvent from the `frisky.events`
+   package and should contain basic information (slack channel, raw command text sent, user name of sender, etc ...)
+* `handle_reaction(self, reaction)` - this method implements handling a reaction, ie one of the 'emoji' you registered
+   in the `register_emoji` class method above.  The `message` argument is a `ReactionEvent` from the `frisky.events`
+   package and should contain basic information (emoji string, username of the user who received the emoji) as well as 
+   a `MessageEvent` instance.            
+
+Note that all 'register' methods are optional, however you must at least implement one and it's corresponding handler
+function to do implement any functionality.                  
 
 ### An example plugin
 This example is included in the source as `ping.py`
-```
-def handle_message(*args, **kwargs) -> str:
-    return ‘pong’
-```
-And the tests for this plugin at `test_ping.py`
-```
-from friskytest import FriskyTestCase
+
+```python
+from typing import Tuple, Optional
+
+from frisky.plugin import FriskyPlugin
 
 
-class PingTestCase(FriskyTestCase):
+class PingPlugin(FriskyPlugin):
 
-    def test_ping_returns_pong(self):
-        reply = self.send_message(‘?ping’)
-        self.assertEqual('pong', reply)
+    def register_commands(self) -> Tuple:
+        return 'ping',
 
+    def handle_message(self, message) -> Optional[str]:
+        return 'pong'
 ```
 
 The base class `FriskyTestCase` has one method, `send_message` which takes in a string and handles it as if it was a
