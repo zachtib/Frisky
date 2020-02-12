@@ -80,15 +80,16 @@ class Frisky(object):
             reply_channel(f'Available plugins: {joined_string}')
 
     def handle_message(self, message: MessageEvent, reply_channel: Callable[[str], bool]) -> None:
-        if message.channel_name in self.ignored_channels:
+        if message.channel_name in self.ignored_channels or message.username == self.name:
             return
         message.command, message.args = self.parse_message_string(message.text)
         if message.command == 'help':
             return self.__show_help_text(message.args, reply_channel)
-        for plugin in self.get_plugins_for_command(message.command):
-            reply = plugin.handle_message(message)
-            if reply is not None:
-                reply_channel(reply)
+        elif message.command != '':
+            for plugin in self.get_plugins_for_command(message.command):
+                reply = plugin.handle_message(message)
+                if reply is not None:
+                    reply_channel(reply)
 
     def handle_reaction(self, reaction: ReactionEvent, reply_channel: Callable[[str], bool]) -> None:
         if reaction.message.channel_name in self.ignored_channels:
