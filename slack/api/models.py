@@ -178,9 +178,10 @@ class Event(object):
 
     def get_event(self):
         event_type = self.event.get('type', None)
+        subtype = self.event.get('subtype', None)
         if event_type == 'reaction_added' or event_type == 'reaction_removed':
             return ReactionAdded.from_dict(self.event)
-        elif event_type == 'message':
+        elif event_type == 'message' and subtype != 'message_changed':
             return MessageSent.from_dict(self.event)
 
         return None
