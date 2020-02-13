@@ -5,9 +5,9 @@ import pkgutil
 from typing import Dict, List, Tuple, Callable
 
 from frisky.events import MessageEvent, ReactionEvent
-from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
 from frisky.util import quotesplit
+from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,9 @@ class Frisky(object):
                 for item_name, item in inspect.getmembers(submodule):
                     if inspect.isclass(item) and item is not FriskyPlugin and issubclass(item, FriskyPlugin):
                         self.__load_plugin_from_class(name, item)
+        for plugin in self.__loaded_plugins:
+            if isinstance(plugin, PluginRepositoryMixin):
+                plugin.loaded_plugins = self.__loaded_plugins
 
     def __load_plugin_from_class(self, name, cls) -> None:
         try:
