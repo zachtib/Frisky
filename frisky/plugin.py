@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 import requests
 from django.core.cache import cache as default_cache, BaseCache
@@ -68,3 +68,13 @@ class FriskyPlugin(object):
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         pass
+
+
+class PluginRepositoryMixin(object):
+    loaded_plugins: List[FriskyPlugin]
+
+    def get_plugin_for_command(self, command: str) -> Optional[FriskyPlugin]:
+        for plugin in self.loaded_plugins:
+            if command in plugin.register_commands():
+                return plugin
+        return None
