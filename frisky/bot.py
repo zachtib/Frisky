@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Callable
 
 from frisky.events import MessageEvent, ReactionEvent
 from frisky.plugin import FriskyPlugin
+from frisky.util import quotesplit
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +110,7 @@ class Frisky(object):
         else:
             return '', tuple()
         message = message.strip()
-        tokens = message.split(' ')
+        tokens = quotesplit(message)
         command = tokens[0]
         args = tuple(tokens[1:])
         return command, args
