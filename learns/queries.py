@@ -5,6 +5,10 @@ from django.db.models.aggregates import Count
 from learns.models import Learn
 
 
+def get_learned_label_counts():
+    return Learn.objects.all().values('label').annotate(total=Count('label')).order_by('-total')
+
+
 def get_all_learns(label):
     return Learn.objects.filter(label=label)
 

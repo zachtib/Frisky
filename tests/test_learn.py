@@ -4,6 +4,10 @@ from learns.queries import get_all_learns
 
 class LearnTestCase(FriskyTestCase):
 
+    def test_help(self):
+        result = self.send_message("?help learn")
+        assert all(s in result for s in ['?lc', '?learn_count', ':brain:', '?learn'])
+
     def test_adding_a_learn(self):
         self.send_message("?learn test foobar")
         count = get_all_learns('test').count()
@@ -30,3 +34,19 @@ class LearnTestCase(FriskyTestCase):
         result = self.send_message('?test -1')
 
         self.assertEqual(result, 'thing3')
+
+    def test_learn_count_alias(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 thing3')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        self.assertEqual(self.send_message('?lc'), '*Counts*\n* test_1: 3\n* test_2: 2')
+
+    def test_learn_count(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 thing3')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        self.assertEqual(self.send_message('?learn_count'), '*Counts*\n* test_1: 3\n* test_2: 2')
