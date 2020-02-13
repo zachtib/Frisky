@@ -13,8 +13,8 @@ class LearnPlugin(FriskyPlugin):
             '*Command Usage*',
             '* `?<label>` - return a random value from `<label>`',
             '* `?learn <label>` - get a random quote for `<label>`',
-            '* `?learn <label> <value>` - add <value> to <label>',
-            '* `?learn_count - show the counts of learned phrases by label (alias: `?lc`)',
+            '* `?learn <label> <value>` - add `<value>` to `<label>`',
+            '* `?learn_count` - show the counts of learned phrases by label (alias: `?lc`)',
             '*Emoji*',
             '* Tag a user message with :brain: for frisky to learn a quote form that user'
         ])
