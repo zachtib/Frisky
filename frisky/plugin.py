@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Generator, Union
 
 import requests
 from django.core.cache import cache as default_cache, BaseCache
@@ -63,8 +63,8 @@ class FriskyPlugin(object):
         key = ':'.join([fn.__name__] + [str(x) for x in args])
         return self.cache.get_or_set(key, lambda: fn(*args))
 
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
+    def handle_message(self, message: MessageEvent) -> Union[Generator[str, None, None], Optional[str]]:
         pass
 
-    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
+    def handle_reaction(self, reaction: ReactionEvent) -> Union[Generator[str, None, None], Optional[str]]:
         pass

@@ -2,10 +2,10 @@ import importlib
 import inspect
 import logging
 import pkgutil
-from typing import Dict, List, Tuple, Callable
+from typing import Dict, List, Tuple, Callable, Generator
 
 from frisky.events import MessageEvent, ReactionEvent
-from frisky.plugin import FriskyPlugin
+from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,10 @@ class Frisky(object):
         elif message.command != '':
             for plugin in self.get_plugins_for_command(message.command):
                 reply = plugin.handle_message(message)
-                if reply is not None:
+                if isinstance(reply, Generator):
+                    for item in reply:
+                        reply_channel(item)
+                elif reply is not None:
                     reply_channel(reply)
 
     def handle_reaction(self, reaction: ReactionEvent, reply_channel: Callable[[str], bool]) -> None:
