@@ -5,10 +5,31 @@ from frisky.events import MessageEvent, ReactionEvent
 
 
 class FriskyTestCase(TestCase):
+    class FriskyTestUser(object):
+
+        def __init__(self, name: str, frisky: Frisky, testcase: 'FriskyTestCase') -> None:
+            super().__init__()
+            self.name = name
+            self.frisky = frisky
+            self.testcase = testcase
+
+        def send_message(self, message, channel='testing') -> MessageEvent:
+            event = MessageEvent(
+                username=self.name,
+                channel_name=channel,
+                text=message,
+                command='',
+                args=tuple()
+            )
+            self.testcase.send_message(event.text, event.username, event.channel_name)
+            return event
 
     def setUp(self) -> None:
         super().setUp()
         self.frisky = Frisky('frisky')
+
+    def create_user(self, username) -> FriskyTestUser:
+        return FriskyTestCase.FriskyTestUser(username, self.frisky, self)
 
     def send_message(self, message, user='dummyuser', channel='testing'):
         result = None
