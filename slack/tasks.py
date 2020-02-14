@@ -74,5 +74,6 @@ def process_event(data):
         logger.warning('KeyError thrown deserializing event', exc_info=err)
     except Exception as err:
         stacktrace = traceback.format_exc()
-        slack_api_client.emergency_log(stacktrace)
+        log_message = f'{stacktrace}\nCaused by:\n{str(data)}'
+        slack_api_client.emergency_log(log_message)
         logger.warning('General exception thrown handling event', exc_info=err)
