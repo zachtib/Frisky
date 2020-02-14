@@ -1,5 +1,5 @@
 from frisky.test import FriskyTestCase
-from learns.queries import get_all_learns
+from learns.queries import get_all_learns, get_random_learn
 
 
 class LearnTestCase(FriskyTestCase):
@@ -7,6 +7,9 @@ class LearnTestCase(FriskyTestCase):
     def test_help(self):
         result = self.send_message("?help learn")
         assert all(s in result for s in ['?lc', '?learn_count', ':brain:', '?learn'])
+
+    def test_get_nonexistant_learn(self):
+        self.assertRaises(ValueError, lambda: get_random_learn('xyzzy'))
 
     def test_adding_a_learn(self):
         self.send_message("?learn test foobar")
@@ -17,6 +20,12 @@ class LearnTestCase(FriskyTestCase):
     def test_adding_a_learn_and_reading_it_back(self):
         self.send_message("?learn test foobar")
         result = self.send_message("?learn test 0")
+
+        self.assertEqual(result, "foobar")
+
+    def test_learn_ignores_case(self):
+        self.send_message("?learn test foobar")
+        result = self.send_message("?learn Test 0")
 
         self.assertEqual(result, "foobar")
 

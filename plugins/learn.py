@@ -14,7 +14,7 @@ class LearnPlugin(FriskyPlugin):
             ' • `?learn <label> <index>` - get a value for `<label>`, if `<index>` is not sent one is chosen at random',
             ' • `?<label> <index>` - short hand for the `?learn <label> ...`',
             ' • `?learn <label> <value>` - add `<value>` to `<label>`',
-            ' • `?learn_count - show the counts of learned phrases by label (alias: `?lc`)',
+            ' • `?learn_count` - show the counts of learned phrases by label (alias: `?lc`)',
             '*Emoji*',
             ' • Tag a user message with :brain: for frisky to learn a quote from that user'
         ])
@@ -29,8 +29,7 @@ class LearnPlugin(FriskyPlugin):
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.emoji == 'brain':
-            if add_learn(reaction.message.username, reaction.message.text):
-                return f'Okay, learned {reaction.message.username}'
+            return self.create_new_learn(reaction.message.username, reaction.message.text)
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         if message.command in ['learn_count', 'lc']:
@@ -40,43 +39,69 @@ class LearnPlugin(FriskyPlugin):
 
     @staticmethod
     def learn_count() -> Optional[str]:
-        return '*Counts*\n'+('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in get_learned_label_counts()]))
+        return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in get_learned_label_counts()]))
 
     @staticmethod
-    def learn(message: MessageEvent) -> Optional[str]:
-        if message.command != 'learn':
-            message.args = (message.command,) + message.args
-        if len(message.args) == 0:
+    def get_random_learn_for_label(label: str) -> str:
+        try:
+            return get_random_learn(label).content
+        except ValueError:
+            pass
+        try:
+            return get_random_learn('error').content
+        except ValueError:
+            pass
+        return 'I got nothing, boss'
+
+    @staticmethod
+    def get_indexed_learn_for_label(label, index) -> str:
+        try:
+            return get_learn_indexed(label, index).content
+        except ValueError:
+            return 'NO SUCH THING'
+
+    @staticmethod
+    def create_new_learn(label: str, content: str) -> Optional[str]:
+        if content.startswith('?'):
+            return "DON'T HURT ME AGAIN"
+        else:
+            if add_learn(label, content):
+                return f'Okay, learned {label}'
+        return None
+
+    def learn(self, message: MessageEvent) -> Optional[str]:
+        """
+
+        Potential cases:
+         * `?learn <label>`                             len(args)=1
+         * `?learn <label> <index>`                     len(args)=2     (int)
+         * `?learn <label> <value>`                     len(args)=2+
+         * `?<label> -> `?* <label>`                    len(args)=1
+         * `?<label> <index>` -> `?* <label> <index>`   len(args)=2     (int)
+
+         Index can be omitted, but is always the second element when it is present
+
+        :param message:
+        :return:
+        """
+        num_args = len(message.args)
+        if num_args == 0:
             return
+        try:
+            element = message.args[1]
+            index = int(element)
+        except (IndexError, ValueError):
+            index = None
         label = message.args[0]
-        if len(message.args) == 1:
-            # Return a random learn
-            # ?learn foobar
-            try:
-                return get_random_learn(label).content
-            except:
-                pass
-            try:
-                return get_random_learn('error').content
-            except:
-                return 'I got nothing, boss'
-        elif len(message.args) == 2:
-            # First, see if it's an int index
-            # ?learn foobar 2
-            try:
-                index = int(message.args[1])
-                return get_learn_indexed(label, index).content
-            except ValueError:
-                if message.command == 'learn':
-                    if message.args[1].startswith('?'):
-                        return "DON'T HURT ME AGAIN"
-                    if add_learn(label, message.args[1]):
-                        return f'Okay, learned {message.args[0]}'
-            except IndexError:
-                return 'NO SUCH THING'
-        elif len(message.args) > 2:
+
+        if num_args == 1:
+            # Retrieve a random learn
+            return self.get_random_learn_for_label(label)
+        elif index is not None:
+            # Retrieve an indexed learn
+            return self.get_indexed_learn_for_label(label, index)
+        elif message.command != '*':
+            # Create a learn
             new_learn = ' '.join(message.args[1:])
-            if new_learn.startswith('?'):
-                return "DON'T HURT ME AGAIN"
-            if add_learn(label, new_learn):
-                return f'Okay, learned {message.args[0]}'
+            return self.create_new_learn(label, new_learn)
+        return None

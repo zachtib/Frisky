@@ -10,7 +10,7 @@ def get_learned_label_counts():
 
 
 def get_all_learns(label):
-    return Learn.objects.filter(label=label)
+    return Learn.objects.filter(label__iexact=label)
 
 
 def get_learn_indexed(label: str, index: int):
