@@ -41,7 +41,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing3')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        self.assertEqual(self.send_message('?lc'), '*Counts*\n* test_1: 3\n* test_2: 2')
+        self.assertEqual(self.send_message('?lc'), '*Counts*\n • test_1: 3\n • test_2: 2')
 
     def test_learn_count(self):
         self.send_message('?learn test_1 thing1')
@@ -49,4 +49,4 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing3')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        self.assertEqual(self.send_message('?learn_count'), '*Counts*\n* test_1: 3\n* test_2: 2')
+        self.assertEqual(self.send_message('?learn_count'), '*Counts*\n • test_1: 3\n • test_2: 2')
