@@ -13,10 +13,10 @@ class LearnPlugin(FriskyPlugin):
             '*Command Usage*',
             ' • `?learn <label> <index>` - get a value for `<label>`, if `<index>` is not sent one is chosen at random',
             ' • `?<label> <index>` - short hand for the `?learn <label> ...`',
-            ' • `?learn <label> <value>` - add <value> to <label>',
+            ' • `?learn <label> <value>` - add `<value>` to `<label>`',
             ' • `?learn_count - show the counts of learned phrases by label (alias: `?lc`)',
             '*Emoji*',
-            ' • Tag a user message with :brain: for frisky to learn a quote form that user'
+            ' • Tag a user message with :brain: for frisky to learn a quote from that user'
         ])
 
     @classmethod
