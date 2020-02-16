@@ -1,9 +1,9 @@
 language: python
 python: "3.8"
 install:
-    - pip install codecov
     - pipenv install --dev
 script:
     - pipenv run python -m coverage run --source='.' manage.py test
 after_success:
+    - pip install codecov
     - codecov
