@@ -57,16 +57,15 @@ class LearnPlugin(FriskyPlugin):
     def get_indexed_learn_for_label(label, index) -> str:
         try:
             return get_learn_indexed(label, index).content
-        except ValueError:
+        except IndexError:
             return 'NO SUCH THING'
 
     @staticmethod
     def create_new_learn(label: str, content: str) -> Optional[str]:
         if content.startswith('?'):
             return "DON'T HURT ME AGAIN"
-        else:
-            if add_learn(label, content):
-                return f'Okay, learned {label}'
+        if add_learn(label, content):
+            return f'Okay, learned {label}'
         return None
 
     def learn(self, message: MessageEvent) -> Optional[str]:

@@ -1,5 +1,6 @@
 from frisky.test import FriskyTestCase
 from learns.queries import get_all_learns, get_random_learn
+from unittest import mock
 
 
 class LearnTestCase(FriskyTestCase):
@@ -7,6 +8,26 @@ class LearnTestCase(FriskyTestCase):
     def test_help(self):
         result = self.send_message("?help learn")
         assert all(s in result for s in ['?lc', '?learn_count', ':brain:', '?learn'])
+
+    def test_learn_noop(self):
+        self.assertEqual(self.send_message('?learn'), None)
+
+    def test_randoms_empty(self):
+        self.assertEqual(self.send_message('?notinthere'), 'I got nothing, boss')
+
+    def test_randoms_empty_with_errors(self):
+        self.send_message('?learn error Finally some good fucking coverage')
+        self.assertEqual(self.send_message('?notinthere'), 'Finally some good fucking coverage')
+
+    def test_dont_hurt_me(self):
+        self.assertEqual(self.send_message('?learn thing ?test'), "DON'T HURT ME AGAIN")
+
+    def test_double_learn(self):
+        self.send_message('?learn test_1 thing1')
+        self.assertEqual(self.send_message('?learn test_1 thing1'), None)
+
+    def test_reaction_learn(self):
+        self.assertEqual(self.send_reaction('brain', 'jim', 'jarjar'), 'Okay, learned jarjar')
 
     def test_get_nonexistant_learn(self):
         self.assertRaises(ValueError, lambda: get_random_learn('xyzzy'))
@@ -59,3 +80,16 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
         self.assertEqual(self.send_message('?learn_count'), '*Counts*\n • test_1: 3\n • test_2: 2')
+
+    def test_get_random(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 thing3')
+        patcher = mock.patch(target='learns.queries.randint', new=lambda *a, **k: 1)
+        patcher.start()
+        self.assertEqual(self.send_message('?test_1'), 'thing2')
+        patcher.stop()
+
+    def test_no_such_thing(self):
+        self.send_message('?learn test_1 thing1')
+        self.assertEqual(self.send_message('?test_1 100'), 'NO SUCH THING')
