@@ -3,7 +3,7 @@ python: "3.8"
 install:
     - pipenv install --dev
 script:
-    - pipenv run python -m coverage run --source='.' manage.py test
+    - pipenv run python -m coverage run --source='.' -m pytest
 after_success:
     - pip install codecov
     - codecov

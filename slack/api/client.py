@@ -111,19 +111,6 @@ class SlackApiClient(object):
             return Message.from_dict(message)
         return None
 
-    @staticmethod
-    def __get_username_from_api_user(user: User) -> str:
-        if user.profile is not None:
-            name = user.profile.display_name_normalized
-            if name is not None and name != '':
-                return name
-            name = user.profile.real_name_normalized
-            if name is not None and name != '':
-                return name
-        if user.name is not None and user.name != '':
-            return user.name
-        return 'unknown'
-
     def get_message(self, conversation: Conversation, timestamp: str) -> Optional[Message]:
         return cache.get_or_set(Message.create_key(conversation.id, timestamp),
                                 lambda: self.__api_get_single_message(conversation.id, timestamp))
