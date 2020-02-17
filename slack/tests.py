@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from slack.api.models import Event, ReactionAdded, User
+from slack.api.models import Event, ReactionAdded, User, Profile
 
 
 class SlackApiModelsTestCase(TestCase):
@@ -105,3 +105,146 @@ class SlackApiModelsTestCase(TestCase):
         user_obj: User = User.from_json(user_string)
 
         self.assertEqual(user_obj.profile.display_name_normalized, 'spengler')
+
+    def test_user_short_name(self):
+        user_string = '''{
+            "id": "W012A3CDE",
+            "team_id": "T012AB3C4",
+            "name": "spengler",
+            "deleted": false,
+            "color": "9f69e7",
+            "real_name": "Egon Spengler",
+            "tz": "America/Los_Angeles",
+            "tz_label": "Pacific Daylight Time",
+            "tz_offset": -25200,
+            "profile": {
+                "avatar_hash": "ge3b51ca72de",
+                "status_text": "Print is dead",
+                "status_emoji": ":books:",
+                "real_name": "Egon Spengler",
+                "display_name": "spengler",
+                "real_name_normalized": "Egon Spengler",
+                "display_name_normalized": "spengler",
+                "email": "spengler@ghostbusters.example.com",
+                "image_original": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_24": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_32": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_48": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_72": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_192": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "team": "T012AB3C4"
+            },
+            "is_admin": true,
+            "is_owner": false,
+            "is_primary_owner": false,
+            "is_restricted": false,
+            "is_ultra_restricted": false,
+            "is_bot": false,
+            "updated": 1502138686,
+            "is_app_user": false,
+            "has_2fa": false
+        }'''
+        user_obj: User = User.from_json(user_string)
+        self.assertEqual(user_obj.get_short_name(), 'spengler')
+
+    def test_user_short_name_with_null_profile(self):
+        user_string = '''{
+            "id": "W012A3CDE",
+            "team_id": "T012AB3C4",
+            "name": "noname",
+            "deleted": false,
+            "color": "9f69e7",
+            "real_name": "Egon Spengler",
+            "tz": "America/Los_Angeles",
+            "tz_label": "Pacific Daylight Time",
+            "tz_offset": -25200,
+            "profile": {
+                "avatar_hash": "ge3b51ca72de",
+                "status_text": "Print is dead",
+                "status_emoji": ":books:",
+                "real_name": "Egon Spengler",
+                "display_name": "spengler",
+                "real_name_normalized": "Egon Spengler",
+                "display_name_normalized": "spengler",
+                "email": "spengler@ghostbusters.example.com",
+                "image_original": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_24": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_32": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_48": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_72": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_192": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "team": "T012AB3C4"
+            },
+            "is_admin": true,
+            "is_owner": false,
+            "is_primary_owner": false,
+            "is_restricted": false,
+            "is_ultra_restricted": false,
+            "is_bot": false,
+            "updated": 1502138686,
+            "is_app_user": false,
+            "has_2fa": false
+        }'''
+        user_obj: User = User.from_json(user_string)
+        user_obj.profile = None
+        self.assertEqual(user_obj.get_short_name(), 'noname')
+
+    def test_user_short_name_with_empty_display_name(self):
+        user_string = '''{
+            "id": "W012A3CDE",
+            "team_id": "T012AB3C4",
+            "name": "noname",
+            "deleted": false,
+            "color": "9f69e7",
+            "real_name": "Egon Spengler",
+            "tz": "America/Los_Angeles",
+            "tz_label": "Pacific Daylight Time",
+            "tz_offset": -25200,
+            "profile": {
+                "avatar_hash": "ge3b51ca72de",
+                "status_text": "Print is dead",
+                "status_emoji": ":books:",
+                "real_name": "Egon Spengler",
+                "display_name": "spengler",
+                "real_name_normalized": "Egon Spengler",
+                "display_name_normalized": "",
+                "email": "spengler@ghostbusters.example.com",
+                "image_original": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_24": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_32": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_48": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_72": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_192": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
+                "team": "T012AB3C4"
+            },
+            "is_admin": true,
+            "is_owner": false,
+            "is_primary_owner": false,
+            "is_restricted": false,
+            "is_ultra_restricted": false,
+            "is_bot": false,
+            "updated": 1502138686,
+            "is_app_user": false,
+            "has_2fa": false
+        }'''
+        user_obj: User = User.from_json(user_string)
+        self.assertEqual(user_obj.get_short_name(), 'Egon Spengler')
+
+    def test_user_shortname_with_no_values(self):
+        user = User(
+            id='',
+            name='',
+            real_name='',
+            team_id='',
+            profile=Profile(
+                real_name='',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual(user.get_short_name(), 'unknown')
