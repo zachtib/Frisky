@@ -36,7 +36,7 @@ class FriskyPlugin(object):
         self.__http_wrapper = None
 
     @property
-    def cache(self) -> CacheWrapper:
+    def cache(self) -> 'CacheWrapper':
         if self.__cache_wrapper is None:
             self.__cache_wrapper = FriskyPlugin.CacheWrapper(type(self).__name__, default_cache)
         return self.__cache_wrapper
