@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from slack.api.models import Event, ReactionAdded, User, Profile
-from .test_data import user_json
+from .test_data import user_json, profile_json
 
 
 class SlackApiModelsTestCase(TestCase):
@@ -98,3 +98,14 @@ class SlackApiModelsTestCase(TestCase):
             )
         )
         self.assertEqual(user.get_short_name(), 'unknown')
+
+    def test_cache_key_creation(self):
+        self.assertEqual('User:W012A3CDE', User.create_key('W012A3CDE'))
+
+    def test_cache_key_creation_on_instance(self):
+        user = User.from_json(user_json)
+        self.assertEqual('User:W012A3CDE', user.key())
+
+    def test_cache_key_creation_on_instance_without_id(self):
+        profile = Profile.from_json(profile_json)
+        self.assertIsNone(profile.key())

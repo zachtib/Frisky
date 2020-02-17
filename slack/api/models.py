@@ -1,23 +1,22 @@
 from dataclasses import dataclass
 from typing import List, Dict
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import DataClassJsonMixin
 
 
-class BaseModel(object):
+class BaseModel(DataClassJsonMixin):
     def key(self):
         if hasattr(self, 'id'):
-            return self.create_key(self.id)
-        return self.create_key(hash(self))
+            return self.create_key(getattr(self, 'id'))
+        return None
 
     @classmethod
     def create_key(cls, *args):
         return cls.__name__ + ':' + ':'.join(args)
 
 
-@dataclass_json
 @dataclass
-class Profile(object):
+class Profile(BaseModel):
     """ Example Profile
     {
         "avatar_hash": "ge3b51ca72de",
@@ -45,7 +44,6 @@ class Profile(object):
     team: str
 
 
-@dataclass_json
 @dataclass
 class User(BaseModel):
     """ Example API User:
@@ -107,14 +105,12 @@ class User(BaseModel):
         return 'unknown'
 
 
-@dataclass_json
 @dataclass
 class Conversation(BaseModel):
     id: str
     name: str
 
 
-@dataclass_json
 @dataclass
 class Team(BaseModel):
     id: str
@@ -122,7 +118,6 @@ class Team(BaseModel):
     domain: str
 
 
-@dataclass_json
 @dataclass
 class Message(BaseModel):
     user: str
@@ -130,9 +125,8 @@ class Message(BaseModel):
     ts: str
 
 
-@dataclass_json
 @dataclass
-class RateLimitedEvent(object):
+class RateLimitedEvent(DataClassJsonMixin):
     """
     {
         "token": "Jhj5dZrVaK7ZwHHjRyZWjbDl",
@@ -149,9 +143,8 @@ class RateLimitedEvent(object):
     api_app_id: str
 
 
-@dataclass_json
 @dataclass
-class Event(object):
+class Event(BaseModel):
     """
     The Slack Event wrapper. An example:
 
@@ -199,9 +192,8 @@ class Event(object):
         return None
 
 
-@dataclass_json
 @dataclass
-class ReactionItem(object):
+class ReactionItem(DataClassJsonMixin):
     """
     {
         "type": "message",
@@ -214,9 +206,8 @@ class ReactionItem(object):
     ts: str
 
 
-@dataclass_json
 @dataclass
-class ReactionAdded(object):
+class ReactionAdded(BaseModel):
     """
     {
         "type": "reaction_added",
@@ -239,9 +230,8 @@ class ReactionAdded(object):
     event_ts: str
 
 
-@dataclass_json
 @dataclass
-class MessageSent:
+class MessageSent(BaseModel):
     """ Example Event:
     {
         "type": "message",

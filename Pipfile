@@ -8,6 +8,8 @@ coverage = "*"
 responses = "*"
 pytest = "*"
 pytest-django = "*"
+pylint = "*"
+pylint-django = "*"
 
 [packages]
 django = "~=3.0"
