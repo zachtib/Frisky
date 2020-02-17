@@ -12,22 +12,20 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'e(h(ztsmtndazln29e9#f6i!&o=33v)a#(m0p$xq&2zyx17$7x')
+# Default value is provided purely for running Frisky locally
+SECRET_KEY = os.environ.get('SECRET_KEY', 'local_development_secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '0') == '1'
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -59,8 +57,7 @@ ROOT_URLCONF = 'app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
