@@ -94,6 +94,18 @@ class User(BaseModel):
     team_id: str
     profile: Profile
 
+    def get_short_name(self):
+        if self.profile is not None:
+            name = self.profile.display_name_normalized
+            if name is not None and name != '':
+                return name
+            name = self.profile.real_name_normalized
+            if name is not None and name != '':
+                return name
+        if self.name is not None and self.name != '':
+            return self.name
+        return 'unknown'
+
 
 @dataclass_json
 @dataclass

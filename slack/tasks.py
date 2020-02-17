@@ -36,10 +36,10 @@ def process_event(data):
             frisky.handle_reaction(
                 ReactionEvent(
                     emoji=event.reaction,
-                    username=user.name,
+                    username=user.get_short_name(),
                     added=added,
                     message=MessageEvent(
-                        username=item_user.name,
+                        username=item_user.get_short_name(),
                         channel_name=channel.name,
                         text=message.text,
                         command='',
@@ -59,7 +59,7 @@ def process_event(data):
                 return
             frisky.handle_message(
                 MessageEvent(
-                    username=user.name,
+                    username=user.get_short_name(),
                     channel_name=channel.name,
                     text=event.text,
                     command='',
