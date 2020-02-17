@@ -40,6 +40,13 @@ meme_list = '''
 
 class MemeTestCase(FriskyTestCase):
 
+    def test_only_meme(self):
+        with responses.RequestsMock() as rm:
+            rm.add('GET', MemePlugin.GET_MEMES_URL, body=meme_list)
+
+            reply = self.send_message('?meme')
+            self.assertEqual(reply, '"Drake Hotline Bling", "Distracted Boyfriend", "Two Buttons"')
+
     def test_listing_failure(self):
         with responses.RequestsMock() as rm:
             rm.add('GET', MemePlugin.GET_MEMES_URL, body='''

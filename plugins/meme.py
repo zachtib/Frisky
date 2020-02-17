@@ -42,6 +42,8 @@ class MemePlugin(FriskyPlugin):
         memes: Dict[str, Meme] = self.cacheify(self.__get_memes)
         if memes is None:
             return 'NO MEMES'
+        if len(message.args) == 0:
+            return ', '.join([f'"{name}"' for name in memes.keys()])
         meme_name = message.args[0]
         meme_args = message.args[1:]
         if meme_name not in memes.keys():
