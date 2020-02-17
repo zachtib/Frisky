@@ -6,7 +6,9 @@ from dataclasses_json import DataClassJsonMixin
 
 class BaseModel(DataClassJsonMixin):
     def key(self):
-        return self.create_key(getattr(self, 'id', hash(self)))
+        if hasattr(self, 'id'):
+            return self.create_key(getattr(self, 'id'))
+        return None
 
     @classmethod
     def create_key(cls, *args):
