@@ -19,33 +19,6 @@ class SlackApiClient(object):
     def __headers(self):
         return {'Authorization': f'Bearer {self.__access_token}'}
 
-
-
-    def __api_get_single_message(self, conversation_id, timestamp):
-        response = requests.get(f'https://slack.com/api/conversations.history?channel=' +
-                                f'{conversation_id}&oldest={timestamp}&latest={timestamp}&inclusive=true&limit=1',
-                                headers=self.__headers())
-        json = response.json()
-        if json['ok']:
-            message = json['messages'][0]
-            return Message.from_dict(message)
-        return None
-
-    def get_message(self, conversation: Conversation, timestamp: str) -> Optional[Message]:
-        return cache.get_or_set(Message.create_key(conversation.id, timestamp),
-                                lambda: self.__api_get_single_message(conversation.id, timestamp))
-
-    def __api_request(self, path, key=None):
-        response = requests.get(f'https://slack.com/api/{path}', headers=self.__headers())
-        json = response.json()
-        if json['ok']:
-            if key:
-                return json[key]
-            else:
-                return json
-        else:
-            return None
-
     def __cast(self, cls, obj):
         if obj is None:
             return None
@@ -58,53 +31,79 @@ class SlackApiClient(object):
         else:
             return None
 
-    def __api(self, cls, method, key, **kwargs):
+    def get(self, cls, method, key=None, **kwargs):
         if len(kwargs) > 0:
             method += '?' + '&'.join([f'{key}={value}' for key, value in kwargs.items()])
-        return self.__cast(cls, self.__api_request(method, key))
 
-    def __api_user_info(self, user_id) -> Optional[User]:
-        return self.__api('users.info', 'user', User, user_id=user_id)
-        # return self.__cast(User, self.__api_request(f'users.info?user={user_id}', 'user'))
+        response = requests.get(f'https://slack.com/api/{method}', headers=self.__headers()).json()
+
+        if not response['ok']:
+            return
+
+        if key:
+            obj = response[key]
+        else:
+            obj = response
+
+        return self.__cast(cls, obj)
+
+    def post(self, method: str, json: dict) -> bool:
+        response = requests.post(f'https://slack.com/api/{method}', json=json, headers=self.__headers())
+        return response.status_code == 200
+
+    def __api_get_single_message(self, conversation_id, timestamp):
+        result = self.get(Message,
+                          'conversations.history',
+                          'messages',
+                          channel=conversation_id,
+                          oldest=timestamp,
+                          latest=timestamp,
+                          inclusive='true',
+                          limit=1)
+
+        if len(result) == 1:
+            return result[0]
+        return None
+
+    def get_message(self, conversation: Conversation, timestamp: str) -> Optional[Message]:
+        return cache.get_or_set(
+            key=Message.create_key(conversation.id, timestamp),
+            default=lambda: self.__api_get_single_message(conversation.id, timestamp)
+        )
 
     def get_user(self, user_id) -> Optional[User]:
-        return cache.get_or_set(User.create_key(user_id), lambda: self.__api_user_info(user_id))
-
-    def __api_conversations_info(self, conversation_id) -> Optional[Conversation]:
-        """
-        https://api.slack.com/methods/conversations.info
-        :param conversation_id:
-        :return:
-        """
-        json = self.__api_request(f'conversations.info?channel={conversation_id}')
-        if json:
-            return Conversation.from_dict(json['channel'])
-        return None
+        return cache.get_or_set(
+            key=User.create_key(user_id),
+            default=lambda: self.get('users.info', 'user', User, user_id=user_id)
+        )
 
     def get_channel(self, channel_id) -> Optional[Conversation]:
-        return cache.get_or_set(Conversation.create_key(channel_id), lambda: self.__api_conversations_info(channel_id))
-
-    def __api_team_info(self, team_id) -> Optional[Team]:
         """
-        https://slack.com/api/team.info
-        :param team_id:
-        :return:
+        https://api.slack.com/methods/conversations.info
+        :param channel_id: The id of the Channel to locate
+        :return: A Conversation object if the channel is found, else None
         """
-        json = self.__api_request(f'team.info?team={team_id}')
-        if json:
-            return Team.from_dict(json['team'])
-        return None
+        return cache.get_or_set(
+            key=Conversation.create_key(channel_id),
+            default=lambda: self.get(Conversation, 'conversations.info', 'channel', channel=channel_id)
+        )
 
     def get_workspace(self, workspace_id) -> Optional[Team]:
-        return cache.get_or_set(Team.create_key(workspace_id), lambda: self.__api_team_info(workspace_id))
+        """
+        https://slack.com/api/team.info
+        :param workspace_id: The id of the Workspace to locate
+        :return: A Team object if the team is found, else None
+        """
+        return cache.get_or_set(
+            key=Team.create_key(workspace_id),
+            default=lambda: self.get(Team, 'team.info', 'team', team=workspace_id)
+        )
 
     def post_message(self, channel: Conversation, message: str) -> bool:
-        requests.post(
-            'https://slack.com/api/chat.postMessage',
-            json={'channel': channel.id, 'text': message},
-            headers=self.__headers()
-        )
-        return True
+        return self.post('chat.postMessage', json={
+            'channel': channel.id,
+            'text': message,
+        })
 
     def emergency_log(self, message):
         """
