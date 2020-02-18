@@ -14,6 +14,16 @@ class BaseModel(DataClassJsonMixin):
     def create_key(cls, *args):
         return cls.__name__ + ':' + ':'.join(args)
 
+    @classmethod
+    def create(cls, obj):
+        if isinstance(obj, dict):
+            return cls.from_dict(obj)
+        if isinstance(obj, str):
+            return cls.from_json(obj)
+        if isinstance(obj, list):
+            return [cls.create(item) for item in obj]
+        return None
+
 
 @dataclass
 class Profile(BaseModel):

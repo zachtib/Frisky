@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from slack.api.models import Event, ReactionAdded, User, Profile
+from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
 from .test_data import user_json, profile_json
 
 
@@ -64,6 +64,14 @@ class SlackApiModelsTestCase(TestCase):
         event = event_wrapper.get_event()
         self.assertTrue(isinstance(event, ReactionAdded))
 
+    def test_user_deserialization_from_null(self):
+        with self.assertRaises(AttributeError):
+            user = User.from_dict(None)
+
+    def test_user_deserialization_from_empty(self):
+        with self.assertRaises(KeyError):
+            user = User.from_dict({})
+
     def test_user_deserialization(self):
         user_obj: User = User.from_json(user_json)
         self.assertEqual('displaynamenormalized', user_obj.profile.display_name_normalized)
@@ -109,3 +117,26 @@ class SlackApiModelsTestCase(TestCase):
     def test_cache_key_creation_on_instance_without_id(self):
         profile = Profile.from_json(profile_json)
         self.assertIsNone(profile.key())
+
+    def test_create_with_dict(self):
+        convo = Conversation.create({'id': 'asdf', 'name': 'foobar'})
+        self.assertEqual('asdf', convo.id)
+        self.assertEqual('foobar', convo.name)
+
+    def test_create_with_string(self):
+        convo = Conversation.create('{"id": "asdf", "name": "foobar"}')
+        self.assertEqual('asdf', convo.id)
+        self.assertEqual('foobar', convo.name)
+
+    def test_create_with_list(self):
+        data = [{'id': 'asdf', 'name': 'foobar'}, '{"id": "asdf2", "name": "foobar2"}']
+        convos = Conversation.create(data)
+        self.assertIsInstance(convos, list)
+        self.assertEqual('asdf', convos[0].id)
+        self.assertEqual('foobar', convos[0].name)
+        self.assertEqual('asdf2', convos[1].id)
+        self.assertEqual('foobar2', convos[1].name)
+
+    def test_create_with_none(self):
+        convo = Conversation.create(None)
+        self.assertIsNone(convo)
