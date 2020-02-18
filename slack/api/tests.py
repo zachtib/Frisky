@@ -142,6 +142,33 @@ class TestClient:
             assert json.loads(rm.calls[0].request.body) == {'channel': 'test', 'text': 'message'}
 
     @pytest.mark.django_db
+    def test_update_message(self, client: SlackApiClient):
+        """Tests SlackApiClient.update_message"""
+        with responses.RequestsMock() as rm:
+            rm.add('POST', f'{URL}/chat.update')
+            client.update_message(Conversation(id='test', name='test'),
+                                  Message(user='jcarreer', text='I never test mah code', ts='12345.67890'),
+                                  text='I always test mah code')
+            assert 'Authorization' in rm.calls[0].request.headers
+            assert json.loads(rm.calls[0].request.body) == {
+                'channel': 'test',
+                'text': 'I always test mah code',
+                'ts': '12345.67890'
+            }
+
+    @pytest.mark.django_db
+    def test_delete_message(self, client: SlackApiClient):
+        """Tests SlackApiClient.delete_message"""
+        with responses.RequestsMock() as rm:
+            rm.add('POST', f'{URL}/chat.delete')
+            client.delete_message(
+                Conversation(id='test', name='test'),
+                Message(user='jcarreer', text='I never test mah code', ts='12345.67890')
+            )
+            assert 'Authorization' in rm.calls[0].request.headers
+            assert json.loads(rm.calls[0].request.body) == {'channel': 'test', 'ts': '12345.67890'}
+
+    @pytest.mark.django_db
     def test_post_image(self, client: SlackApiClient):
         with responses.RequestsMock() as rm:
             rm.add('POST', f'{URL}/chat.postMessage')
