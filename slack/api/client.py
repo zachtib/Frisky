@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Union, List, Dict
+from typing import Optional
 
 import requests
 from django.conf import settings
@@ -19,11 +19,6 @@ class SlackApiClient(object):
     def __headers(self):
         return {'Authorization': f'Bearer {self.__access_token}'}
 
-    def __cast(self, cls, obj: Union[List, Dict]):
-        if isinstance(obj, list):
-            return [self.__cast(cls, item) for item in obj]
-        return cls.from_dict(obj)
-
     def __get(self, cls, method: str, key: str, **kwargs) -> Optional[object]:
         if len(kwargs) > 0:
             method += '?' + '&'.join([f'{key}={value}' for key, value in kwargs.items()])
@@ -33,7 +28,7 @@ class SlackApiClient(object):
         if not response['ok']:
             return None
 
-        return self.__cast(cls, response[key])
+        return cls.create(response[key])
 
     def __post(self, method: str, **kwargs) -> bool:
         response = requests.post(f'https://slack.com/api/{method}', json=kwargs, headers=self.__headers())
