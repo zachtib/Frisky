@@ -22,23 +22,22 @@ class SlackApiClient(object):
     def __cast(self, cls, obj):
         if obj is None:
             return None
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
             return cls.from_dict(obj)
-        elif isinstance(obj, str):
+        if isinstance(obj, str):
             return cls.from_json(obj)
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self.__cast(cls, item) for item in obj]
-        else:
-            return None
+        return None
 
-    def get(self, cls, method, key=None, **kwargs):
+    def __get(self, cls, method, key=None, **kwargs) -> Optional[object]:
         if len(kwargs) > 0:
             method += '?' + '&'.join([f'{key}={value}' for key, value in kwargs.items()])
 
         response = requests.get(f'https://slack.com/api/{method}', headers=self.__headers()).json()
 
         if not response['ok']:
-            return
+            return None
 
         if key:
             obj = response[key]
@@ -47,19 +46,19 @@ class SlackApiClient(object):
 
         return self.__cast(cls, obj)
 
-    def post(self, method: str, json: dict) -> bool:
-        response = requests.post(f'https://slack.com/api/{method}', json=json, headers=self.__headers())
+    def __post(self, method: str, **kwargs) -> bool:
+        response = requests.post(f'https://slack.com/api/{method}', json=kwargs, headers=self.__headers())
         return response.status_code == 200
 
     def __api_get_single_message(self, conversation_id, timestamp):
-        result = self.get(Message,
-                          'conversations.history',
-                          'messages',
-                          channel=conversation_id,
-                          oldest=timestamp,
-                          latest=timestamp,
-                          inclusive='true',
-                          limit=1)
+        result = self.__get(Message,
+                            'conversations.history',
+                            'messages',
+                            channel=conversation_id,
+                            oldest=timestamp,
+                            latest=timestamp,
+                            inclusive='true',
+                            limit=1)
 
         if result is not None and isinstance(result, list) and len(result) == 1:
             return result[0]
@@ -74,7 +73,7 @@ class SlackApiClient(object):
     def get_user(self, user_id) -> Optional[User]:
         return cache.get_or_set(
             key=User.create_key(user_id),
-            default=lambda: self.get(User, 'users.info', 'user', user=user_id)
+            default=lambda: self.__get(User, 'users.info', 'user', user=user_id)
         )
 
     def get_channel(self, channel_id) -> Optional[Conversation]:
@@ -85,7 +84,7 @@ class SlackApiClient(object):
         """
         return cache.get_or_set(
             key=Conversation.create_key(channel_id),
-            default=lambda: self.get(Conversation, 'conversations.info', 'channel', channel=channel_id)
+            default=lambda: self.__get(Conversation, 'conversations.info', 'channel', channel=channel_id)
         )
 
     def get_workspace(self, workspace_id) -> Optional[Team]:
@@ -96,14 +95,11 @@ class SlackApiClient(object):
         """
         return cache.get_or_set(
             key=Team.create_key(workspace_id),
-            default=lambda: self.get(Team, 'team.info', 'team', team=workspace_id)
+            default=lambda: self.__get(Team, 'team.info', 'team', team=workspace_id)
         )
 
     def post_message(self, channel: Conversation, message: str) -> bool:
-        return self.post('chat.postMessage', json={
-            'channel': channel.id,
-            'text': message,
-        })
+        return self.__post('chat.postMessage', channel=channel.id, text=message)
 
     def emergency_log(self, message):
         """
