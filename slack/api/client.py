@@ -61,7 +61,7 @@ class SlackApiClient(object):
                           inclusive='true',
                           limit=1)
 
-        if len(result) == 1:
+        if result is not None and isinstance(result, list) and len(result) == 1:
             return result[0]
         return None
 
@@ -74,7 +74,7 @@ class SlackApiClient(object):
     def get_user(self, user_id) -> Optional[User]:
         return cache.get_or_set(
             key=User.create_key(user_id),
-            default=lambda: self.get('users.info', 'user', User, user_id=user_id)
+            default=lambda: self.get(User, 'users.info', 'user', user=user_id)
         )
 
     def get_channel(self, channel_id) -> Optional[Conversation]:
