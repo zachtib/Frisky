@@ -134,6 +134,18 @@ class TestClient:
             assert json.loads(rm.calls[0].request.body) == {'channel': 'test', 'text': 'message'}
 
     @pytest.mark.django_db
+    def test_post_image(self, client: SlackApiClient):
+        with responses.RequestsMock() as rm:
+            rm.add('POST', f'{URL}/chat.postMessage')
+            client.post_message(Conversation(id='test', name='test'), 'http://i.imgflip.com/blah.jpg')
+            assert 'Authorization' in rm.calls[0].request.headers
+            assert json.loads(rm.calls[0].request.body) == {'channel': 'test', 'blocks': [{
+                "type": "image",
+                "image_url": 'http://i.imgflip.com/blah.jpg',
+                "alt_text": "Image"
+            }]}
+
+    @pytest.mark.django_db
     def test_post_emergency_log(self, client: SlackApiClient):
         """Tests SlackApiClient.emergency_log"""
         with responses.RequestsMock() as rm:

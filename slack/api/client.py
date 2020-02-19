@@ -1,4 +1,5 @@
 import datetime
+import re
 from typing import Optional
 
 import requests
@@ -6,7 +7,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from slack.api.models import User, Conversation, Team, Message
-import re
+
 
 class SlackApiClient(object):
     __access_token: str
@@ -83,12 +84,12 @@ class SlackApiClient(object):
         )
 
     def post_message(self, channel: Conversation, message: str) -> bool:
-        if re.match(r'^https?://i\.imgflip\.com/\w+\.jpg$', message):
+        if re.match(r'^https?://[\w/.]+\.(?:jpg|gif|png)$', message):
             return self.__post('chat.postMessage', channel=channel.id, blocks=[
                 {
                     "type": "image",
                     "image_url": message,
-                    "alt_text": "ImgFlip Image"
+                    "alt_text": "Image"
                 }
             ])
         return self.__post('chat.postMessage', channel=channel.id, text=message)
