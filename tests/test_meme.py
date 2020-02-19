@@ -130,3 +130,22 @@ class MemeTestCase(FriskyTestCase):
         self.assertEqual('Usage: `?memealias <alias> <id>` or `?memealias list`', reply)
         reply = self.send_message('?memealias')
         self.assertEqual('Usage: `?memealias <alias> <id>` or `?memealias list`', reply)
+
+    def test_alias_with_spaces(self):
+        reply = self.send_message('?memealias goodnews 123456')
+        self.assertEqual('Ok, added goodnews', reply)
+        with responses.RequestsMock() as rm:
+            rm.add('POST', MemePlugin.CAPTION_IMAGE_URL, body='''
+            {
+                "success": true,
+                "data": {
+                    "url": "https://i.imgflip.com/123abc.jpg",
+                    "page_url": "https://imgflip.com/i/123abc"
+                }
+            }
+            '''.strip())
+            reply = self.send_message('?meme goodnews "One Does Not Simply" "Mock Http Requests"')
+            self.assertEqual(rm.calls[0].request.body,
+                             'template_id=123456&username=&password=&text0=One+Does+Not+Simply&' +
+                             'text1=Mock+Http+Requests')
+            self.assertEqual(reply, 'https://i.imgflip.com/123abc.jpg')
