@@ -14,6 +14,8 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
     if len(intersection) > 0:
         raise ValueError(f'No characters can be shared between separators and groupers: {intersection}')
 
+    string = string.replace('“', '"').replace('”', '"')
+
     result: List[str] = []
     stack: List[chr] = []
     substring: str = ""
