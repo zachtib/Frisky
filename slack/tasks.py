@@ -6,10 +6,18 @@ from django.conf import settings
 
 from frisky.bot import Frisky
 from frisky.events import ReactionEvent, MessageEvent
+from frisky.responses import FriskyResponse, Image
 from slack.api.client import SlackApiClient
 from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
 
 logger = logging.getLogger(__name__)
+
+
+def reply(client: SlackApiClient, conversation: Conversation, response: FriskyResponse):
+    if isinstance(response, str):
+        client.post_message(conversation, response)
+    elif isinstance(response, Image):
+        client.post_image(conversation, response.url, response.alt_text)
 
 
 @shared_task
@@ -65,7 +73,7 @@ def process_event(data):
                     command='',
                     args=tuple(),
                 ),
-                reply_channel=lambda reply: slack_api_client.post_message(channel, reply)
+                reply_channel=lambda res: reply(slack_api_client, channel, res)
             )
     except KeyError as err:
         stacktrace = traceback.format_exc()
