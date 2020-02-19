@@ -47,7 +47,7 @@ class MemeTestCase(FriskyTestCase):
             reply = self.send_message('?meme')
             self.assertEqual(reply, '"Drake Hotline Bling", "Distracted Boyfriend", "Two Buttons"')
 
-    def test_listing_failure(self):
+    def test_listing_failure_with_args(self):
         with responses.RequestsMock() as rm:
             rm.add('GET', MemePlugin.GET_MEMES_URL, body='''
             {
@@ -55,6 +55,16 @@ class MemeTestCase(FriskyTestCase):
             }
             '''.strip())
             reply = self.send_message('?meme "" "" ""')
+            self.assertEqual('NO MEMES', reply)
+
+    def test_listing_failure(self):
+        with responses.RequestsMock() as rm:
+            rm.add('GET', MemePlugin.GET_MEMES_URL, body='''
+            {
+                "success": false
+            }
+            '''.strip())
+            reply = self.send_message('?meme')
             self.assertEqual('NO MEMES', reply)
 
     def test_success(self):
@@ -92,3 +102,31 @@ class MemeTestCase(FriskyTestCase):
             '''.strip())
             reply = self.send_message('?meme "Drake Hotline Bling" "foo" "bar"')
             self.assertEqual('YA DONE FUCKED UP LADDIE', reply)
+
+    def test_improper_usage(self):
+        reply = self.send_message('?meme 1 2 3 4')
+        self.assertEqual('Usage: `?meme <meme_id> <text0> <text1>`', reply)
+
+    def test_alias_creation(self):
+        reply = self.send_message('?memealias goodnews 123456')
+        self.assertEqual('Ok, added goodnews', reply)
+        reply = self.send_message('?memealias list')
+        self.assertEqual('goodnews', reply)
+
+    def test_alias_creation_fails_with_noninteger(self):
+        reply = self.send_message('?memealias goodnews asdf')
+        self.assertEqual('Usage: `?memealias <alias> <id>`', reply)
+        reply = self.send_message('?memealias list')
+        self.assertEqual('', reply)
+
+    def test_duplicate_creation(self):
+        reply = self.send_message('?memealias goodnews 123456')
+        self.assertEqual('Ok, added goodnews', reply)
+        reply = self.send_message('?memealias goodnews 123456')
+        self.assertEqual('Error: alias already exists', reply)
+
+    def test_memealias_usage_text(self):
+        reply = self.send_message('?memealias goodnews 123456 asdff')
+        self.assertEqual('Usage: `?memealias <alias> <id>` or `?memealias list`', reply)
+        reply = self.send_message('?memealias')
+        self.assertEqual('Usage: `?memealias <alias> <id>` or `?memealias list`', reply)
