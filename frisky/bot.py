@@ -88,12 +88,18 @@ class Frisky(object):
             reply_channel(f'Available plugins: {joined_string}')
 
     def handle_message(self, message: MessageEvent, reply_channel: Callable[[FriskyResponse], bool]) -> None:
+        # Major debug, do not do
+        from slack.api.client import SlackApiClient
+        from django.conf import settings
+        slack_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
+
         if message.channel_name in self.ignored_channels or message.username == self.name:
             return
         message.command, message.args = self.parse_message_string(message.text)
         if message.command in ('help', '?'):
             return self.__show_help_text(message.args, reply_channel)
         elif message.command != '':
+            slack_client.emergency_log(message)
             plugins = self.get_plugins_for_command(message.command)
             if len(plugins) == 0:
                 # Reformat the message as a generic one
@@ -101,6 +107,7 @@ class Frisky(object):
                 plugins = self.get_generic_handlers()
             for plugin in plugins:
                 reply = plugin.handle_message(message)
+
                 if reply is not None:
                     reply_channel(reply)
 
