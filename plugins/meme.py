@@ -6,6 +6,7 @@ from dataclasses_json import DataClassJsonMixin
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
+from frisky.responses import Image, FriskyResponse
 from memes.models import MemeAlias
 
 
@@ -55,7 +56,7 @@ class MemePlugin(FriskyPlugin):
             return ', '.join(MemeAlias.objects.get_all_aliases())
         return 'Usage: `?memealias <alias> <id>` or `?memealias list`'
 
-    def __handle_meme(self, message: MessageEvent) -> Optional[str]:
+    def __handle_meme(self, message: MessageEvent) -> FriskyResponse:
         if len(message.args) == 0:
             memes: Dict[str, Meme] = self.__memes()
             if memes is None:
@@ -90,10 +91,10 @@ class MemePlugin(FriskyPlugin):
 
         json = result.json()
         if json['success']:
-            return json['data']['url']
+            return Image(json['data']['url'])
         return json['error_message']
 
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
+    def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if message.command == 'memealias':
             return self.__handle_memealias(message)
         return self.__handle_meme(message)

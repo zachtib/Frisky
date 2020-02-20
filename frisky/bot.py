@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Callable
 
 from frisky.events import MessageEvent, ReactionEvent
 from frisky.plugin import FriskyPlugin
+from frisky.responses import FriskyResponse
 from frisky.util import quotesplit
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ class Frisky(object):
             joined_string = ', '.join(plugins)
             reply_channel(f'Available plugins: {joined_string}')
 
-    def handle_message(self, message: MessageEvent, reply_channel: Callable[[str], bool]) -> None:
+    def handle_message(self, message: MessageEvent, reply_channel: Callable[[FriskyResponse], bool]) -> None:
         if message.channel_name in self.ignored_channels or message.username == self.name:
             return
         message.command, message.args = self.parse_message_string(message.text)

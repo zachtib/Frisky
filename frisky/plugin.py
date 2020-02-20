@@ -4,6 +4,7 @@ import requests
 from django.core.cache import cache as default_cache, BaseCache
 
 from frisky.events import MessageEvent, ReactionEvent
+from frisky.responses import FriskyResponse
 
 
 class FriskyPlugin(object):
@@ -63,8 +64,8 @@ class FriskyPlugin(object):
         key = ':'.join([fn.__name__] + [str(x) for x in args])
         return self.cache.get_or_set(key, lambda: fn(*args))
 
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
+    def handle_message(self, message: MessageEvent) -> FriskyResponse:
         pass
 
-    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
+    def handle_reaction(self, reaction: ReactionEvent) -> FriskyResponse:
         pass

@@ -1,5 +1,6 @@
 import responses
 
+from frisky.responses import Image
 from frisky.test import FriskyTestCase
 from plugins.meme import MemePlugin
 
@@ -11,7 +12,7 @@ meme_list = '''
          {
             "id":"181913649",
             "name":"Drake Hotline Bling",
-            "url":"https:\/\/i.imgflip.com\/30b1gx.jpg",
+            "url":"https://i.imgflip.com/30b1gx.jpg",
             "width":1200,
             "height":1200,
             "box_count":2
@@ -19,7 +20,7 @@ meme_list = '''
          {
             "id":"112126428",
             "name":"Distracted Boyfriend",
-            "url":"https:\/\/i.imgflip.com\/1ur9b0.jpg",
+            "url":"https://i.imgflip.com/1ur9b0.jpg",
             "width":1200,
             "height":800,
             "box_count":3
@@ -27,7 +28,7 @@ meme_list = '''
          {
             "id":"87743020",
             "name":"Two Buttons",
-            "url":"https:\/\/i.imgflip.com\/1g8my4.jpg",
+            "url":"https://i.imgflip.com/1g8my4.jpg",
             "width":600,
             "height":908,
             "box_count":2
@@ -83,7 +84,8 @@ class MemeTestCase(FriskyTestCase):
             self.assertEqual(rm.calls[1].request.body,
                              'template_id=181913649&username=&password=&text0=One+Does+Not+Simply&' +
                              'text1=Mock+Http+Requests')
-            self.assertEqual(reply, 'https://i.imgflip.com/123abc.jpg')
+            self.assertIsInstance(reply, Image)
+            self.assertEqual(reply.url, 'https://i.imgflip.com/123abc.jpg')
 
     def test_nonexistant_meme(self):
         with responses.RequestsMock() as rm:
@@ -148,4 +150,5 @@ class MemeTestCase(FriskyTestCase):
             self.assertEqual(rm.calls[0].request.body,
                              'template_id=123456&username=&password=&text0=One+Does+Not+Simply&' +
                              'text1=Mock+Http+Requests')
-            self.assertEqual(reply, 'https://i.imgflip.com/123abc.jpg')
+            self.assertIsInstance(reply, Image)
+            self.assertEqual(reply.url, 'https://i.imgflip.com/123abc.jpg')
