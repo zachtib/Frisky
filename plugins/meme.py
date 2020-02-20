@@ -66,9 +66,14 @@ class MemePlugin(FriskyPlugin):
 
         if len(message.args) != 3:
             return 'Usage: `?meme <meme_id> <text0> <text1>`'
+        # Major debug, do not do
+        from slack.api.client import SlackApiClient
+        from django.conf import settings
+        slack_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
 
         meme_name = message.args[0]
         meme_args = message.args[1:]
+        slack_client.emergency_log(f'{meme_name} {meme_args}')
 
         meme_id = MemeAlias.objects.get_id_for_alias(meme_name)
 
@@ -82,6 +87,8 @@ class MemePlugin(FriskyPlugin):
         if meme_id == -1:
             return 'NO SUCH MEME'
 
+        slack_client.emergency_log(str(meme_id))
+
         try:
             result = self.http.post(self.CAPTION_IMAGE_URL, data={
                 'template_id': meme_id,
@@ -90,12 +97,14 @@ class MemePlugin(FriskyPlugin):
                 'text0': meme_args[0],
                 'text1': meme_args[1],
             })
+            slack_client.emergency_log(result)
             json = result.json()
+            slack_client.emergency_log(json)
             if json['success']:
                 return Image(json['data']['url'])
             return json['error_message']
         except Exception as err:
-            return str(f'Error: {traceback.format_exc()}')
+            slack_client.emergency_log(traceback.format_exc())
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if message.command == 'memealias':
