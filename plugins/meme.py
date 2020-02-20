@@ -88,11 +88,13 @@ class MemePlugin(FriskyPlugin):
             'text0': meme_args[0],
             'text1': meme_args[1],
         })
-
-        json = result.json()
-        if json['success']:
-            return Image(json['data']['url'])
-        return json['error_message']
+        try:
+            json = result.json()
+            if json['success']:
+                return Image(json['data']['url'])
+            return json['error_message']
+        except Exception as err:
+            return str(result)
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if message.command == 'memealias':
