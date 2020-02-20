@@ -13,11 +13,12 @@ from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
 logger = logging.getLogger(__name__)
 
 
-def reply(client: SlackApiClient, conversation: Conversation, response: FriskyResponse):
+def reply(client: SlackApiClient, conversation: Conversation, response: FriskyResponse) -> bool:
     if isinstance(response, str):
-        client.post_message(conversation, response)
-    elif isinstance(response, Image):
-        client.post_image(conversation, response.url, response.alt_text)
+        return client.post_message(conversation, response)
+    if isinstance(response, Image):
+        return client.post_image(conversation, response.url, response.alt_text)
+    return False
 
 
 @shared_task
