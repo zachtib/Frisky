@@ -55,3 +55,90 @@ profile_json = '''{
         "image_512": "https://.../avatar/e3b51ca72dee4ef87916ae2b9240df50.jpg",
         "team": "T012AB3C4"
     }'''
+
+reg_event_json = '''{
+            "token": "z26uFbvR1xHJEdHE1OQiO6t8",
+            "team_id": "T061EG9RZ",
+            "api_app_id": "A0FFV41KK",
+            "event": {
+                    "type": "reaction_added",
+                    "user": "U061F1EUR",
+                    "item": {
+                            "type": "message",
+                            "channel": "C061EG9SL",
+                            "ts": "1464196127.000002"
+                    },
+                    "reaction": "slightly_smiling_face",
+                    "item_user": "U0M4RL1NY",
+                    "event_ts": "1465244570.336841"
+            },
+            "type": "event_callback",
+            "authed_users": [
+                    "U061F7AUR"
+            ],
+            "event_id": "Ev9UQ52YNA",
+            "event_time": 1234567890
+    }'''
+
+item_event_json = '''{
+            "token": "z26uFbvR1xHJEdHE1OQiO6t8",
+            "team_id": "T061EG9RZ",
+            "api_app_id": "A0FFV41KK",
+            "event": {
+                    "type": "reaction_added",
+                    "user": "U061F1EUR",
+                    "item": {
+                            "type": "message",
+                            "channel": "C061EG9SL",
+                            "ts": "1464196127.000002"
+                    },
+                    "reaction": "slightly_smiling_face",
+                    "item_user": "U0M4RL1NY",
+                    "event_ts": "1465244570.336841"
+            },
+            "type": "event_callback",
+            "authed_users": [
+                    "U061F7AUR"
+            ],
+            "event_id": "Ev9UQ52YNA",
+            "event_time": 1234567890
+    }'''
+
+bot_event_json = '''{
+        "api_app_id": "ARNN86LBU",
+        "authed_users": [
+            "US3BT1NJK"
+        ],
+        "event": {
+            "attachments": [
+                {
+                    "color": "6E3E74",
+                    "fallback": "I don't know what this field is",
+                    "id": 1,
+                    "mrkdwn_in": [
+                        "text"
+                    ],
+                    "text": "Expensive Cardboard 3/4",
+                    "thumb_height": 204,
+                    "thumb_url": "https://imgflip.com/memegenerator/224675250/PHALLIC",
+                    "thumb_width": 146,
+                    "title": "Kess, Dissident Mage :mana-1::mana-u::mana-b::mana-r:",
+                    "title_link": "https://www.youtube.com/watch?v=oHg5SJYRHA0"
+                }
+            ],
+            "bot_id": "B5HF86T18",
+            "channel": "C5HBKKEAE",
+            "channel_type": "channel",
+            "event_ts": "1582222822.004400",
+            "subtype": "bot_message",
+            "text": "",
+            "ts": "1582222822.004400",
+            "type": "message",
+            "username": "Scryfall"
+        },
+        "event_id": "EvUBUBKW0N",
+        "event_time": 1582222822,
+        "team_id": "T5J4V03V4",
+        "token": "NONEYAFUCKINGBIZNASS",
+        "type": "event_callback"
+    }'''
