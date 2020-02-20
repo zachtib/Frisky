@@ -1,4 +1,5 @@
 import os
+import traceback
 from dataclasses import dataclass
 from typing import Tuple, Optional, Dict
 
@@ -81,20 +82,20 @@ class MemePlugin(FriskyPlugin):
         if meme_id == -1:
             return 'NO SUCH MEME'
 
-        result = self.http.post(self.CAPTION_IMAGE_URL, data={
-            'template_id': meme_id,
-            'username': os.environ.get('IMGFLIP_USERNAME', ''),
-            'password': os.environ.get('IMGFLIP_PASSWORD', ''),
-            'text0': meme_args[0],
-            'text1': meme_args[1],
-        })
         try:
+            result = self.http.post(self.CAPTION_IMAGE_URL, data={
+                'template_id': meme_id,
+                'username': os.environ.get('IMGFLIP_USERNAME', ''),
+                'password': os.environ.get('IMGFLIP_PASSWORD', ''),
+                'text0': meme_args[0],
+                'text1': meme_args[1],
+            })
             json = result.json()
             if json['success']:
                 return Image(json['data']['url'])
             return json['error_message']
         except Exception as err:
-            return str(result)
+            return str(f'Error: {traceback.format_exc()}')
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if message.command == 'memealias':
