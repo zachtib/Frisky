@@ -1,5 +1,6 @@
 import responses
 
+from frisky.responses import Image
 from frisky.test import FriskyTestCase
 from plugins.meme import MemePlugin
 
@@ -83,7 +84,8 @@ class MemeTestCase(FriskyTestCase):
             self.assertEqual(rm.calls[1].request.body,
                              'template_id=181913649&username=&password=&text0=One+Does+Not+Simply&' +
                              'text1=Mock+Http+Requests')
-            self.assertEqual(reply, 'https://i.imgflip.com/123abc.jpg')
+            self.assertIsInstance(reply, Image)
+            self.assertEqual(reply.url, 'https://i.imgflip.com/123abc.jpg')
 
     def test_nonexistant_meme(self):
         with responses.RequestsMock() as rm:
@@ -148,4 +150,5 @@ class MemeTestCase(FriskyTestCase):
             self.assertEqual(rm.calls[0].request.body,
                              'template_id=123456&username=&password=&text0=One+Does+Not+Simply&' +
                              'text1=Mock+Http+Requests')
-            self.assertEqual(reply, 'https://i.imgflip.com/123abc.jpg')
+            self.assertIsInstance(reply, Image)
+            self.assertEqual(reply.url, 'https://i.imgflip.com/123abc.jpg')
