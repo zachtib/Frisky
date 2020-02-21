@@ -71,6 +71,8 @@ class TestClient:
             ts = '1581947248'
             api = f'{URL}/conversations.history?channel={cid}&oldest={ts}&latest={ts}&inclusive=true&limit=1'
             rm.add('GET', api, body=json.dumps(payload))
+            if not payload['ok']:
+                rm.add('POST', f'{URL}/chat.postMessage')
             assert client.get_message(Conversation(id=cid, name='test'), ts) == expected
             assert 'Authorization' in rm.calls[0].request.headers
             # Should be from cache, because we in a requests mock context, if we hit the API again the test wil fail
@@ -86,6 +88,8 @@ class TestClient:
         """Tests SlackApiClient.get_user"""
         with responses.RequestsMock() as rm:
             rm.add('GET', f'{URL}/users.info?user={uid}', body=payload)
+            if not json.loads(payload)['ok']:
+                rm.add('POST', f'{URL}/chat.postMessage')
             assert client.get_user(uid) == expected
             assert 'Authorization' in rm.calls[0].request.headers
             # Should be from cache, because we in a requests mock context, if we hit the API again the test wil fail
@@ -102,6 +106,8 @@ class TestClient:
         """Tests SlackApiClient.get_channel"""
         with responses.RequestsMock() as rm:
             rm.add('GET', f'{URL}/conversations.info?channel={cid}', body=json.dumps(payload))
+            if not payload['ok']:
+                rm.add('POST', f'{URL}/chat.postMessage')
             assert client.get_channel(cid) == expected
             assert 'Authorization' in rm.calls[0].request.headers
             # Should be from cache, because we in a requests mock context, if we hit the API again the test wil fail
@@ -118,6 +124,8 @@ class TestClient:
         """Tests SlackApiClient.get_team"""
         with responses.RequestsMock() as rm:
             rm.add('GET', f'{URL}/team.info?team={tid}', body=json.dumps(payload))
+            if not payload['ok']:
+                rm.add('POST', f'{URL}/chat.postMessage')
             assert client.get_workspace(tid) == expected
             assert 'Authorization' in rm.calls[0].request.headers
             # Should be from cache, because we in a requests mock context, if we hit the API again the test wil fail
