@@ -1,7 +1,12 @@
 from typing import Tuple, List
 
 
-def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tuple[chr] = ('"', "'")) -> List[str]:
+def sanitize(string: str) -> str:
+    string = string.replace('“', '"').replace('”', '"')
+    return string
+
+
+def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tuple[chr] = ('"',)) -> List[str]:
     """
     Split the input string, string, into a list of substrings while respecting nested grouping of strings
     :param string: The string to split
@@ -14,17 +19,22 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
     if len(intersection) > 0:
         raise ValueError(f'No characters can be shared between separators and groupers: {intersection}')
 
-    string = string.replace('“', '"').replace('”', '"')
+    string = sanitize(string)
 
     result: List[str] = []
     stack: List[chr] = []
     substring: str = ""
 
+    def add_token(token: str):
+        if token.startswith('@'):
+            token = token.lstrip('@')
+        result.append(token)
+
     for character in string:
         if character in separators:
             if len(stack) == 0:
                 if len(substring) > 0:
-                    result.append(substring)
+                    add_token(substring)
                     substring = ''
             else:
                 substring += character
@@ -35,7 +45,7 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
                 if stack[-1] == character:
                     stack.pop()
                     if len(stack) == 0:
-                        result.append(substring)
+                        add_token(substring)
                         substring = ''
                     else:
                         substring += character
@@ -46,6 +56,6 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
             substring += character
 
     if len(substring) > 0:
-        result.append(substring)
+        add_token(substring)
 
     return result

@@ -12,7 +12,7 @@ from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
 
 logger = logging.getLogger(__name__)
 
-SUBTYPE_BLACKLIST = ['bot_message', 'message_deleted']
+SUBTYPE_BLACKLIST = ['bot_message', 'message_changed', 'message_deleted']
 
 slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
 
@@ -76,14 +76,11 @@ def handle_reaction_event(event: ReactionAdded):
     )
 
 
-def sanitize(data: dict): dict
-
-
 @shared_task
 def process_event(data):
     logger.debug(f'Handling event from slack: ')
     if data['event'].get('subtype') in SUBTYPE_BLACKLIST:
-        logger.debug(f'Ignoring {data["event"]["event_id"]}, subtype was in blacklist')
+        logger.debug(f'Ignoring {data["event_id"]}, subtype was in blacklist')
         return
 
     # noinspection PyBroadException
