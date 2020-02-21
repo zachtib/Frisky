@@ -32,7 +32,6 @@ class SlackApiClient(object):
 
     def __post(self, method: str, **kwargs) -> bool:
         response = requests.post(f'https://slack.com/api/{method}', json=kwargs, headers=self.__headers())
-
         return response.status_code == 200
 
     def __api_get_single_message(self, conversation_id, timestamp):
