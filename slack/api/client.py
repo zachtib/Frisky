@@ -26,6 +26,7 @@ class SlackApiClient(object):
         response = requests.get(f'https://slack.com/api/{method}', headers=self.__headers()).json()
 
         if not response['ok']:
+            self.emergency_log(response)
             return None
 
         return cls.create(response[key])
