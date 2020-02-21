@@ -88,6 +88,7 @@ class MemePlugin(FriskyPlugin):
             'text0': meme_args[0],
             'text1': meme_args[1],
         })
+
         json = result.json()
         if json['success']:
             return Image(json['data']['url'], meme_name)

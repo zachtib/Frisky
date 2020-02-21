@@ -89,6 +89,8 @@ class SlackApiClient(object):
         )
 
     def post_image(self, channel: Conversation, image_url: str, alt_text='Image') -> bool:
+        if alt_text is None or alt_text == '':
+            alt_text = 'Image'
         return self.__post('chat.postMessage', channel=channel.id, blocks=[{
             'type': 'image',
             'image_url': image_url,

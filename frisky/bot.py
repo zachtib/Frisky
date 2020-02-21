@@ -101,7 +101,6 @@ class Frisky(object):
                 plugins = self.get_generic_handlers()
             for plugin in plugins:
                 reply = plugin.handle_message(message)
-
                 if reply is not None:
                     reply_channel(reply)
 
