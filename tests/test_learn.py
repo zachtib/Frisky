@@ -1,6 +1,7 @@
+from unittest import mock
+
 from frisky.test import FriskyTestCase
 from learns.queries import get_all_learns, get_random_learn
-from unittest import mock
 
 
 class LearnTestCase(FriskyTestCase):
@@ -93,3 +94,7 @@ class LearnTestCase(FriskyTestCase):
     def test_no_such_thing(self):
         self.send_message('?learn test_1 thing1')
         self.assertEqual(self.send_message('?test_1 100'), 'NO SUCH THING')
+
+    def test_quotesplit_at(self):
+        reply = self.send_message('?learn @jcarreer I dont test')
+        self.assertEqual(reply, 'Okay, learned jcarreer')

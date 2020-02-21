@@ -40,14 +40,17 @@ def handle_message_event(event: MessageSent):
         channel = slack_api_client.get_channel(event.channel)
     else:
         return
+    message_event = MessageEvent(
+        username=user.get_short_name(),
+        channel_name=channel.name,
+        text=event.text,
+        command='',
+        args=tuple(),
+    )
+    if settings.LOG_HANDLED_MESSAGES:
+        slack_api_client.emergency_log(message_event)
     frisky.handle_message(
-        MessageEvent(
-            username=user.get_short_name(),
-            channel_name=channel.name,
-            text=event.text,
-            command='',
-            args=tuple(),
-        ),
+        message_event,
         reply_channel=lambda reply: reply_channel(channel, reply)
     )
 

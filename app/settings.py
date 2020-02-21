@@ -141,6 +141,8 @@ FRISKY_IGNORED_CHANNELS = (
     FRISKY_LOGGING_CHANNEL,
 )
 
+LOG_HANDLED_MESSAGES = bool(os.environ.get('LOG_HANDLED_MESSAGES'))
+
 if 'HEROKU' in os.environ:
     import django_heroku
 
