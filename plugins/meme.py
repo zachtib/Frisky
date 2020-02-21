@@ -91,7 +91,7 @@ class MemePlugin(FriskyPlugin):
 
         json = result.json()
         if json['success']:
-            return Image(json['data']['url'])
+            return Image(json['data']['url'], meme_name)
         return json['error_message']
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
