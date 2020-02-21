@@ -101,7 +101,7 @@ class MemePlugin(FriskyPlugin):
             json = result.json()
             slack_client.emergency_log(json)
             if json['success']:
-                return Image(json['data']['url'])
+                return Image(json['data']['url'], meme_name)
             return json['error_message']
         except Exception as err:
             slack_client.emergency_log(traceback.format_exc())

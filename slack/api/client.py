@@ -83,7 +83,7 @@ class SlackApiClient(object):
             default=lambda: self.__get(Team, 'team.info', 'team', team=workspace_id)
         )
 
-    def post_image(self, channel: Conversation, image_url: str, alt_text='') -> bool:
+    def post_image(self, channel: Conversation, image_url: str, alt_text='Image') -> bool:
         self.emergency_log(f'Sending image: {image_url}')
         return self.__post('chat.postMessage', channel=channel.id, blocks=[{
             'type': 'image',
