@@ -47,8 +47,6 @@ def handle_message_event(event: MessageSent):
         command='',
         args=tuple(),
     )
-    if settings.LOG_HANDLED_MESSAGES:
-        slack_api_client.emergency_log(message_event)
     frisky.handle_message(
         message_event,
         reply_channel=lambda reply: reply_channel(channel, reply)
@@ -81,6 +79,8 @@ def handle_reaction_event(event: ReactionAdded):
 
 @shared_task
 def process_event(data):
+    if settings.LOG_HANDLED_MESSAGES:
+        slack_api_client.emergency_log(data)
     logger.debug(f'Handling event from slack: ')
     if data['event'].get('subtype') in SUBTYPE_BLACKLIST:
         logger.debug(f'Ignoring {data["event_id"]}, subtype was in blacklist')
