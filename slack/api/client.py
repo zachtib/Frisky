@@ -26,13 +26,18 @@ class SlackApiClient(object):
         response = requests.get(f'https://slack.com/api/{method}', headers=self.__headers()).json()
 
         if not response['ok']:
+            self.emergency_log(response)
             return None
 
         return cls.create(response[key])
 
     def __post(self, method: str, **kwargs) -> bool:
-        response = requests.post(f'https://slack.com/api/{method}', json=kwargs, headers=self.__headers())
-        self.emergency_log(response.json())
+        response = requests.post(f'https://slack.com/api/{method}', json=kwargs, headers=self.__headers()).json()
+
+        if not response['ok']:
+            self.emergency_log(response)
+            return False
+
         return response.status_code == 200
 
     def __api_get_single_message(self, conversation_id, timestamp):
@@ -84,7 +89,6 @@ class SlackApiClient(object):
         )
 
     def post_image(self, channel: Conversation, image_url: str, alt_text='Image') -> bool:
-        self.emergency_log(f'Sending image: {image_url}')
         return self.__post('chat.postMessage', channel=channel.id, blocks=[{
             'type': 'image',
             'image_url': image_url,

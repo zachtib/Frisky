@@ -1,5 +1,4 @@
 import os
-import traceback
 from dataclasses import dataclass
 from typing import Tuple, Optional, Dict
 
@@ -66,14 +65,9 @@ class MemePlugin(FriskyPlugin):
 
         if len(message.args) != 3:
             return 'Usage: `?meme <meme_id> <text0> <text1>`'
-        # Major debug, do not do
-        from slack.api.client import SlackApiClient
-        from django.conf import settings
-        slack_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
 
         meme_name = message.args[0]
         meme_args = message.args[1:]
-        slack_client.emergency_log(f'{meme_name} {meme_args}')
 
         meme_id = MemeAlias.objects.get_id_for_alias(meme_name)
 
@@ -87,24 +81,17 @@ class MemePlugin(FriskyPlugin):
         if meme_id == -1:
             return 'NO SUCH MEME'
 
-        slack_client.emergency_log(str(meme_id))
-
-        try:
-            result = self.http.post(self.CAPTION_IMAGE_URL, data={
-                'template_id': meme_id,
-                'username': os.environ.get('IMGFLIP_USERNAME', ''),
-                'password': os.environ.get('IMGFLIP_PASSWORD', ''),
-                'text0': meme_args[0],
-                'text1': meme_args[1],
-            })
-            slack_client.emergency_log(result)
-            json = result.json()
-            slack_client.emergency_log(json)
-            if json['success']:
-                return Image(json['data']['url'], meme_name)
-            return json['error_message']
-        except Exception as err:
-            slack_client.emergency_log(traceback.format_exc())
+        result = self.http.post(self.CAPTION_IMAGE_URL, data={
+            'template_id': meme_id,
+            'username': os.environ.get('IMGFLIP_USERNAME', ''),
+            'password': os.environ.get('IMGFLIP_PASSWORD', ''),
+            'text0': meme_args[0],
+            'text1': meme_args[1],
+        })
+        json = result.json()
+        if json['success']:
+            return Image(json['data']['url'], meme_name)
+        return json['error_message']
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if message.command == 'memealias':

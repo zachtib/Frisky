@@ -20,7 +20,6 @@ def reply(client: SlackApiClient, conversation: Conversation, response: FriskyRe
         return client.post_message(conversation, response)
     if isinstance(response, Image):
         return client.post_image(conversation, response.url, response.alt_text)
-    client.emergency_log(f"Didn't know how to handle: {response}")
     return False
 
 
