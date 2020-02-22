@@ -12,7 +12,7 @@ from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
 
 logger = logging.getLogger(__name__)
 
-SUBTYPE_BLACKLIST = ['bot_message']
+SUBTYPE_BLACKLIST = ['bot_message', 'message_deleted']
 
 
 def reply(client: SlackApiClient, conversation: Conversation, response: FriskyResponse) -> bool:
@@ -29,8 +29,9 @@ def process_event(data):
     # noinspection PyBroadException
     try:
         if data['event'].get('subtype') in SUBTYPE_BLACKLIST:
-            logger.debug(f'Ignoring {data["event"]["event_id"]}, subtype was in blacklist')
-            return
+            return logger.debug(f'Ignoring {data["event"]["event_id"]}, subtype was in blacklist')
+        elif data['event'] == 'reaction_added' and not data.get('item_user'):
+            return logger.debug(f'Ignoring {data["event"]["event_id"]}, it had no item_user')
         event_wrapper: Event = Event.from_dict(data)
         event = event_wrapper.get_event()
         # team = slack_api_client.get_workspace(data['team_id'])
