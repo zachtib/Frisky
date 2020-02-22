@@ -28,9 +28,9 @@ def process_event(data):
     slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
     # noinspection PyBroadException
     try:
-        if data['event'].get('subtype') in SUBTYPE_BLACKLIST:
+        if data.get('event', {}).get('subtype') in SUBTYPE_BLACKLIST:
             return logger.debug(f'Ignoring {data["event"].get("event_id")}, subtype was in blacklist')
-        elif data['event'] == 'reaction_added' and not data.get('item_user'):
+        elif data.get('event', {}).get('type') == 'reaction_added' and not data.get('item_user'):
             return logger.debug(f'Ignoring {data["event"].get("event_id")}, it had no item_user')
         event_wrapper: Event = Event.from_dict(data)
         event = event_wrapper.get_event()

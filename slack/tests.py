@@ -3,13 +3,16 @@ import pytest
 from unittest import TestCase
 
 from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
+import responses
 from .test_data import *
 from .tasks import process_event
 
 
 @pytest.mark.parametrize('event_json', [bot_event_json, no_user_reaction_json, message_deleted_event])
 def test_ignore_msg(event_json):
-    assert process_event(json.loads(event_json)) is None
+    # Test will fail because emergency log will be called and response mock setup with 0 calls
+    with responses.RequestsMock() as rm:
+        assert process_event(json.loads(event_json)) is None
 
 
 class SlackApiModelsTestCase(TestCase):
