@@ -5,6 +5,7 @@ from unittest import TestCase
 from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
 import responses
 from .test_data import *
+from .api.tests import URL
 from .tasks import process_event
 
 
@@ -13,6 +14,12 @@ def test_ignore_msg(event_json):
     # Test will fail because emergency log will be called and response mock setup with 0 calls
     with responses.RequestsMock() as rm:
         assert process_event(json.loads(event_json)) is None
+
+
+def test_rubbish_handled():
+    with responses.RequestsMock() as rm:
+        rm.add('POST', f'{URL}/chat.postMessage')
+        assert process_event(json.loads(complete_and_utter_rubbish)) is None
 
 
 class SlackApiModelsTestCase(TestCase):

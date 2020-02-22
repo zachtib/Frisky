@@ -188,3 +188,5 @@ message_deleted_event = '''{
     "token": "SUCKATHISISSECRET",
     "type": "event_callback"
 }'''
+
+complete_and_utter_rubbish = '''{"msg": "just some rubbish for test coverage"}'''
