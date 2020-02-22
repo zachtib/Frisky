@@ -142,3 +142,51 @@ bot_event_json = '''{
         "token": "NONEYAFUCKINGBIZNASS",
         "type": "event_callback"
     }'''
+
+no_user_reaction_json = '''{
+    "api_app_id": "ARNN86LBU",
+    "authed_users": [
+        "US3BT1NJK"
+    ],
+    "event": {
+        "event_ts": "1582233893.005700",
+        "item": {
+            "channel": "G98JUGVN1",
+            "ts": "1582233843.005600",
+            "type": "message"
+        },
+        "item_user": "U5H8EPHFD",
+        "reaction": "cry",
+        "type": "reaction_added",
+        "user": "U5HEAEPGD"
+    },
+    "event_id": "EvUA38PA77",
+    "event_time": 1582233893,
+    "team_id": "T5J4V03V4",
+    "token": "BITCHGETAOUTAHERE",
+    "type": "event_callback"
+}'''
+
+message_deleted_event = '''{
+    "api_app_id": "ARNN86LBU",
+    "authed_users": [
+        "US3BT1NJK"
+    ],
+    "event": {
+        "channel": "CSTSDLCDS",
+        "channel_type": "channel",
+        "deleted_ts": "1582297826.141900",
+        "event_ts": "1582297852.016600",
+        "hidden": true,
+        "subtype": "message_deleted",
+        "ts": "",
+        "type": "message"
+    },
+    "event_id": "EvUB8VV90V",
+    "event_time": 1582297852,
+    "team_id": "T5J4V03V4",
+    "token": "SUCKATHISISSECRET",
+    "type": "event_callback"
+}'''
+
+complete_and_utter_rubbish = '''{"msg": "just some rubbish for test coverage"}'''
