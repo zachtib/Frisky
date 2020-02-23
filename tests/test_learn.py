@@ -95,6 +95,6 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing1')
         self.assertEqual(self.send_message('?test_1 100'), 'NO SUCH THING')
 
-    def test_quotesplit_at(self):
+    def test_that_learn_drop_at_from_username(self):
         reply = self.send_message('?learn @jcarreer I dont test')
         self.assertEqual(reply, 'Okay, learned jcarreer')

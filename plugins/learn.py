@@ -92,6 +92,8 @@ class LearnPlugin(FriskyPlugin):
         except (IndexError, ValueError):
             index = None
         label = message.args[0]
+        if label.startswith('@'):
+            label = label.lstrip('@')
 
         if num_args == 1:
             # Retrieve a random learn

@@ -36,7 +36,3 @@ class FriskyUtilTestCase(TestCase):
         result = quotesplit('foo "bar \'blah\'"')
         expected = ['foo', "bar 'blah'"]
         self.assertEqual(result, expected)
-
-    def test_quotesplit_with_at(self):
-        result = quotesplit('!ping @blah')
-        self.assertEqual(result, ['!ping', "blah"])
