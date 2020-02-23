@@ -1,7 +1,6 @@
 import logging
 import re
 import traceback
-from typing.re import Match
 
 from celery import shared_task
 from django.conf import settings
@@ -24,10 +23,10 @@ frisky = Frisky(
     ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
 )
 
-NICK_RE = re.compile(r'@<\w+>')
+NICK_RE = re.compile(r'<@\w+>')
 
 
-def declutter_username(match: Match[str]) -> str:
+def declutter_username(match) -> str:
     user_id = match.group()
     user = slack_api_client.get_user(user_id)
     return user.get_short_name()
