@@ -1,12 +1,13 @@
 import json
-import pytest
 from unittest import TestCase
 
-from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
+import pytest
 import responses
-from .test_data import *
+
+from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
 from .api.tests import URL
 from .tasks import process_event
+from .test_data import *
 
 
 @pytest.mark.parametrize('event_json', [bot_event_json, no_user_reaction_json, message_deleted_event])
@@ -112,3 +113,5 @@ class SlackApiModelsTestCase(TestCase):
     def test_create_with_none(self):
         convo = Conversation.create(None)
         self.assertIsNone(convo)
+
+

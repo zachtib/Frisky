@@ -1,5 +1,7 @@
 import logging
+import re
 import traceback
+from typing import Pattern, Match
 
 from celery import shared_task
 from django.conf import settings
@@ -12,20 +14,90 @@ from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
 
 logger = logging.getLogger(__name__)
 
-SUBTYPE_BLACKLIST = ['bot_message', 'message_deleted']
+SUBTYPE_BLACKLIST = ['bot_message', 'message_changed', 'message_deleted']
+
+slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
+
+frisky = Frisky(
+    name=settings.FRISKY_NAME,
+    prefix=settings.FRISKY_PREFIX,
+    ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
+)
+
+username_pattern: Pattern[str] = re.compile(r'<@(?P<user_id>\w+)>')
 
 
-def reply(client: SlackApiClient, conversation: Conversation, response: FriskyResponse) -> bool:
+def replace_usernames(match: Match[str]) -> str:
+    user_id = match.group('user_id')
+    user = slack_api_client.get_user(user_id)
+    if user is None:
+        return 'unknown'
+    return user.get_short_name()
+
+
+def sanitize_message_text(text: str) -> str:
+    text = username_pattern.sub(replace_usernames, text)
+    text = text.replace('“', '"').replace('”', '"')
+    return text
+
+
+def reply_channel(conversation: Conversation, response: FriskyResponse) -> bool:
     if isinstance(response, str):
-        return client.post_message(conversation, response)
+        return slack_api_client.post_message(conversation, response)
     if isinstance(response, Image):
-        return client.post_image(conversation, response.url, response.alt_text)
+        return slack_api_client.post_image(conversation, response.url, response.alt_text)
     return False
+
+
+def handle_message_event(event: MessageSent):
+    user = slack_api_client.get_user(event.user)
+    if event.channel_type == 'im':
+        # TODO: Is there an api method (or a reason) to look this up?
+        channel = Conversation(id=event.channel, name=user.name)
+    elif event.channel_type == 'channel':
+        channel = slack_api_client.get_channel(event.channel)
+    else:
+        return
+    message_event = MessageEvent(
+        username=user.get_short_name(),
+        channel_name=channel.name,
+        text=sanitize_message_text(event.text),
+        command='',
+        args=tuple(),
+    )
+    frisky.handle_message(
+        message_event,
+        reply_channel=lambda reply: reply_channel(channel, reply)
+    )
+
+
+def handle_reaction_event(event: ReactionAdded):
+    user = slack_api_client.get_user(event.user)
+    channel = slack_api_client.get_channel(event.item.channel)
+    item_user = slack_api_client.get_user(event.item_user)
+    added = event.type == 'reaction_added'
+    message = slack_api_client.get_message(channel, event.item.ts)
+    message_text = sanitize_message_text(message.text if message is not None else "")
+
+    frisky.handle_reaction(
+        ReactionEvent(
+            emoji=event.reaction,
+            username=user.get_short_name(),
+            added=added,
+            message=MessageEvent(
+                username=item_user.get_short_name(),
+                channel_name=channel.name,
+                text=message_text,
+                command='',
+                args=tuple(),
+            ),
+        ),
+        reply_channel=lambda reply: slack_api_client.post_message(channel, reply)
+    )
 
 
 @shared_task
 def process_event(data):
-    slack_api_client = SlackApiClient(settings.SLACK_ACCESS_TOKEN)
     # noinspection PyBroadException
     try:
         if data.get('event', {}).get('subtype') in SUBTYPE_BLACKLIST:
@@ -34,54 +106,12 @@ def process_event(data):
             return logger.debug(f'Ignoring {data["event"].get("event_id")}, it had no item_user')
         event_wrapper: Event = Event.from_dict(data)
         event = event_wrapper.get_event()
-        # team = slack_api_client.get_workspace(data['team_id'])
-        frisky = Frisky(
-            name=settings.FRISKY_NAME,
-            prefix=settings.FRISKY_PREFIX,
-            ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
-        )
 
-        if isinstance(event, ReactionAdded):
-            user = slack_api_client.get_user(event.user)
-            channel = slack_api_client.get_channel(event.item.channel)
-            item_user = slack_api_client.get_user(event.item_user)
-            added = event.type == 'reaction_added'
-            message = slack_api_client.get_message(channel, event.item.ts)
+        if isinstance(event, MessageSent):
+            handle_message_event(event)
+        elif isinstance(event, ReactionAdded):
+            handle_reaction_event(event)
 
-            frisky.handle_reaction(
-                ReactionEvent(
-                    emoji=event.reaction,
-                    username=user.get_short_name(),
-                    added=added,
-                    message=MessageEvent(
-                        username=item_user.get_short_name(),
-                        channel_name=channel.name,
-                        text=message.text,
-                        command='',
-                        args=tuple(),
-                    ),
-                ),
-                reply_channel=lambda reply: slack_api_client.post_message(channel, reply)
-            )
-        elif isinstance(event, MessageSent):
-            user = slack_api_client.get_user(event.user)
-            if event.channel_type == 'im':
-                # TODO: Is there an api method (or a reason) to look this up?
-                channel = Conversation(id=event.channel, name=user.name)
-            elif event.channel_type == 'channel':
-                channel = slack_api_client.get_channel(event.channel)
-            else:
-                return
-            frisky.handle_message(
-                MessageEvent(
-                    username=user.get_short_name(),
-                    channel_name=channel.name,
-                    text=event.text,
-                    command='',
-                    args=tuple(),
-                ),
-                reply_channel=lambda res: reply(slack_api_client, channel, res)
-            )
     except KeyError as err:
         stacktrace = traceback.format_exc()
         slack_api_client.emergency_log(stacktrace)
