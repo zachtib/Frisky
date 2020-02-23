@@ -1,7 +1,7 @@
 from typing import Tuple, List
 
 
-def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tuple[chr] = ('"',)) -> List[str]:
+def quotesplit(string: str, separators: Tuple[str, ...] = (' ', '\t'), groupers: Tuple[str, ...] = ('"',)) -> List[str]:
     """
     Split the input string, string, into a list of substrings while respecting nested grouping of strings
     :param string: The string to split

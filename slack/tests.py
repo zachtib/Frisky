@@ -1,12 +1,14 @@
 import json
-import pytest
 from unittest import TestCase
 
-from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
+import pytest
 import responses
-from .test_data import *
+
+from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
 from .api.tests import URL
-from .tasks import process_event
+from .api.tests import USER_OK
+from .tasks import process_event, sanitize_message_text
+from .test_data import *
 
 
 @pytest.mark.parametrize('event_json', [bot_event_json, no_user_reaction_json, message_deleted_event])
@@ -112,3 +114,12 @@ class SlackApiModelsTestCase(TestCase):
     def test_create_with_none(self):
         convo = Conversation.create(None)
         self.assertIsNone(convo)
+
+
+class EventHandlingTestCase(TestCase):
+
+    def test_username_substitution(self):
+        with responses.RequestsMock() as rm:
+            rm.add('GET', f'{URL}/users.info?user=W012A3CDE', body=USER_OK)
+            result = sanitize_message_text('<@W012A3CDE> is a jerk')
+            self.assertEqual('spengler is a jerk', result)

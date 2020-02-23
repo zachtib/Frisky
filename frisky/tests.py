@@ -36,3 +36,7 @@ class FriskyUtilTestCase(TestCase):
         result = quotesplit('foo "bar \'blah\'"')
         expected = ['foo', "bar 'blah'"]
         self.assertEqual(result, expected)
+
+    def test_quotesplit_errors_with_dupe_chars(self):
+        with self.assertRaises(ValueError):
+            quotesplit("", separators=('a', 'b'), groupers=('b', 'c'))
