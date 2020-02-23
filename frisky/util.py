@@ -1,11 +1,6 @@
 from typing import Tuple, List
 
 
-def sanitize(string: str) -> str:
-    string = string.replace('“', '"').replace('”', '"')
-    return string
-
-
 def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tuple[chr] = ('"',)) -> List[str]:
     """
     Split the input string, string, into a list of substrings while respecting nested grouping of strings
@@ -18,8 +13,6 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
     intersection = [value for value in separators if value in groupers]
     if len(intersection) > 0:
         raise ValueError(f'No characters can be shared between separators and groupers: {intersection}')
-
-    string = sanitize(string)
 
     result: List[str] = []
     stack: List[chr] = []

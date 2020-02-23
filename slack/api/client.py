@@ -23,10 +23,7 @@ class SlackApiClient(object):
         if len(kwargs) > 0:
             method += '?' + '&'.join([f'{key}={value}' for key, value in kwargs.items()])
 
-        url = f'https://slack.com/api/{method}'
-        print(url)
-        response = requests.get(url, headers=self.__headers()).json()
-        print(response)
+        response = requests.get(f'https://slack.com/api/{method}', headers=self.__headers()).json()
 
         if not response['ok']:
             self.emergency_log(response)
@@ -59,7 +56,6 @@ class SlackApiClient(object):
         )
 
     def get_user(self, user_id) -> Optional[User]:
-        print(f'Getting user {user_id}')
         return cache.get_or_set(
             key=User.create_key(user_id),
             default=lambda: self.__get(User, 'users.info', 'user', user=user_id)

@@ -36,7 +36,9 @@ def replace_usernames(match: Match[str]) -> str:
 
 
 def sanitize_message_text(text: str) -> str:
-    return username_pattern.sub(replace_usernames, text)
+    text = username_pattern.sub(replace_usernames, text)
+    text = text.replace('“', '"').replace('”', '"')
+    return text
 
 
 def reply_channel(conversation: Conversation, response: FriskyResponse) -> bool:
