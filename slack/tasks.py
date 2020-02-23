@@ -99,8 +99,6 @@ def handle_reaction_event(event: ReactionAdded):
 
 @shared_task
 def process_event(data):
-    if settings.LOG_HANDLED_MESSAGES:
-        logger.warning(data)
     logger.debug(f'Handling event from slack: ')
     if data['event'].get('subtype') in SUBTYPE_BLACKLIST:
         logger.debug(f'Ignoring {data["event_id"]}, subtype was in blacklist')
