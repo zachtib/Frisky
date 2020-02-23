@@ -69,7 +69,6 @@ class LearnPlugin(FriskyPlugin):
         return None
 
     def learn(self, message: MessageEvent) -> Optional[str]:
-        return f'`{message.command}`: {" ".join(f"`{x}`" for x in message.args)}'
         """
 
         Potential cases:

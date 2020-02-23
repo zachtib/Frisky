@@ -1,6 +1,7 @@
 import logging
 import re
 import traceback
+from typing import Pattern, Match
 
 from celery import shared_task
 from django.conf import settings
@@ -23,13 +24,19 @@ frisky = Frisky(
     ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
 )
 
-NICK_RE = re.compile(r'<@\w+>')
+username_pattern: Pattern[str] = re.compile(r'<@(?P<user_id>\w+)>')
 
 
-def declutter_username(match) -> str:
-    user_id = match.group()
+def replace_usernames(match: Match[str]) -> str:
+    user_id = match.group('user_id')
     user = slack_api_client.get_user(user_id)
+    if user is None:
+        return 'unknown'
     return user.get_short_name()
+
+
+def sanitize_message_text(text: str) -> str:
+    return username_pattern.sub(replace_usernames, text)
 
 
 def reply_channel(conversation: Conversation, response: FriskyResponse) -> bool:
@@ -53,7 +60,7 @@ def handle_message_event(event: MessageSent):
     message_event = MessageEvent(
         username=user.get_short_name(),
         channel_name=channel.name,
-        text=re.sub(NICK_RE, declutter_username, event.text),
+        text=sanitize_message_text(event.text),
         command='',
         args=tuple(),
     )
@@ -69,6 +76,7 @@ def handle_reaction_event(event: ReactionAdded):
     item_user = slack_api_client.get_user(event.item_user)
     added = event.type == 'reaction_added'
     message = slack_api_client.get_message(channel, event.item.ts)
+    message_text = sanitize_message_text(message.text if message is not None else "")
 
     frisky.handle_reaction(
         ReactionEvent(
@@ -78,7 +86,7 @@ def handle_reaction_event(event: ReactionAdded):
             message=MessageEvent(
                 username=item_user.get_short_name(),
                 channel_name=channel.name,
-                text=message.text if message is not None else "",
+                text=message_text,
                 command='',
                 args=tuple(),
             ),
