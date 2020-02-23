@@ -29,6 +29,8 @@ NICK_RE = re.compile(r'<@\w+>')
 def declutter_username(match) -> str:
     user_id = match.group()
     user = slack_api_client.get_user(user_id)
+    if user is None:
+        return 'unknown'
     return user.get_short_name()
 
 

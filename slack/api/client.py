@@ -56,6 +56,7 @@ class SlackApiClient(object):
         )
 
     def get_user(self, user_id) -> Optional[User]:
+        print(f'Getting user {user_id}')
         return cache.get_or_set(
             key=User.create_key(user_id),
             default=lambda: self.__get(User, 'users.info', 'user', user=user_id)
