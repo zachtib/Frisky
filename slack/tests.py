@@ -6,8 +6,7 @@ import responses
 
 from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
 from .api.tests import URL
-from .api.tests import USER_OK
-from .tasks import process_event, sanitize_message_text
+from .tasks import process_event
 from .test_data import *
 
 
@@ -116,10 +115,3 @@ class SlackApiModelsTestCase(TestCase):
         self.assertIsNone(convo)
 
 
-class EventHandlingTestCase(TestCase):
-
-    def test_username_substitution(self):
-        with responses.RequestsMock() as rm:
-            rm.add('GET', f'{URL}/users.info?user=W012A3CDE', body=USER_OK)
-            result = sanitize_message_text('<@W012A3CDE> is a jerk')
-            self.assertEqual('spengler is a jerk', result)
