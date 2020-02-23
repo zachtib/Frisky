@@ -51,7 +51,6 @@ def reply_channel(conversation: Conversation, response: FriskyResponse) -> bool:
 
 def handle_message_event(event: MessageSent):
     user = slack_api_client.get_user(event.user)
-    print(f'sending user: {user}')
     if event.channel_type == 'im':
         # TODO: Is there an api method (or a reason) to look this up?
         channel = Conversation(id=event.channel, name=user.name)
