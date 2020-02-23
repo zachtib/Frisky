@@ -18,16 +18,11 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
     stack: List[chr] = []
     substring: str = ""
 
-    def add_token(token: str):
-        if token.startswith('@'):
-            token = token.lstrip('@')
-        result.append(token)
-
     for character in string:
         if character in separators:
             if len(stack) == 0:
                 if len(substring) > 0:
-                    add_token(substring)
+                    result.append(substring)
                     substring = ''
             else:
                 substring += character
@@ -38,7 +33,7 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
                 if stack[-1] == character:
                     stack.pop()
                     if len(stack) == 0:
-                        add_token(substring)
+                        result.append(substring)
                         substring = ''
                     else:
                         substring += character
@@ -49,6 +44,6 @@ def quotesplit(string: str, separators: Tuple[chr] = (' ', '\t'), groupers: Tupl
             substring += character
 
     if len(substring) > 0:
-        add_token(substring)
+        result.append(substring)
 
     return result
