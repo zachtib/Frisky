@@ -29,8 +29,6 @@ NICK_RE = re.compile(r'<@\w+>')
 def declutter_username(match) -> str:
     user_id = match.group()
     user = slack_api_client.get_user(user_id)
-    if user is None:
-        return 'unknown'
     return user.get_short_name()
 
 
@@ -44,6 +42,7 @@ def reply_channel(conversation: Conversation, response: FriskyResponse) -> bool:
 
 def handle_message_event(event: MessageSent):
     user = slack_api_client.get_user(event.user)
+    print(f'sending user: {user}')
     if event.channel_type == 'im':
         # TODO: Is there an api method (or a reason) to look this up?
         channel = Conversation(id=event.channel, name=user.name)
