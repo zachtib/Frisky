@@ -23,7 +23,9 @@ class SlackApiClient(object):
         if len(kwargs) > 0:
             method += '?' + '&'.join([f'{key}={value}' for key, value in kwargs.items()])
 
-        response = requests.get(f'https://slack.com/api/{method}', headers=self.__headers()).json()
+        url = f'https://slack.com/api/{method}'
+        print(url)
+        response = requests.get(url, headers=self.__headers()).json()
         print(response)
 
         if not response['ok']:
