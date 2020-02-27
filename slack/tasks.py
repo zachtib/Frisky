@@ -54,7 +54,7 @@ def handle_message_event(event: MessageSent):
     if event.channel_type == 'im':
         # TODO: Is there an api method (or a reason) to look this up?
         channel = Conversation(id=event.channel, name=user.name)
-    elif event.channel_type == 'channel':
+    elif event.channel_type in ('channel', 'group'):
         channel = slack_api_client.get_channel(event.channel)
     else:
         return
