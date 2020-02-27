@@ -67,9 +67,13 @@ def handle_message_event(event: MessageSent):
 
 
 def handle_reaction_event(event: ReactionAdded):
+    logger.debug(f'Received: {event}')
     user = slack_api_client.get_user(event.user)
+    logger.debug(f'Got user from api: {user}')
     channel = slack_api_client.get_channel(event.item.channel)
+    logger.debug(f'Got channel from api: {channel}')
     item_user = slack_api_client.get_user(event.item_user)
+    logger.debug(f'Got user from api: {item_user}')
     added = event.type == 'reaction_added'
 
     message_text = None
@@ -77,6 +81,8 @@ def handle_reaction_event(event: ReactionAdded):
         message = slack_api_client.get_message(channel, event.item.ts)
         if message is not None:
             message_text = sanitize_message_text(message.text)
+    else:
+        logger.debug('Did not query api for message, because we are in a private channel')
 
     frisky.handle_reaction(
         ReactionEvent(
@@ -87,8 +93,6 @@ def handle_reaction_event(event: ReactionAdded):
                 username=item_user.get_short_name(),
                 channel_name=channel.name,
                 text=message_text,
-                command='',
-                args=tuple(),
             ),
         ),
         reply_channel=lambda reply: slack_api_client.post_message(channel, reply)

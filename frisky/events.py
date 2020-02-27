@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 @dataclass
 class MessageEvent(object):
     username: str
     channel_name: str
-    text: str
+    text: Optional[str]
     command: str = ""
     args: Tuple[str] = tuple()
 
