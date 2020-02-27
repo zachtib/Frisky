@@ -7,8 +7,8 @@ class MessageEvent(object):
     username: str
     channel_name: str
     text: str
-    command: str
-    args: Tuple[str]
+    command: str = ""
+    args: Tuple[str] = tuple()
 
 
 @dataclass

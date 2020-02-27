@@ -89,7 +89,7 @@ class EventHandlingTestCase(TestCase):
         expected = MessageEvent(
             username='spengler',
             channel_name='general',
-            text='I like to :poop:',
+            text='?I like to :poop:',
             command='',
             args=tuple()
         )
@@ -110,7 +110,7 @@ class EventHandlingTestCase(TestCase):
                 handle_message_event(MessageSent(
                     channel='123',
                     user='W012A3CDE',
-                    text='I like to :poop:',
+                    text='?I like to :poop:',
                     ts='123',
                     event_ts='123',
                     channel_type='channel'

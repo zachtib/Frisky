@@ -189,3 +189,47 @@ message_deleted_event = '''{
 }'''
 
 complete_and_utter_rubbish = '''{"msg": "just some rubbish for test coverage"}'''
+
+dm_json = '''{
+        "id": "D00000000",
+        "created": 1582815028,
+        "is_archived": false,
+        "is_im": true,
+        "is_org_shared": false,
+        "user": "U00000000",
+        "last_read": "0000000000.000000",
+        "latest": {
+            "bot_id": "B00000000",
+            "type": "message",
+            "text": "pong",
+            "user": "U00000000",
+            "ts": "1582815032.000300",
+            "team": "T00000000",
+            "bot_profile": {
+                "id": "B00000000",
+                "deleted": false,
+                "name": "Risky",
+                "updated": 1581702916,
+                "app_id": "A00000000",
+                "icons": {
+                    "image_36": "https://avatars.slack-edge.com/2020-02-14/952745718468_58cea6ae8be276fc1f1e_36.png",
+                    "image_48": "https://avatars.slack-edge.com/2020-02-14/952745718468_58cea6ae8be276fc1f1e_48.png",
+                    "image_72": "https://avatars.slack-edge.com/2020-02-14/952745718468_58cea6ae8be276fc1f1e_72.png"
+                },
+                "team_id": "T00000000"
+            },
+            "reactions": [
+                {
+                    "name": "upvote",
+                    "users": [
+                        "U00000000"
+                    ],
+                    "count": 1
+                }
+            ]
+        },
+        "unread_count": 2,
+        "unread_count_display": 1,
+        "is_open": false,
+        "priority": 0
+    }'''

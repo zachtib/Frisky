@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -118,7 +118,11 @@ class User(BaseModel):
 @dataclass
 class Conversation(BaseModel):
     id: str
-    name: str
+    name: Optional[str] = None
+    is_channel: bool = False
+    is_group: bool = False
+    is_private: bool = False
+    is_im: bool = False
 
 
 @dataclass

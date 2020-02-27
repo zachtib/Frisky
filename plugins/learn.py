@@ -29,7 +29,9 @@ class LearnPlugin(FriskyPlugin):
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.emoji == 'brain':
-            return self.create_new_learn(reaction.message.username, reaction.message.text)
+            if reaction.message.text is not None:
+                return self.create_new_learn(reaction.message.username, reaction.message.text)
+            return 'This is a learning-free zone!'
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         if message.command in ['learn_count', 'lc']:
