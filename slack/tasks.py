@@ -100,10 +100,14 @@ def handle_reaction_event(event: ReactionAdded):
 def process_event(data):
     # noinspection PyBroadException
     try:
-        if data.get('event', {}).get('subtype') in SUBTYPE_BLACKLIST:
-            return logger.debug(f'Ignoring {data["event"].get("event_id")}, subtype was in blacklist')
-        elif data.get('event', {}).get('type') == 'reaction_added' and not data.get('item_user'):
-            return logger.debug(f'Ignoring {data["event"].get("event_id")}, it had no item_user')
+        event_id = data["event"].get("event_id")
+        event_type = data.get('event', {}).get('type')
+        event_subtype = data.get('event', {}).get('subtype')
+        item_user = data.get('event', {}).get('item_user')
+        if event_subtype in SUBTYPE_BLACKLIST:
+            return logger.debug(f'Ignoring {event_id}, subtype was in blacklist')
+        elif event_type == 'reaction_added' and not item_user:
+            return logger.debug(f'Ignoring {event_id}, it had no item_user')
         event_wrapper: Event = Event.from_dict(data)
         event = event_wrapper.get_event()
 

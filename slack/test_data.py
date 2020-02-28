@@ -155,7 +155,6 @@ no_user_reaction_json = '''{
             "ts": "1582233843.005600",
             "type": "message"
         },
-        "item_user": "U5H8EPHFD",
         "reaction": "cry",
         "type": "reaction_added",
         "user": "U5HEAEPGD"
