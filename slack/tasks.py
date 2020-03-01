@@ -67,13 +67,9 @@ def handle_message_event(event: MessageSent):
 
 
 def handle_reaction_event(event: ReactionAdded):
-    logger.debug(f'Received: {event}')
     user = slack_api_client.get_user(event.user)
-    logger.debug(f'Got user from api: {user}')
     channel = slack_api_client.get_channel(event.item.channel)
-    logger.debug(f'Got channel from api: {channel}')
     item_user = slack_api_client.get_user(event.item_user)
-    logger.debug(f'Got user from api: {item_user}')
     added = event.type == 'reaction_added'
 
     message_text = None
