@@ -50,23 +50,18 @@ def reply_channel(conversation: Conversation, response: FriskyResponse) -> bool:
 
 
 def handle_message_event(event: MessageSent):
-    user = slack_api_client.get_user(event.user)
-    if event.channel_type == 'im':
-        # TODO: Is there an api method (or a reason) to look this up?
-        channel = Conversation(id=event.channel, name=user.name)
-    elif event.channel_type == 'channel':
-        channel = slack_api_client.get_channel(event.channel)
-    else:
+    if not event.text.startswith(settings.FRISKY_PREFIX):
         return
-    message_event = MessageEvent(
-        username=user.get_short_name(),
-        channel_name=channel.name,
-        text=sanitize_message_text(event.text),
-        command='',
-        args=tuple(),
-    )
+
+    user = slack_api_client.get_user(event.user)
+    channel = slack_api_client.get_channel(event.channel)
+
     frisky.handle_message(
-        message_event,
+        MessageEvent(
+            username=user.get_short_name(),
+            channel_name=channel.name,
+            text=sanitize_message_text(event.text),
+        ),
         reply_channel=lambda reply: reply_channel(channel, reply)
     )
 
@@ -76,8 +71,14 @@ def handle_reaction_event(event: ReactionAdded):
     channel = slack_api_client.get_channel(event.item.channel)
     item_user = slack_api_client.get_user(event.item_user)
     added = event.type == 'reaction_added'
-    message = slack_api_client.get_message(channel, event.item.ts)
-    message_text = sanitize_message_text(message.text if message is not None else "")
+
+    message_text = None
+    if not channel.is_private:
+        message = slack_api_client.get_message(channel, event.item.ts)
+        if message is not None:
+            message_text = sanitize_message_text(message.text)
+    else:
+        logger.debug('Did not query api for message, because we are in a private channel')
 
     frisky.handle_reaction(
         ReactionEvent(
@@ -88,8 +89,6 @@ def handle_reaction_event(event: ReactionAdded):
                 username=item_user.get_short_name(),
                 channel_name=channel.name,
                 text=message_text,
-                command='',
-                args=tuple(),
             ),
         ),
         reply_channel=lambda reply: slack_api_client.post_message(channel, reply)

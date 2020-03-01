@@ -114,4 +114,8 @@ class SlackApiModelsTestCase(TestCase):
         convo = Conversation.create(None)
         self.assertIsNone(convo)
 
-
+    def test_dm_deserialization(self):
+        convo = Conversation.from_json(dm_json)
+        self.assertIsNotNone(convo)
+        self.assertIsNone(convo.name)
+        self.assertTrue(convo.is_im)
