@@ -1,9 +1,8 @@
-import re
 from typing import Tuple, Optional
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
-from frisky.responses import Image, FriskyResponse
+from frisky.responses import FriskyResponse
 from learns.queries import add_learn, get_random_learn, get_learn_indexed, get_learned_label_counts
 
 
@@ -40,8 +39,8 @@ class LearnPlugin(FriskyPlugin):
             return self.learn_count()
         else:
             result = self.learn(message)
-            if re.match(r'^https?://[\w/.]+\.(?:jpg|gif|png)$', result):
-                result = Image(result)
+            # if re.match(r'^https?://[\w/.]+\.(?:jpg|gif|png)$', result):
+            #     return Image(result)
             return result
 
     @staticmethod
