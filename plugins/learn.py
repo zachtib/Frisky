@@ -1,7 +1,9 @@
+import re
 from typing import Tuple, Optional
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
+from frisky.responses import Image, FriskyResponse
 from learns.queries import add_learn, get_random_learn, get_learn_indexed, get_learned_label_counts
 
 
@@ -33,11 +35,14 @@ class LearnPlugin(FriskyPlugin):
                 return self.create_new_learn(reaction.message.username, reaction.message.text)
             return 'This is a learning-free zone!'
 
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
+    def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if message.command in ['learn_count', 'lc']:
             return self.learn_count()
         else:
-            return self.learn(message)
+            result = self.learn(message)
+            if re.match(r'^https?://[\w/.]+\.(?:jpg|gif|png)$', result):
+                result = Image(result)
+            return result
 
     @staticmethod
     def learn_count() -> Optional[str]:

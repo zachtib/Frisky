@@ -77,7 +77,11 @@ def handle_reaction_event(event: ReactionAdded):
     if not channel.is_private:
         message = slack_api_client.get_message(channel, event.item.ts)
         if message is not None:
-            message_text = sanitize_message_text(message.text)
+            if len(message.text) > 0:
+                message_text = sanitize_message_text(message.text)
+            elif message.files is not None and len(message.files) > 0:
+                message_text = message.files[0].permalink
+
     else:
         logger.debug('Did not query api for message, because we are in a private channel')
 
