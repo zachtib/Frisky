@@ -114,7 +114,8 @@ def process_event(data):
             handle_message_event(event)
         elif isinstance(event, ReactionAdded):
             if event.reaction == 'dumpling':
-                slack_api_client.emergency_log(str(data))
+                raw_message = slack_api_client.get_message_raw(event.item.channel, event.item.ts)
+                slack_api_client.emergency_log(str(raw_message))
             handle_reaction_event(event)
 
     except KeyError as err:
