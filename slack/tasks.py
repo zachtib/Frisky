@@ -1,6 +1,7 @@
 import logging
 import re
 import traceback
+from pprint import pprint
 from typing import Pattern, Match
 
 from celery import shared_task
@@ -113,9 +114,9 @@ def process_event(data):
         if isinstance(event, MessageSent):
             handle_message_event(event)
         elif isinstance(event, ReactionAdded):
-            if event.reaction == 'dumpling':
+            if event.type == 'reaction_added' and event.reaction == 'dumpling':
                 raw_message = slack_api_client.get_message_raw(event.item.channel, event.item.ts)
-                slack_api_client.emergency_log(str(raw_message))
+                slack_api_client.emergency_log(pprint(raw_message))
             handle_reaction_event(event)
 
     except KeyError as err:
