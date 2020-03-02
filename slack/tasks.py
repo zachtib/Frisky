@@ -113,6 +113,8 @@ def process_event(data):
         if isinstance(event, MessageSent):
             handle_message_event(event)
         elif isinstance(event, ReactionAdded):
+            if event.reaction == 'dumpling':
+                slack_api_client.emergency_log(str(data))
             handle_reaction_event(event)
 
     except KeyError as err:
