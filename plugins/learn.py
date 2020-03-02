@@ -72,7 +72,7 @@ class LearnPlugin(FriskyPlugin):
         if content.startswith('?'):
             return "DON'T HURT ME AGAIN"
         if add_learn(label, content):
-            return f'Okay, learned {label}'
+            return f'Okay, learned {label} as {content}'
         return None
 
     def learn(self, message: MessageEvent) -> Optional[str]:
