@@ -38,7 +38,7 @@ class Frisky(object):
                 for item_name, item in inspect.getmembers(submodule):
                     if inspect.isclass(item) and item is not FriskyPlugin and issubclass(item, FriskyPlugin):
                         self.__load_plugin_from_class(name, item)
-        for plugin in self.__loaded_plugins:
+        for plugin in self.__loaded_plugins.values():
             if isinstance(plugin, PluginRepositoryMixin):
                 plugin.loaded_plugins = self.__loaded_plugins
 
