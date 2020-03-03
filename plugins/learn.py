@@ -38,10 +38,7 @@ class LearnPlugin(FriskyPlugin):
         if message.command in ['learn_count', 'lc']:
             return self.learn_count()
         else:
-            result = self.learn(message)
-            # if re.match(r'^https?://[\w/.]+\.(?:jpg|gif|png)$', result):
-            #     return Image(result)
-            return result
+            return self.learn(message)
 
     @staticmethod
     def learn_count() -> Optional[str]:
