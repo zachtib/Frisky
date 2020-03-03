@@ -28,5 +28,5 @@ class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
             channel_name=message.channel_name,
             text='',
             command='meme',
-            args=[meme_id, '', meme_message],
+            args=[message.args[0], '', meme_message],
         ))
