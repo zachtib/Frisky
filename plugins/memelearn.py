@@ -26,7 +26,7 @@ class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
         return self.get_plugin_for_command('meme').handle_message(MessageEvent(
             username=message.username,
             channel_name=message.channel_name,
-            text=f'?meme {meme_id} "" "{message}"',
+            text='',
             command='meme',
-            args=['', meme_message],
+            args=[meme_id, '', meme_message],
         ))
