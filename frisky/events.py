@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Tuple, Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
 
 
 @dataclass
@@ -8,7 +8,7 @@ class MessageEvent(object):
     channel_name: str
     text: Optional[str]
     command: str = ""
-    args: Tuple[str] = tuple()
+    args: List[str] = field(default_factory=list)
 
 
 @dataclass

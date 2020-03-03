@@ -5,9 +5,9 @@ import pkgutil
 from typing import Dict, List, Tuple, Callable
 
 from frisky.events import MessageEvent, ReactionEvent
+from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
 from frisky.responses import FriskyResponse
 from frisky.util import quotesplit
-from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class Frisky(object):
     __message_handlers: Dict[str, List[FriskyPlugin]]
     __reaction_handlers: Dict[str, List[FriskyPlugin]]
 
-    def __init__(self, name, prefix='?', ignored_channels=tuple(), plugin_modules=('plugins',)) -> None:
+    def __init__(self, name, prefix='?', ignored_channels=(), plugin_modules=('plugins',)) -> None:
         super().__init__()
         self.name = name
         self.prefix = prefix
@@ -68,11 +68,11 @@ class Frisky(object):
 
     @staticmethod
     def convert_message_to_generic(message: MessageEvent) -> MessageEvent:
-        message.args = (message.command,) + message.args
+        message.args = [message.command] + message.args
         message.command = '*'
         return message
 
-    def __show_help_text(self, args: Tuple[str], reply_channel: Callable[[str], bool]) -> None:
+    def __show_help_text(self, args: List[str], reply_channel: Callable[[str], bool]) -> None:
         if len(args) == 1:
             plugin_name = args[0]
             if plugin_name == 'help':
@@ -115,17 +115,17 @@ class Frisky(object):
             if reply is not None:
                 reply_channel(reply)
 
-    def parse_message_string(self, message: str) -> Tuple[str, Tuple[str]]:
+    def parse_message_string(self, message: str) -> Tuple[str, List[str]]:
         if message is None or len(message) == 0:
-            return '', tuple()
+            return '', []
         if message.startswith(self.prefix):
             message = message[len(self.prefix):]
         elif message.startswith(f'@{self.name}'):
             message = message[len(self.name) + 1:]
         else:
-            return '', tuple()
+            return '', []
         message = message.strip()
         tokens = quotesplit(message)
         command = tokens[0]
-        args = tuple(tokens[1:])
+        args = tokens[1:]
         return command, args

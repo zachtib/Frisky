@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
@@ -28,7 +28,7 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
                 item = ' '.join([item, previous_result])
             split_item = item.strip(' ').split(' ')
             command: str = split_item[0]
-            args: Tuple[str] = tuple(split_item[1:])
+            args: List[str] = split_item[1:]
             plugin = self.get_plugin_for_command(command)
             event = MessageEvent(
                 username=message.username,

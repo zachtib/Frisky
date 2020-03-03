@@ -11,7 +11,7 @@ class FriskyBotTestCase(TestCase):
 
     def test_simple_message_parsing(self):
         result = self.frisky.parse_message_string('?help')
-        expected = ('help', ())
+        expected = ('help', [])
         self.assertTupleEqual(result, expected)
 
 

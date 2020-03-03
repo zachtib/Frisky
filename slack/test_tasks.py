@@ -90,8 +90,6 @@ class EventHandlingTestCase(TestCase):
             username='spengler',
             channel_name='general',
             text='?I like to :poop:',
-            command='',
-            args=tuple()
         )
         result = None
 
@@ -128,8 +126,6 @@ class EventHandlingTestCase(TestCase):
                 username='spengler',
                 channel_name='general',
                 text='I find you punny and would like to smell your nose letter',
-                command='',
-                args=tuple()
             )
         )
         result = None
