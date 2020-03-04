@@ -1,7 +1,7 @@
 from unittest import mock
 
 from frisky.test import FriskyTestCase
-from learns.queries import get_all_learns, get_random_learn
+from learns.queries import get_all_learns, get_random_learn_for_label
 
 
 class LearnTestCase(FriskyTestCase):
@@ -31,7 +31,7 @@ class LearnTestCase(FriskyTestCase):
         self.assertEqual(self.send_reaction('brain', 'jim', 'jarjar'), 'Okay, learned jarjar')
 
     def test_get_nonexistant_learn(self):
-        self.assertRaises(ValueError, lambda: get_random_learn('xyzzy'))
+        self.assertRaises(ValueError, lambda: get_random_learn_for_label('xyzzy'))
 
     def test_adding_a_learn(self):
         self.send_message("?learn test foobar")
@@ -82,13 +82,22 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing2')
         self.assertEqual(self.send_message('?learn_count'), '*Counts*\n • test_1: 3\n • test_2: 2')
 
-    def test_get_random(self):
+    def test_get_random_labeled(self):
         self.send_message('?learn test_1 thing1')
         self.send_message('?learn test_1 thing2')
         self.send_message('?learn test_1 thing3')
         patcher = mock.patch(target='learns.queries.randint', new=lambda *a, **k: 1)
         patcher.start()
         self.assertEqual(self.send_message('?test_1'), 'thing2')
+        patcher.stop()
+
+    def test_get_random(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_2 thing2')
+        self.send_message('?learn test_3 thing3')
+        patcher = mock.patch(target='learns.queries.randint', new=lambda *a, **k: 1)
+        patcher.start()
+        self.assertEqual(self.send_message('?random'), 'test_2: thing2')
         patcher.stop()
 
     def test_no_such_thing(self):

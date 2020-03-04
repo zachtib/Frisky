@@ -2,7 +2,9 @@ from typing import Tuple, Optional
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
-from learns.queries import add_learn, get_random_learn, get_learn_indexed, get_learned_label_counts
+from frisky.responses import FriskyResponse
+from learns.queries import add_learn, get_random_learn_for_label, get_random_learn, get_learn_indexed, \
+    get_learned_label_counts
 
 
 class LearnPlugin(FriskyPlugin):
@@ -25,7 +27,7 @@ class LearnPlugin(FriskyPlugin):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return 'learn', 'lc', 'learn_count', '*'
+        return 'learn', 'lc', 'learn_count', 'random', '*'
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.emoji == 'brain':
@@ -36,6 +38,8 @@ class LearnPlugin(FriskyPlugin):
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         if message.command in ['learn_count', 'lc']:
             return self.learn_count()
+        elif message.command == 'random':
+            return self.random()
         else:
             return self.learn(message)
 
@@ -46,11 +50,11 @@ class LearnPlugin(FriskyPlugin):
     @staticmethod
     def get_random_learn_for_label(label: str) -> str:
         try:
-            return get_random_learn(label).content
+            return get_random_learn_for_label(label).content
         except ValueError:
             pass
         try:
-            return get_random_learn('error').content
+            return get_random_learn_for_label('error').content
         except ValueError:
             pass
         return 'I got nothing, boss'
@@ -68,6 +72,13 @@ class LearnPlugin(FriskyPlugin):
             return "DON'T HURT ME AGAIN"
         if add_learn(label, content):
             return f'Okay, learned {label}'
+        return None
+
+    @staticmethod
+    def random() -> FriskyResponse:
+        learn = get_random_learn()
+        if learn:
+            return f'{learn.label}: {learn.content}'
         return None
 
     def learn(self, message: MessageEvent) -> Optional[str]:
