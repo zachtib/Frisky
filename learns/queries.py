@@ -24,7 +24,14 @@ def get_learn_indexed(label: str, index: int):
     return learns[int(index)]
 
 
-def get_random_learn(label):
+def get_random_learn():
+    all_learns = Learn.objects.all()
+    count = all_learns.aggregate(count=Count('id'))['count']
+    random_index = randint(0, count - 1)
+    return all_learns[random_index]
+
+
+def get_random_learn_for_label(label):
     learns = get_all_learns(label)
     count = learns.aggregate(count=Count('id'))['count']
     random_index = randint(0, count - 1)
