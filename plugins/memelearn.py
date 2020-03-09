@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
@@ -8,6 +8,11 @@ from memes.models import MemeAlias
 
 
 class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
+    _help_text = 'Usage: `?memelearn <THING TO MEME>`'
+
+    @classmethod
+    def help_text(cls) -> Optional[str]:
+        return cls._help_text
 
     @classmethod
     def register_commands(cls) -> Tuple:
@@ -15,7 +20,7 @@ class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if len(message.args) != 1 or message.args[0] == 'help':
-            return 'Usage: `?memelearn <THING TO MEME>`'
+            return self._help_text
         meme_id = MemeAlias.objects.get_id_for_alias(message.args[0])
         if meme_id == -1:
             return 'NO SUCH MEME'
