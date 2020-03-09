@@ -55,6 +55,13 @@ class SlackApiClient(object):
             default=lambda: self.__api_get_single_message(conversation.id, timestamp)
         )
 
+    def get_message_raw(self, conversation: str, timestamp: str) -> dict:
+        return requests.get(
+            f'https://slack.com/api/conversations.history?channel={conversation}&oldest={timestamp}' +
+            f'&latest={timestamp}&inclusive=true&limit=1',
+            headers=self.__headers()
+        ).json()
+
     def get_user(self, user_id) -> Optional[User]:
         return cache.get_or_set(
             key=User.create_key(user_id),

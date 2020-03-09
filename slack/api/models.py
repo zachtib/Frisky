@@ -133,10 +133,17 @@ class Team(BaseModel):
 
 
 @dataclass
+class File(BaseModel):
+    id: str
+    permalink: str
+
+
+@dataclass
 class Message(BaseModel):
     user: str
     text: str
     ts: str
+    files: Optional[List[File]] = None
 
 
 @dataclass
