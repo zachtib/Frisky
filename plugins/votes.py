@@ -38,6 +38,9 @@ class VotesPlugin(FriskyPlugin):
     def __do_downvote(self, user, thing, silent=False) -> Optional[str]:
         if user == thing:
             record = downvote(thing)
+            if user == 'alex' and record.votes == 3:
+                record = downvote(thing)
+                return f'The daily double! Alex has {self.__format_score(record.votes)}!'
             if not silent:
                 return f'You CAN however, downvote yourself. You have {self.__format_score(record.votes)}. Bwahaha.'
         else:
