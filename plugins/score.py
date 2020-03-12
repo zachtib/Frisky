@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
@@ -11,6 +11,12 @@ class ScorePlugin(FriskyPlugin):
     GAIN = 'gain'
     LOSE = 'lose'
     SCORE = 'score'
+
+    @classmethod
+    def help_text(cls) -> Optional[str]:
+        return f'`?{cls.NEW_GAME} <user1>, <user2> ... <starting_score>` to begin, ' + \
+               f'`?{cls.GAIN} <num>` and `?{cls.LOSE} <num>` to alter scores, and ' + \
+               f'`?{cls.SCORE}` to view'
 
     @classmethod
     def register_commands(cls) -> Tuple:
