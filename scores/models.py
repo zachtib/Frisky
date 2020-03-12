@@ -19,7 +19,10 @@ class GameManager(models.Manager):
         return game
 
     def get_named(self, name):
-        return self.get(name=name)
+        try:
+            return self.get(name=name)
+        except Game.DoesNotExist:
+            return None
 
 
 class Game(models.Model):

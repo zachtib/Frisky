@@ -38,8 +38,60 @@ class ScoreTestCase(FriskyTestCase):
         }
         self.assertDictEqual(expected, scores)
 
+    def test_checking_score(self):
+        Game.objects.create_named('test', 20, ['zach', 'asia'])
+        reply = self.send_message('?score', channel='test')
+        self.assertEqual('zach: 20, asia: 20', reply)
+
     def test_interaction(self):
-        print(self.send_message('?newgame zach asia 20', channel='test', user='zach'))
-        print(self.send_message('?gain 2', channel='test', user='zach'))
-        print(self.send_message('?lose 4', channel='test', user='zach'))
-        print(self.send_message('?lose asia 2', channel='test', user='zach'))
+        self.send_message('?newgame zach asia 20', channel='test', user='zach')
+
+        game = Game.objects.get_named('test')
+        self.assertIsNotNone(game)
+
+        scores = game.get_all_scores()
+        expected = {
+            'zach': 20,
+            'asia': 20
+        }
+        self.assertDictEqual(expected, scores)
+
+        self.send_message('?gain 2', channel='test', user='zach')
+        scores = game.get_all_scores()
+        expected = {
+            'zach': 22,
+            'asia': 20
+        }
+        self.assertDictEqual(expected, scores)
+
+        self.send_message('?lose 4', channel='test', user='zach')
+        scores = game.get_all_scores()
+        expected = {
+            'zach': 18,
+            'asia': 20
+        }
+        self.assertDictEqual(expected, scores)
+
+        self.send_message('?lose asia 2', channel='test', user='zach')
+        scores = game.get_all_scores()
+        expected = {
+            'zach': 18,
+            'asia': 18
+        }
+        self.assertDictEqual(expected, scores)
+
+        self.send_message('?gain', channel='test', user='zach')
+        scores = game.get_all_scores()
+        expected = {
+            'zach': 19,
+            'asia': 18
+        }
+        self.assertDictEqual(expected, scores)
+
+    def test_no_game(self):
+        game = Game.objects.get_named('test')
+        self.assertIsNone(game)
+
+    def test_no_game_cmd(self):
+        reply = self.send_message('?score')
+        self.assertEqual('No active game here', reply)

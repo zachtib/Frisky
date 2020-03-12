@@ -35,7 +35,7 @@ class ScorePlugin(FriskyPlugin):
         if len(message.args) == 0:
             players = [message.username]
             delta = 1
-        if len(message.args) == 1:
+        elif len(message.args) == 1:
             players = [message.username]
             delta = int(message.args[0])
         else:
