@@ -2,6 +2,7 @@ from typing import Tuple, Optional, List
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
+from frisky.util import quotesplit
 
 
 class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
@@ -18,15 +19,22 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
         """
         if message.command not in ('pipe', '|'):
             return
-        raw_text = ' '.join(message.args)
+        built_args = []
+        for arg in message.args:
+            arg = arg.strip()
+            if ' ' in arg:
+                built_args.append(f'"{arg}"')
+            else:
+                built_args.append(arg)
+        raw_text = ' '.join(built_args)
         split_commands = raw_text.split('|')
 
         previous_result: Optional[str] = None
         for item in split_commands:
             item = item.strip(' ')
             if previous_result:
-                item = ' '.join([item, previous_result])
-            split_item = item.strip(' ').split(' ')
+                item = ' '.join([item, f'"{previous_result}"'])
+            split_item = quotesplit(item.strip(' '))
             command: str = split_item[0]
             args: List[str] = split_item[1:]
             plugin = self.get_plugin_for_command(command)
