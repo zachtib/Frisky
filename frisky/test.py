@@ -16,8 +16,6 @@ class FriskyTestCase(TestCase):
             username=user,
             channel_name=channel,
             text=message,
-            command='',
-            args=tuple()
         )
 
         def callback(response: str) -> bool:
@@ -39,8 +37,6 @@ class FriskyTestCase(TestCase):
                 username=to_user,
                 channel_name=channel,
                 text=reacted_message,
-                command='',
-                args=tuple()
             )
         )
 
