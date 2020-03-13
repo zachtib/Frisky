@@ -82,3 +82,15 @@ class PluginRepositoryMixin(object):
             if command in plugin.register_commands():
                 return plugin
         return None
+
+    def get_generic_handler(self) -> Optional[FriskyPlugin]:
+        for plugin in self.loaded_plugins.values():
+            if '*' in plugin.register_commands():
+                return plugin
+        return None
+
+    @staticmethod
+    def convert_message_to_generic(message: MessageEvent) -> MessageEvent:
+        message.args = [message.command] + message.args
+        message.command = '*'
+        return message

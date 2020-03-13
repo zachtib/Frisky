@@ -14,6 +14,16 @@ class FriskyBotTestCase(TestCase):
         expected = ('help', [])
         self.assertTupleEqual(result, expected)
 
+    def test_parsing_nothing(self):
+        result = self.frisky.parse_message_string('')
+        expected = ('', [])
+        self.assertTupleEqual(result, expected)
+
+    def test_parsing_unrelated_message(self):
+        result = self.frisky.parse_message_string('I like cats')
+        expected = ('', [])
+        self.assertTupleEqual(result, expected)
+
 
 class FriskyUtilTestCase(TestCase):
 

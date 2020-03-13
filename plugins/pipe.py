@@ -8,7 +8,7 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return 'pipe',
+        return 'pipe', '|'
 
     def handle_message(self, message: MessageEvent) -> Optional[str]:
         """
@@ -16,7 +16,7 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
         :param message:
         :return:
         """
-        if not message.command == 'pipe':
+        if message.command not in ('pipe', '|'):
             return
         raw_text = ' '.join(message.args)
         split_commands = raw_text.split('|')
@@ -30,6 +30,7 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
             command: str = split_item[0]
             args: List[str] = split_item[1:]
             plugin = self.get_plugin_for_command(command)
+
             event = MessageEvent(
                 username=message.username,
                 channel_name=message.channel_name,
@@ -37,5 +38,10 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
                 command=command,
                 args=args
             )
+            if plugin is None:
+                plugin = self.get_generic_handler()
+                if plugin is None:
+                    return
+                event = self.convert_message_to_generic(event)
             previous_result = plugin.handle_message(event)
         return previous_result
