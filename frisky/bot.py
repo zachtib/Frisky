@@ -72,31 +72,11 @@ class Frisky(object):
         message.command = '*'
         return message
 
-    def __show_help_text(self, args: List[str], reply_channel: Callable[[str], bool]) -> None:
-        if len(args) == 1:
-            plugin_name = args[0]
-            if plugin_name == 'help':
-                reply_channel('Usage: `?help` or `?help <plugin_name>`')
-                return
-            plugin = self.__loaded_plugins.get(plugin_name, None)
-            if plugin is None:
-                reply_channel(f'No such plugin: `{plugin_name}`, try `?help` to list installed plugins')
-            elif (help_text := plugin.help_text()) is None:
-                reply_channel(f'Plugin `{plugin_name}` does not provide help text.')
-            else:
-                reply_channel(help_text)
-        else:
-            plugins = self.__loaded_plugins.keys()
-            joined_string = ', '.join(plugins)
-            reply_channel(f'Available plugins: {joined_string}')
-
     def handle_message(self, message: MessageEvent, reply_channel: Callable[[FriskyResponse], bool]) -> None:
         if message.channel_name in self.ignored_channels or message.username == self.name:
             return
         message.command, message.args = self.parse_message_string(message.text)
-        if message.command in ('help', '?'):
-            return self.__show_help_text(message.args, reply_channel)
-        elif message.command != '':
+        if message.command != '':
             plugins = self.get_plugins_for_command(message.command)
             if len(plugins) == 0:
                 # Reformat the message as a generic one
