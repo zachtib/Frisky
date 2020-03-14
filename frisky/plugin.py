@@ -74,6 +74,9 @@ class FriskyPlugin(object):
 class PluginRepositoryMixin(object):
     loaded_plugins: Dict[str, FriskyPlugin]
 
+    def get_plugin_names(self):
+        return self.loaded_plugins.keys()
+
     def get_plugin_by_name(self, name: str) -> Optional[FriskyPlugin]:
         return self.loaded_plugins.get(name, None)
 

@@ -19,11 +19,9 @@ class HelpPlugin(FriskyPlugin, PluginRepositoryMixin):
             plugin = self.get_plugin_by_name(plugin_name)
             if plugin is None:
                 return f'No such plugin: `{plugin_name}`, try `?help` to list installed plugins'
-            elif (help_text := plugin.help_text()) is None:
+            if (help_text := plugin.help_text()) is None:
                 return f'Plugin `{plugin_name}` does not provide help text.'
-            else:
-                return help_text
-        else:
-            plugins = self.loaded_plugins.keys()
-            joined_string = ', '.join(plugins)
-            return f'Available plugins: {joined_string}'
+            return help_text
+        plugins = self.get_plugin_names()
+        joined_string = ', '.join(plugins)
+        return f'Available plugins: {joined_string}'
