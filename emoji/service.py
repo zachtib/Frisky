@@ -45,3 +45,6 @@ class EmojiService:
             url = emoji[emoji_name]
             return Emoji(emoji_name, url)
         return None
+
+    def upload_emoji(self, auth: EmojiToken, new_emoji_name, new_emoji_url) -> bool:
+        return True
