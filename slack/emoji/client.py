@@ -1,5 +1,8 @@
-from frisky.emoji import EmojiApiClient
+from typing import Dict
+
+from emoji.service import EmojiApiClient
 
 
 class SlackEmojiApiClient(EmojiApiClient):
-    pass
+    def list_emoji(self, auth: str) -> Dict[str, str]:
+        return {}

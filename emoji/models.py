@@ -11,6 +11,9 @@ class EmojiTokenManager(models.Manager):
         except IntegrityError:
             return False
 
+    def list_tokens(self, username: str):
+        return self.filter(username=username).all()
+
     def get_token(self, username: str, token_name: str):
         try:
             return self.get(name=token_name, username=username)
