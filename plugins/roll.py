@@ -1,12 +1,12 @@
 import re
 from dataclasses import dataclass
-from random import randint
+from random import randint, normalvariate
 from typing import Tuple, List, Optional
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
-
+from math import sqrt
 
 @dataclass
 class DieRoll:
@@ -31,6 +31,36 @@ def parse_single_die_syntax(expr: str) -> Optional[DieRoll]:
 
 def parse_dice_syntax(inputs: List[str]) -> List[DieRoll]:
     return [parse_single_die_syntax(expr) for expr in inputs]
+
+
+def mean(sides: int, dice: int) -> float:
+    # https://boardgamegeek.com/blogpost/25470/variance-dice-sums
+    #
+    # example - average result of 2 6-sided dice:
+    #   (2 * 6 + 2) / 2
+    #   (12 + 2) / 2
+    #   14 / 2
+    #   7
+    return (sides * dice + dice) / 2.0
+
+
+def variance(sides: int, dice: int) -> float:
+    # Calculate the variance of once dice of `sides` first
+    # Proof in roll.maxima: maxima < roll.maxima
+    one_dice_variance = (sides**2 - 1) / 12.0
+    return dice * one_dice_variance
+
+
+def clamp(num: int, min_value: int, max_value: int) -> int:
+    return max(min(num, max_value), min_value)
+
+
+def probability_roll(roll: DieRoll) -> int:
+    m = mean(roll.die, roll.count)
+    v = variance(roll.die, roll.count)
+    standard_deviation = sqrt(v)
+    result = normalvariate(m, standard_deviation)
+    return clamp(round(result), roll.die, roll.die * roll.count) + roll.modifier
 
 
 def calculate_roll(roll: DieRoll) -> int:
@@ -66,8 +96,10 @@ class RollPlugin(FriskyPlugin):
             if roll is None:
                 errors.append(expr)
                 results.append('???')
+            elif roll.count <= 10000:
+                results.append(f"{calculate_roll(roll)}")
             else:
-                results.append(str(calculate_roll(roll)))
+                results.append(f"{probability_roll(roll)} USING MATH")
         result_string = ', '.join(results)
         errors_string = ', '.join(errors)
         message = f'{message.username} rolled {result_string}'
