@@ -1,12 +1,12 @@
 import re
 from dataclasses import dataclass
-from random import randint
+from random import randint, normalvariate
 from typing import Tuple, List, Optional
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
-
+from math import sqrt
 
 @dataclass
 class DieRoll:
@@ -33,8 +33,40 @@ def parse_dice_syntax(inputs: List[str]) -> List[DieRoll]:
     return [parse_single_die_syntax(expr) for expr in inputs]
 
 
+def mean(sides: int, dice: int) -> float:
+    # https://boardgamegeek.com/blogpost/25470/variance-dice-sums
+    #
+    # example - average result of 2 6-sided dice:
+    #   (2 * 6 + 2) / 2
+    #   (12 + 2) / 2
+    #   14 / 2
+    #   7
+    return (sides * dice + dice) / 2.0
+
+
+def variance(sides: int, dice: int) -> float:
+    # Calculate the variance of once dice of `sides` first
+    # Proof in roll.maxima: maxima < roll.maxima
+    one_dice_variance = (sides**3 - sides) / 72.0
+    return dice * one_dice_variance
+
+
+def clamp(num: int, min_value: int, max_value: int) -> int:
+    return max(min(num, max_value), min_value)
+
+
+def probability_roll(sides: int, dice: int) -> int:
+    m = mean(sides, dice)
+    v = variance(sides, dice)
+    standard_deviation = sqrt(v)
+    roll = normalvariate(m, standard_deviation)
+    return clamp(round(roll), dice, dice * sides)
+
+
 def calculate_roll(roll: DieRoll) -> int:
     total = 0
+    if roll.count > 10000:
+        return probability_roll(roll.die, roll.count) + roll.modifier
     for i in range(0, roll.count):
         result = randint(1, roll.die)
         total += result
