@@ -40,5 +40,5 @@ v(6);
 /* expand it for programming purposes */
 
 string(expand(v(x)));
-/* the whole thing simplifies to: (x^3 - x) / 12.0 */
+/* the whole thing simplifies to: (x^2 - 1) / 12.0 */
 
