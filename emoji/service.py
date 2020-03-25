@@ -19,6 +19,10 @@ class EmojiApiClient(ABC):
     def list_emoji(self, auth: str) -> Dict[str, str]:
         pass
 
+    @abstractmethod
+    def upload_emoji(self, auth: str, filename: str, name: str) -> bool:
+        pass
+
 
 class EmojiService:
     __client: EmojiApiClient
