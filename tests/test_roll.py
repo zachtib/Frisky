@@ -49,9 +49,9 @@ class RollTestCase(FriskyTestCase):
         patcher.stop()
 
     def test_too_many_dice(self):
-        response = self.send_message('?roll 1000000d6')
+        response = self.send_message('?roll 100000d6')
         self.assertEqual("I don't have that many dice, man!", response)
 
     def test_too_large_die(self):
-        response = self.send_message('?roll 1d1000000')
+        response = self.send_message('?roll 1d100000')
         self.assertEqual("I don't have a die that big, man!", response)
