@@ -66,6 +66,10 @@ class RollPlugin(FriskyPlugin):
             if roll is None:
                 errors.append(expr)
                 results.append('???')
+            elif roll.count > 1000:
+                return "I don't have that many dice, man!"
+            elif roll.die > 1000:
+                return "I don't have a die that big, man!"
             else:
                 results.append(str(calculate_roll(roll)))
         result_string = ', '.join(results)
