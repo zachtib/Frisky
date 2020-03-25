@@ -49,7 +49,7 @@ class RollTestCase(FriskyTestCase):
         patcher.stop()
 
     def test_big_numbers(self):
-        self.assertRegexpMatches(self.send_message('?roll 1000000d10000'), 'dummyuser rolled [0-9]+')
+        self.assertRegexpMatches(self.send_message('?roll 1000000d10000'), '^dummyuser rolled [0-9]+ USING MATH$')
 
     def test_bad_big_numbers(self):
         self.assertEqual('dummyuser rolled ???... I don\'t know how to roll 11000d-10000', self.send_message('?roll 11000d-10000'))

@@ -55,18 +55,16 @@ def clamp(num: int, min_value: int, max_value: int) -> int:
     return max(min(num, max_value), min_value)
 
 
-def probability_roll(sides: int, dice: int) -> int:
-    m = mean(sides, dice)
-    v = variance(sides, dice)
+def probability_roll(roll: DieRoll) -> int:
+    m = mean(roll.die, roll.count)
+    v = variance(roll.die, roll.count)
     standard_deviation = sqrt(v)
-    roll = normalvariate(m, standard_deviation)
-    return clamp(round(roll), dice, dice * sides)
+    result = normalvariate(m, standard_deviation)
+    return clamp(round(result), roll.die, roll.die * roll.count) + roll.modifier
 
 
 def calculate_roll(roll: DieRoll) -> int:
     total = 0
-    if roll.count > 10000:
-        return probability_roll(roll.die, roll.count) + roll.modifier
     for i in range(0, roll.count):
         result = randint(1, roll.die)
         total += result
@@ -98,8 +96,10 @@ class RollPlugin(FriskyPlugin):
             if roll is None:
                 errors.append(expr)
                 results.append('???')
-            else:
+            elif roll.count <= 10000:
                 results.append(str(calculate_roll(roll)))
+            else:
+                results.append("{} USING MATH".format(probability_roll(roll)))
         result_string = ', '.join(results)
         errors_string = ', '.join(errors)
         message = f'{message.username} rolled {result_string}'
