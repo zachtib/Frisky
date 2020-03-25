@@ -1,0 +1,44 @@
+/* x is the number of sides on the dice.  No (n) for dice yet... */
+mean(x) := (x + 1) / 2;
+
+/* source of definition: https://boardgamegeek.com/blogpost/25470/variance-dice-sums */
+/* sum of the below from y = 1 to x */
+variance(x) := sum((y - mean(x)) ^ 2, y, 1, x);
+
+/* display sum: expand(variance(x)); */
+expand(variance(x));
+
+/* This function works, but programming with it would require a `for` loop */
+/* Maxima doesn't successfully simplify this, I *assume* because it fails to see that x is a positive integer */
+/* However, there are only 6 terms in the sum series, so I expanded them manually as p1 to p6 */
+
+/* sum of y^2 from y = 1 to x */
+p1(x) := 1/6 * x * (x + 1) * (2 * x + 1);
+
+/* sum of x * y from y = 1 to x */
+p2(x) := (1 / 2) * x * x * (x + 1);
+
+/* sum of y from y = 1 to x */
+p3(x) := (1 / 2) * x * (x + 1);
+
+/* sum of x^2 / 4 from y = 1 to x */
+p4(x) := x^3 / 4;
+
+/* sum of x / 2 from y = 1 to x */
+p5(x) := x^2 / 2;
+
+/* sum of 1/ 4 from y = 1 to x */
+p6(x) := x / 4;
+
+/* declare the expanded variance sum */
+v(x) := p1(x) - p2(x) - p3(x) + p4(x) + p5(x) + p6(x);
+
+/* test we got the same answers as the definition */
+variance(6) * 1 / 6;
+v(6) * 1 / 6;
+
+/* expand it for programming purposes */
+
+string(expand(v(x) * 1/6));
+/* the whole thing simplifies to: (x^3 - x) / 12.0 */
+
