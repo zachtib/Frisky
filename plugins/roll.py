@@ -97,9 +97,9 @@ class RollPlugin(FriskyPlugin):
                 errors.append(expr)
                 results.append('???')
             elif roll.count <= 10000:
-                results.append("{}".format(calculate_roll(roll)))
+                results.append(f"{calculate_roll(roll)}")
             else:
-                results.append("{} USING MATH".format(probability_roll(roll)))
+                results.append(f"{probability_roll(roll)} USING MATH")
         result_string = ', '.join(results)
         errors_string = ', '.join(errors)
         message = f'{message.username} rolled {result_string}'
