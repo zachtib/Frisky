@@ -47,7 +47,7 @@ def mean(sides: int, dice: int) -> float:
 def variance(sides: int, dice: int) -> float:
     # Calculate the variance of once dice of `sides` first
     # Proof in roll.maxima: maxima < roll.maxima
-    one_dice_variance = (sides**3 - sides) / 72.0
+    one_dice_variance = (sides**2 - 1) / 12.0
     return dice * one_dice_variance
 
 

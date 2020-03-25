@@ -31,14 +31,14 @@ p5(x) := x^2 / 2;
 p6(x) := x / 4;
 
 /* declare the expanded variance sum */
-v(x) := p1(x) - p2(x) - p3(x) + p4(x) + p5(x) + p6(x);
+v(x) := (p1(x) - p2(x) - p3(x) + p4(x) + p5(x) + p6(x)) / x;
 
 /* test we got the same answers as the definition */
 variance(6) * 1 / 6;
-v(6) * 1 / 6;
+v(6);
 
 /* expand it for programming purposes */
 
-string(expand(v(x) * 1/6));
+string(expand(v(x)));
 /* the whole thing simplifies to: (x^3 - x) / 12.0 */
 
