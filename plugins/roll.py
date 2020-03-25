@@ -1,18 +1,18 @@
 import re
 from dataclasses import dataclass
-from random import randint, normalvariate
+from math import sqrt
+from random import normalvariate, randint
 from typing import Tuple, List, Optional
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
-from math import sqrt
 
 @dataclass
 class DieRoll:
     count: int
     die: int
-    modifier: Optional[int] = None
+    modifier: int = 0
 
 
 regex = re.compile(r'(\d+)?d(\d+)([+\-]\d+)?')
