@@ -97,7 +97,7 @@ class RollPlugin(FriskyPlugin):
                 errors.append(expr)
                 results.append('???')
             elif roll.count <= 10000:
-                results.append(str(calculate_roll(roll)))
+                results.append("{}".format(calculate_roll(roll)))
             else:
                 results.append("{} USING MATH".format(probability_roll(roll)))
         result_string = ', '.join(results)
