@@ -44,7 +44,7 @@ class RollTestCase(FriskyTestCase):
     def test_multiple_inputs(self):
         patcher = mock.patch(target='plugins.roll.die_roll.randint', new=lambda *a, **k: 10)
         patcher.start()
-        self.assertEqual('dummyuser rolled 10 on 1d20 with a chance of 5%, 10 on 1d20 with a chance of 5%, 10 on 1d20 with a chance of 5%', self.send_message('?roll 1d20 1d20 1d20'))
+        self.assertEqual('dummyuser rolled 10 on 1d20 with a chance of 5%, 10 on 1d20 with a chance of 5%, 10 on 1d20 with a chance of 5% for a total of 30', self.send_message('?roll 1d20 1d20 1d20'))
         patcher.stop()
 
     def test_big_numbers(self):

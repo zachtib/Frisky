@@ -37,6 +37,7 @@ class RollPlugin(FriskyPlugin):
 
         results = []
         errors = []
+        total = 0
         for expr, roll in zip(args, parsed_rolls):
             if roll is None:
                 errors.append(expr)
@@ -58,7 +59,7 @@ class RollPlugin(FriskyPlugin):
                     critical = "CRITICAL FAIL "
                 if result.is_maximum:
                     critical = "CRITICAL "
-                
+                total += result.result
                 # Did we "use math" to compute the result of the dice roll?
                 using_math = ""
                 if result.used_probability:
@@ -89,7 +90,11 @@ class RollPlugin(FriskyPlugin):
 
         result_string = ', '.join(results)
         errors_string = ', '.join(errors)
-        message = f'{message.username} rolled {result_string}'
+
+        total_string = ""
+        if len(parsed_rolls) > 1:
+            total_string = f" for a total of {total}"
+        message = f'{message.username} rolled {result_string}{total_string}'
         if errors_string:
             message += f"... I don't know how to roll {errors_string}"
         return message
