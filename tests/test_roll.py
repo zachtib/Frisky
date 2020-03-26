@@ -26,14 +26,14 @@ class RollTestCase(FriskyTestCase):
         patcher.start()
         result = self.send_message('?roll 1d6+1')
         patcher.stop()
-        self.assertEqual('dummyuser rolled 1 on 1d6+1 with a chance of 16.66666667%', result)
+        self.assertEqual('dummyuser rolled 1 on 1d6+1 with a chance of 16.67%', result)
 
     def test_roll_considers_negative_modifier(self):
         patcher = mock.patch(target='plugins.roll.die_roll.randint', new=lambda *a, **k: 0)
         patcher.start()
         result = self.send_message('?roll 1d6-1')
         patcher.stop()
-        self.assertEqual('dummyuser rolled -1 on 1d6-1 with a chance of 16.66666667%', result)
+        self.assertEqual('dummyuser rolled -1 on 1d6-1 with a chance of 16.67%', result)
 
     def test_invalid_input_shames_user(self):
         patcher = mock.patch(target='plugins.roll.die_roll.randint', new=lambda *a, **k: 10)
@@ -72,7 +72,7 @@ class RollTestCase(FriskyTestCase):
         patcher.start()
         result = self.send_message('?roll 10d6')
         patcher.stop()
-        self.assertEqual('dummyuser rolled 40 on 10d6 with a chance of 4.81117823%ish', result)
+        self.assertEqual('dummyuser rolled 40 on 10d6 with a chance of 4.81%ish', result)
 
     def test_slowest_possible(self):
         patcher = mock.patch(target='plugins.roll.die_roll.randint', new=lambda *a, **k: 50)

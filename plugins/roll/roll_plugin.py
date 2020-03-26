@@ -72,11 +72,17 @@ class RollPlugin(FriskyPlugin):
                 if result.chance_ish:
                     ish = "ish"
 
-                # generate the float string out to 8 decimal digits, but strip the 0's to the right
-                chance_string = f'{(result.chance*100):.8f}'.rstrip('0')
+                # generate the float string out so a few digits after the decimal are shown
+                chance_string = ""
+                if result.chance < 0.000001:
+                    chance_string = f'{(result.chance*100):.8f}'
+                elif result.chance < 0.01:
+                    chance_string = f'{(result.chance*100):.5f}'
+                else:
+                    chance_string = f'{(result.chance*100):.2f}'
 
-                # if there's a period at the end, remove that too
-                chance_string = chance_string.rstrip('.')
+                # Remove 0's at the end.  If there's a period at the end, remove that too.
+                chance_string = chance_string.rstrip('0').rstrip('.')
 
                 # The verbose string should read "CRITICAL 5 on 1d4+1 with a chance of 25%"
                 verbose = f"{critical}{result.result} {using_math}on {roll.dice}d{roll.sides}{modifier} with a chance of {chance_string}%{ish}"
