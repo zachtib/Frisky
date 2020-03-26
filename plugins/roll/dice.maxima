@@ -4,7 +4,8 @@ mean(x) := (x + 1) / 2;
 /* source of definition: https://boardgamegeek.com/blogpost/25470/variance-dice-sums */
 /* sum of the below from y = 1 to x */
 variance(x) := sum((y - mean(x)) ^ 2, y, 1, x);
-
+assume(x > 1);
+declare(x, integer);
 /* display sum: expand(variance(x)); */
 expand(variance(x));
 
@@ -41,4 +42,22 @@ v(6);
 
 string(expand(v(x)));
 /* the whole thing simplifies to: (x^2 - 1) / 12.0 */
+
+
+sigma(s, n) := sqrt(v(s) * n);
+mean(s, n) := (s * n + n) / 2;
+
+pdf(x, s, n) := 1 / (sigma(s, n) * sqrt(2 * %pi)) * %e^(-1/2 * ((x - mean(s, n)) / sigma(s, n)) ^ 2);
+
+assume(r > 0);
+
+cdf(s, n, r) := integrate(pdf(x, s, n), x, 0, r);
+
+float(cdf(6, 2, 7.5) - cdf(6, 2, 6.5));
+
+string(float(cdf(s, n, r)));
+
+bfloat(cdf(100, 100, 101)), fpprec: 100;
+
+string(float(optimize(cdf(s, n, r))));
 
