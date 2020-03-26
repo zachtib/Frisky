@@ -161,22 +161,6 @@ class DieRoll:
         return self.cdf(r + 0.5) - self.cdf(r - 0.5)
 
 
-    def probability_ge(self, r: int) -> float:
-        if self.dice < 1:
-            return 1.0
-        elif self.dice == 1:
-            return (self.sides - r) / self.sides
-        return 1.0 - self.cdf(r - 0.5)
-
-
-    def probability_le(self, r: int) -> float:
-        if self.dice < 1:
-            return 1.0
-        elif self.dice == 1:
-            return r / self.sides
-        return self.cdf(r + 0.5)
-
-
     def roll(self) -> RollResult:
         s = 0
         if self.dice > 10000:
