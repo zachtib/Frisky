@@ -71,8 +71,14 @@ class RollPlugin(FriskyPlugin):
                 if result.chance_ish:
                     ish = "ish"
 
+                # generate the float string out to 8 decimal digits, but strip the 0's to the right
+                chance_string = f'{(result.chance*100):.8f}'.rstrip('0')
+
+                # if there's a period at the end, remove that too
+                chance_string = chance_string.rstrip('.')
+
                 # The verbose string should read "1d4+1 and it's a 5 CRITICAL with a chance of .25"
-                verbose = f"{quiet} {critical}{using_math}with a chance of {result.chance:.6}{ish}"
+                verbose = f"{quiet} {critical}{using_math}with a chance of {chance_string}%{ish}"
 
                 # If the user specified quiet, only return the quiet string.  Otherwise, return
                 # the full string
