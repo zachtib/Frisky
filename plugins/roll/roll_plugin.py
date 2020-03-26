@@ -49,7 +49,7 @@ class RollPlugin(FriskyPlugin):
                     modifier = str(roll.modifier)
                 if roll.modifier > 0:
                     modifier = "+" + str(roll.modifier)
-                quiet = f"{roll.dice}d{roll.sides}{modifier} and it's a {result.result}"
+                quiet = f"{result.result} on {roll.dice}d{roll.sides}{modifier}"
                 
                 # if the value is a minimum or maximum, turn that into a string for the user
                 # and put it in 'critical'
@@ -77,8 +77,8 @@ class RollPlugin(FriskyPlugin):
                 # if there's a period at the end, remove that too
                 chance_string = chance_string.rstrip('.')
 
-                # The verbose string should read "1d4+1 and it's a 5 CRITICAL with a chance of .25"
-                verbose = f"{quiet} {critical}{using_math}with a chance of {chance_string}%{ish}"
+                # The verbose string should read "CRITICAL 5 on 1d4+1 with a chance of 25%"
+                verbose = f"{critical}{result.result} {using_math}on {roll.dice}d{roll.sides}{modifier} with a chance of {chance_string}%{ish}"
 
                 # If the user specified quiet, only return the quiet string.  Otherwise, return
                 # the full string
