@@ -38,6 +38,7 @@ class RollPlugin(FriskyPlugin):
         results = []
         errors = []
         total = 0
+        overflow = False
         for expr, roll in zip(args, parsed_rolls):
             if roll is None:
                 errors.append(expr)
@@ -89,7 +90,10 @@ class RollPlugin(FriskyPlugin):
 
                 # If the user specified quiet, only return the quiet string.  Otherwise, return
                 # the full string
-                if roll.stats:
+                if result.overflow:
+                    overflow = True
+                    break
+                elif roll.stats:
                     results.append(verbose)
                 else:
                     results.append(quiet)
@@ -103,4 +107,7 @@ class RollPlugin(FriskyPlugin):
         message = f'{message.username} rolled {result_string}{total_string}'
         if errors_string:
             message += f"... I don't know how to roll {errors_string}"
+
+        if overflow:
+            message = "Damn it Jim, stop trying to break things."
         return message

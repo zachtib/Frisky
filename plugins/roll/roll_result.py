@@ -9,3 +9,4 @@ class RollResult:
     used_probability: bool
     chance: float
     chance_ish: float
+    overflow: bool

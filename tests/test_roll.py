@@ -101,3 +101,7 @@ class RollTestCase(FriskyTestCase):
     def test_zero_dice(self):
         result = self.send_message('?roll 0d10')
         self.assertEqual('dummyuser rolled CRITICAL 0 on 0d10 with a chance of 100%', result)
+
+    def test_damnit_jim(self):
+        result = self.send_message('?roll 999999999999999999999999999999999999999999d9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999')
+        self.assertEqual('Damn it Jim, stop trying to break things.', result)

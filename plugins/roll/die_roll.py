@@ -162,18 +162,28 @@ class DieRoll:
 
 
     def roll(self) -> RollResult:
-        s = 0
-        if self.dice > 10000:
-            s = self.probability_roll()
-        else:
-            s = self.regular_roll()
-
-        return RollResult(
-            result = s,
-            is_minimum = (s == self.dice + self.modifier),
-            is_maximum = (s == self.dice * self.sides + self.modifier),
-            is_average = (s == self.mean()),
-            chance = self.probability_eq(s - self.modifier),
-            chance_ish = (self.sides > 50 or self.dice > 4) and self.dice != 1,
-            used_probability = self.dice > 10000
-        )
+        try:
+            s = 0
+            if self.dice > 10000:
+                s = self.probability_roll()
+            else:
+                s = self.regular_roll()
+            return RollResult(
+                result = s,
+                is_minimum = (s == self.dice + self.modifier),
+                is_maximum = (s == self.dice * self.sides + self.modifier),
+                is_average = (s == self.mean()),
+                chance = self.probability_eq(s - self.modifier),
+                chance_ish = (self.sides > 50 or self.dice > 4) and self.dice != 1,
+                used_probability = self.dice > 10000,
+                overflow = False,
+            )
+        except OverflowError:
+            return RollResult(result = 0,
+                    is_minimum = True,
+                    is_maximum = True,
+                    is_average = True,
+                    chance = 1.0,
+                    chance_ish = True,
+                    used_probability = True,
+                    overflow = True)
