@@ -1,4 +1,3 @@
-import datetime
 from typing import Optional
 
 import requests
@@ -10,11 +9,9 @@ from slack.api.models import User, Conversation, Team, Message
 
 class SlackApiClient(object):
     __access_token: str
-    __cache_timeout: datetime.timedelta
 
-    def __init__(self, access_token, cache_timeout=86400):
+    def __init__(self, access_token):
         self.__access_token = access_token
-        self.__cache_timeout = datetime.timedelta(seconds=cache_timeout)
 
     def __headers(self):
         return {'Authorization': f'Bearer {self.__access_token}'}
@@ -102,14 +99,18 @@ class SlackApiClient(object):
     def post_message(self, channel: Conversation, message: str) -> bool:
         return self.__post('chat.postMessage', channel=channel.id, text=message)
 
+    def update_message(self, channel: Conversation, old_message: Message, text: str) -> bool:
+        return self.__post('chat.update', channel=channel.id, ts=old_message.ts, text=text)
+
+    def delete_message(self, channel: Conversation, message: Message) -> bool:
+        return self.__post('chat.delete', channel=channel.id, ts=message.ts)
+
     def emergency_log(self, message):
         """
         DO NOT USE!
         :param message:
         :return:
         """
-        requests.post(
-            'https://slack.com/api/chat.postMessage',
-            json={'channel': settings.FRISKY_LOGGING_CHANNEL, 'text': f'```{message}```'},
-            headers=self.__headers()
-        )
+        self.__post('chat.postMessage',
+                    channel=settings.FRISKY_LOGGING_CHANNEL,
+                    text=f'```{message}```')
