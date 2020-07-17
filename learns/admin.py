@@ -5,4 +5,4 @@ from .models import Learn
 
 @admin.register(Learn)
 class LearnAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ['label', 'content']
