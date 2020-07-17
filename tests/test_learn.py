@@ -107,3 +107,30 @@ class LearnTestCase(FriskyTestCase):
     def test_that_learn_drop_at_from_username(self):
         reply = self.send_message('?learn @jcarreer I dont test')
         self.assertEqual(reply, 'Okay, learned jcarreer')
+
+    def test_learn_search(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 thing3')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        response = self.send_message('?learnsearch test_1 thing')
+        self.assertEqual(response, 'thing1\nthing2\nthing3')
+
+    def test_learn_search_exclusion(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 bananaphone')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        response = self.send_message('?learnsearch test_1 thing')
+        self.assertEqual(response, 'thing1\nthing2')
+
+    def test_learn_search_with_zero_args_returns_nothing(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 bananaphone')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        response = self.send_message('?learnsearch')
+        self.assertIsNone(response)

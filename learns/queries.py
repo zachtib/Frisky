@@ -49,3 +49,7 @@ def add_learn(label, content) -> bool:
         Learn.objects.create(label=label, content=content)
         return True
     return False
+
+
+def search_learns(label, query):
+    return Learn.objects.filter(label=label, content__icontains=query)
