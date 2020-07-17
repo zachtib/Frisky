@@ -3,7 +3,8 @@ from typing import Tuple, Optional
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
-from learns.queries import add_learn, get_random_learn_for_label, get_random_learn, get_learn_indexed, get_learned_label_counts
+from learns.queries import add_learn, search_learns, get_random_learn_for_label, get_random_learn, get_learn_indexed, \
+    get_learned_label_counts
 
 
 class LearnPlugin(FriskyPlugin):
@@ -26,7 +27,7 @@ class LearnPlugin(FriskyPlugin):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return 'learn', 'lc', 'learn_count', 'random', '*'
+        return 'learn', 'lc', 'learn_count', 'learnsearch', 'random', '*'
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.emoji == 'brain':
@@ -39,12 +40,23 @@ class LearnPlugin(FriskyPlugin):
             return self.learn_count()
         elif message.command == 'random':
             return self.random()
+        elif message.command == 'learnsearch':
+            return self.learn_search(message)
         else:
             return self.learn(message)
 
     @staticmethod
     def learn_count() -> Optional[str]:
         return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in get_learned_label_counts()]))
+
+    @staticmethod
+    def learn_search(self, message):
+        if len(message.args) < 2:
+            return
+        label = message.args[0]
+        query = ' '.join(message.args[1:])
+        learns = search_learns(label, query)
+        return '\n'.join([learn.content for learn in learns])
 
     @staticmethod
     def get_random_learn_for_label(label: str) -> str:
