@@ -47,7 +47,11 @@ class LearnPlugin(FriskyPlugin):
 
     @staticmethod
     def learn_count() -> Optional[str]:
-        return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in get_learned_label_counts()]))
+        learn_counts = get_learned_label_counts()
+        learn_counts = [lc for lc in learn_counts if lc["total"] > 1]
+        learn_counts = learn_counts[:10]
+
+        return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in learn_counts]))
 
     @staticmethod
     def learn_search(message):

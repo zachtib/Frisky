@@ -6,7 +6,9 @@ from learns.models import Learn
 
 
 def get_learned_label_counts():
-    return Learn.objects.all().values('label').annotate(total=Count('label')).order_by('-total')
+    return Learn.objects.all() \
+        .values('label') \
+        .annotate(total=Count('label'))
 
 
 def get_all_learns(label):
