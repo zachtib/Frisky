@@ -52,4 +52,4 @@ class StockPlugin(FriskyPlugin):
             diff = last_trade - last_close
             diff_perc = 100 * diff / last_close
             positive = diff > 0
-            return f'{self.get_chart_emoji(positive)}{symbol} last traded at {last_trade} ({diff:.2f} {diff_perc:.2f}%)'
+            return f'{self.get_chart_emoji(positive)}  {symbol} last traded at {last_trade:.2f} ({diff:.2f} {diff_perc:.2f}%)'

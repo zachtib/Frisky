@@ -8,7 +8,7 @@
 3. [Troubleshooting](#troubleshooting)
 
 ## Running Frisky Locally
-Before you get started, make sure you have python 3.8.1 installed.  Frisky is a modern ~~cat~~ bot with modern needs!
+Before you get started, make sure you have python 3.8 installed.  Frisky is a modern ~~cat~~ bot with modern needs!
 
 Frisky uses `pipenv` to manage its Python environment. This is just a standard pip package that can be installed with
 `pip install pipenv`, the python runtime you install it to does not matter.  From the project directory, you can run
