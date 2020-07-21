@@ -47,15 +47,14 @@ class StockPlugin(FriskyPlugin):
             currency = json['chart']['result'][0]['meta']['currency']
             last_close = json['chart']['result'][0]['meta']['previousClose']
             trades = json['chart']['result'][0]['indicators']['quote'][0]['close']
-            last_trade = None
-            while len(trades) and last_trade is None:
+            if len(trades):
                 last_trade = trades.pop()
-            if last_trade is None:
+                daily_change = last_trade - last_close
+                percentage_change = 100 * daily_change / last_close
+                is_positive = daily_change > 0
+                return f'{self.get_chart_emoji(is_positive)}  {symbol} last traded at ' \
+                       f'{self.format_money(last_close, currency)} ' \
+                       f'({self.format_money(daily_change, currency)} {percentage_change:.2f}%)'
+            else:
                 close_msg = f'{symbol} last closed at {self.format_money(last_close, currency)}'
                 return close_msg
-            daily_change = last_trade - last_close
-            percentage_change = 100 * daily_change / last_close
-            is_positive = daily_change > 0
-            return f'{self.get_chart_emoji(is_positive)}  {symbol} last traded at ' \
-                   f'{self.format_money(last_close, currency)} ' \
-                   f'({self.format_money(daily_change, currency)} {percentage_change:.2f}%)'
