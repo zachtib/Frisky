@@ -1,7 +1,7 @@
 import responses
 
 from frisky.test import FriskyTestCase
-
+from plugins.stock import StockPlugin
 
 positive_change = '''
 {
@@ -96,3 +96,12 @@ class StockTestCase(FriskyTestCase):
             rm.add('GET', StockTestCase.URL, body=negative_change)
             reply = self.send_message('?stock TEST')
             self.assertEqual(reply, ':chart_with_downwards_trend:  TEST last traded at $13.37 (-$28.63 -68.17%)')
+
+    def test_no_args_returns_the_help_text(self):
+        reply = self.send_message('?stock')
+        self.assertEqual(reply, 'Usage: ?stock $SYMBOL')
+
+    def test_unknown_currency_throws_error(self):
+        plugin = StockPlugin()
+        with self.assertRaises(NotImplementedError):
+            plugin.format_money(420.69, 'ASDF')
