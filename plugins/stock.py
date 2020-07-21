@@ -41,19 +41,20 @@ class StockPlugin(FriskyPlugin):
 
         symbol = message.args[0]
         url = self.format_url(symbol)
-        result = requests.get(url)
-        if result.status_code == 200:
-            json = result.json()
-            currency = json['chart']['result'][0]['meta']['currency']
-            last_close = json['chart']['result'][0]['meta']['previousClose']
-            trades = json['chart']['result'][0]['indicators']['quote'][0]['close']
+        response = requests.get(url)
+        if response.status_code == 200:
+            json = response.json()
+            result = json['chart']['result'][0]
+            currency = result['meta']['currency']
+            last_close = result['meta']['previousClose']
+            trades = result['indicators']['quote'][0]['close']
             if len(trades):
                 last_trade = trades.pop()
                 daily_change = last_trade - last_close
                 percentage_change = 100 * daily_change / last_close
                 is_positive = daily_change > 0
                 return f'{self.get_chart_emoji(is_positive)}  {symbol} last traded at ' \
-                       f'{self.format_money(last_close, currency)} ' \
+                       f'{self.format_money(last_trade, currency)} ' \
                        f'({self.format_money(daily_change, currency)} {percentage_change:.2f}%)'
             else:
                 close_msg = f'{symbol} last closed at {self.format_money(last_close, currency)}'
