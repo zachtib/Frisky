@@ -22,7 +22,11 @@ class StockPlugin(FriskyPlugin):
 
     def format_money(self, money, currency):
         if currency == 'USD':
-            return f'${money:.2f}'
+            if money >= 0:
+                return f'${money:.2f}'
+            else:
+                money *= -1
+                return f'-${money:.2f}'
         raise NotImplementedError(f'Unsupported currency: {currency}')
 
     def get_chart_emoji(self, is_positive):
@@ -52,4 +56,4 @@ class StockPlugin(FriskyPlugin):
             diff = last_trade - last_close
             diff_perc = 100 * diff / last_close
             positive = diff > 0
-            return f'{self.get_chart_emoji(positive)}  {symbol} last traded at {last_trade:.2f} ({diff:.2f} {diff_perc:.2f}%)'
+            return f'{self.get_chart_emoji(positive)}  {symbol} last traded at {self.format_money(last_close)} ({self.format_money(diff)} {diff_perc:.2f}%)'
