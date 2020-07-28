@@ -32,6 +32,11 @@ class FriskyPlugin(object):
         def post(self, *args, **kwargs):
             return requests.post(*args, **kwargs)
 
+    reactions = []
+    commands = []
+    command_aliases = {}
+    help = ''
+
     def __init__(self) -> None:
         self.__cache_wrapper = None
         self.__http_wrapper = None
@@ -50,25 +55,34 @@ class FriskyPlugin(object):
 
     @classmethod
     def register_emoji(cls) -> Tuple:
-        return ()
+        return tuple(cls.reactions)
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return ()
+        return tuple(cls.commands)
 
     @classmethod
     def help_text(cls) -> Optional[str]:
-        return None
+        return cls.help
 
     def cacheify(self, fn, *args):
         key = ':'.join([fn.__name__] + [str(x) for x in args])
         return self.cache.get_or_set(key, lambda: fn(*args))
 
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
-        pass
+        command = message.command
+        if command in self.command_aliases.keys():
+            command = self.command_aliases[command]
+        call = getattr(self, f'command_{command}', None)
+        if call is None:
+            return None
+        return call(message)
 
     def handle_reaction(self, reaction: ReactionEvent) -> FriskyResponse:
-        pass
+        call = getattr(self, f'reaction_{reaction.emoji}', None)
+        if call is None:
+            return None
+        return call(reaction)
 
 
 class PluginRepositoryMixin(object):

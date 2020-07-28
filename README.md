@@ -42,17 +42,14 @@ function to do implement any functionality.
 This example is included in the source as `ping.py`
 
 ```python
-from typing import Tuple, Optional
-
 from frisky.plugin import FriskyPlugin
 
 
 class PingPlugin(FriskyPlugin):
+    
+    commands = ['ping']
 
-    def register_commands(self) -> Tuple:
-        return 'ping',
-
-    def handle_message(self, message) -> Optional[str]:
+    def command_ping(self, message):
         return 'pong'
 ```
 

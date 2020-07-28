@@ -1,52 +1,38 @@
-from typing import Tuple, Optional
+from typing import Optional
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
-from frisky.responses import FriskyResponse
 from learns.queries import add_learn, search_learns, get_random_learn_for_label, get_random_learn, get_learn_indexed, \
     get_learned_label_counts
 
 
 class LearnPlugin(FriskyPlugin):
+    help = '\n'.join([
+        '*Command Usage*',
+        ' • `?learn <label> <index>` - get a value for `<label>`, if `<index>` is not sent one is chosen at random',
+        ' • `?<label> <index>` - short hand for the `?learn <label> ...`',
+        ' • `?learn <label> <value>` - add `<value>` to `<label>`',
+        ' • `?learn_count` - show the counts of learned phrases by label (alias: `?lc`)',
+        '*Emoji*',
+        ' • Tag a user message with :brain: for frisky to learn a quote from that user'
+    ])
 
-    @classmethod
-    def help_text(cls) -> Optional[str]:
-        return '\n'.join([
-            '*Command Usage*',
-            ' • `?learn <label> <index>` - get a value for `<label>`, if `<index>` is not sent one is chosen at random',
-            ' • `?<label> <index>` - short hand for the `?learn <label> ...`',
-            ' • `?learn <label> <value>` - add `<value>` to `<label>`',
-            ' • `?learn_count` - show the counts of learned phrases by label (alias: `?lc`)',
-            '*Emoji*',
-            ' • Tag a user message with :brain: for frisky to learn a quote from that user'
-        ])
+    reactions = ['brain']
 
-    @classmethod
-    def register_emoji(cls) -> Tuple:
-        return 'brain',
+    commands = ['learn', 'lc', 'learn_count', 'learnsearch', 'random', '*']
 
-    @classmethod
-    def register_commands(cls) -> Tuple:
-        return 'learn', 'lc', 'learn_count', 'learnsearch', 'random', '*'
+    command_aliases = {
+        'lc': 'learn_count',
+        '*': 'learn'
+    }
 
-    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
-        if reaction.emoji == 'brain':
-            if reaction.message.text is not None:
-                return self.create_new_learn(reaction.message.username, reaction.message.text)
-            return 'This is a learning-free zone!'
-
-    def handle_message(self, message: MessageEvent) -> FriskyResponse:
-        if message.command in ['learn_count', 'lc']:
-            return self.learn_count()
-        elif message.command == 'random':
-            return self.random()
-        elif message.command == 'learnsearch':
-            return self.learn_search(message)
-        else:
-            return self.learn(message)
+    def reaction_brain(self, reaction: ReactionEvent) -> Optional[str]:
+        if reaction.message.text is not None:
+            return self.create_new_learn(reaction.message.username, reaction.message.text)
+        return 'This is a learning-free zone!'
 
     @staticmethod
-    def learn_count() -> Optional[str]:
+    def command_learn_count(message: MessageEvent):
         learn_counts = get_learned_label_counts()
         learn_counts = [lc for lc in learn_counts if lc["total"] > 1]
         learn_counts = learn_counts[:10]
@@ -54,7 +40,14 @@ class LearnPlugin(FriskyPlugin):
         return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in learn_counts]))
 
     @staticmethod
-    def learn_search(message):
+    def command_random(message: MessageEvent):
+        learn = get_random_learn()
+        if learn:
+            return f'{learn.label}: {learn.content}'
+        return None
+
+    @staticmethod
+    def command_learnsearch(message: MessageEvent):
         if len(message.args) < 2:
             return
         label = message.args[0]
@@ -89,14 +82,7 @@ class LearnPlugin(FriskyPlugin):
             return f'Okay, learned {label}'
         return None
 
-    @staticmethod
-    def random() -> FriskyResponse:
-        learn = get_random_learn()
-        if learn:
-            return f'{learn.label}: {learn.content}'
-        return None
-
-    def learn(self, message: MessageEvent) -> Optional[str]:
+    def command_learn(self, message: MessageEvent) -> Optional[str]:
         """
 
         Potential cases:
