@@ -21,21 +21,20 @@ end-to-end. However, a test case class is provided to more easily test simple pl
 To create a plugin, add a python file underneath the `plugins/` directory. Inside this file, import and extend the base
 frisky plugin `frisky.plugins.FriskyPlugin`.  This class contains the base functionality you'll need for a new plugin.
 
-Additionally you'll notice several unimplemented functions:
+To implement your plugin, implement any of the following properties and methods:
 
-* `register_emoji(cls)` - this no argument class method should define the emoji your plugin will react to, if any
-* `register_commands(cls)` - this no argument class method should define the commands your plugin will react to, if any
-* `help_text(cls)` - this no argument class method should return helpful information about how to use your plugin in 
-   slack
-* `handle_message(self, message)` - this method implements handling a message, ie one of the 'commands' you registered
-   in the `register_commands` class method above. The `message` argument is a MessageEvent from the `frisky.events`
-   package and should contain basic information (slack channel, raw command text sent, user name of sender, etc ...)
-* `handle_reaction(self, reaction)` - this method implements handling a reaction, ie one of the 'emoji' you registered
-   in the `register_emoji` class method above.  The `message` argument is a `ReactionEvent` from the `frisky.events`
-   package and should contain basic information (emoji string, username of the user who received the emoji) as well as 
-   a `MessageEvent` instance.            
+* `reactions: List[str]` - a list of emoji reactions you want to handle
+* `commands: List[str]` - a list of commands you want to handle
+* `help: str` - helpful information about how to use your plugin in slack
+* `command_aliases: Dict[str, str]` - a dictionary in order to alias commands to others (see learn.py for an example)
+* `def command_{command_name}(self, message)` - for each command you want to handle in your plugin. The `message`
+   argument is a MessageEvent from the `frisky.events` package and should contain basic information (slack channel, raw
+   command text sent, user name of sender, etc ...)
+* `def reaction_{emoji}(self, reaction)` - for each reaction you want to handle in your plugin. The `message` argument
+   is a `ReactionEvent` from the `frisky.events` package and should contain basic information (emoji string, username of
+   the user who received the emoji) as well as a `MessageEvent` instance.            
 
-Note that all 'register' methods are optional, however you must at least implement one and it's corresponding handler
+Note that all of these properties are optional, however you must at least implement one and it's corresponding handler
 function to do implement any functionality.                  
 
 ### An example plugin
