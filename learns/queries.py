@@ -30,6 +30,8 @@ def get_learn_indexed(label: str, index: int):
 def get_random_learn():
     all_learns = Learn.objects.all()
     count = all_learns.aggregate(count=Count('id'))['count']
+    if count == 0:
+        return None
     random_index = randint(0, count - 1)
     return all_learns[random_index]
 

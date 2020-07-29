@@ -1,13 +1,10 @@
-from typing import Tuple, Optional
+from typing import Optional
 
 from frisky.plugin import FriskyPlugin
 
 
 class PingPlugin(FriskyPlugin):
+    commands = ['ping']
 
-    @classmethod
-    def register_commands(cls) -> Tuple:
-        return 'ping',
-
-    def handle_message(self, message) -> Optional[str]:
+    def command_ping(self, message) -> Optional[str]:
         return 'pong'

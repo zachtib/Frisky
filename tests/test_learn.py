@@ -30,6 +30,10 @@ class LearnTestCase(FriskyTestCase):
     def test_reaction_learn(self):
         self.assertEqual(self.send_reaction('brain', 'jim', 'jarjar'), 'Okay, learned jarjar')
 
+    def test_learn_free_zone(self):
+        self.assertEqual(self.send_reaction('brain', 'george', 'john', reacted_message=None),
+                         'This is a learning-free zone!')
+
     def test_get_nonexistant_learn(self):
         self.assertRaises(ValueError, lambda: get_random_learn_for_label('xyzzy'))
 
@@ -99,6 +103,9 @@ class LearnTestCase(FriskyTestCase):
         patcher.start()
         self.assertEqual(self.send_message('?random'), 'test_2: thing2')
         patcher.stop()
+
+    def test_get_random_no_learns_returns_none(self):
+        self.assertIsNone(self.send_message('?random'))
 
     def test_no_such_thing(self):
         self.send_message('?learn test_1 thing1')
