@@ -19,6 +19,7 @@ requests = "~=2.22"
 celery = "~=4.4"
 redis = "==3.3.11"
 dataclasses-json = "~=0.3"
+markovify = "~=0.8"
 
 [requires]
 python_version = "3.8"
