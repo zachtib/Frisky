@@ -19,6 +19,13 @@ class LearnApiTests(FriskyTestCase):
         content = json.loads(response.content)
         self.assertEqual(content['result'], 'abcdefg')
 
+    def test_invalid_jwt_404s(self):
+        token = jwt.encode({'label': 'api_test'}, 'my_fake_secret', algorithm='HS256').decode()
+
+        response = self.client.get('/api/random/', HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        self.assertEqual(response.status_code, 404)
+
     def test_no_learns_for_label_404s(self):
         self.send_message('?learn api_test abcdefg')
         token = jwt.encode({'label': 'api_test_2'}, settings.JWT_SECRET, algorithm='HS256').decode()

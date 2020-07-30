@@ -12,7 +12,10 @@ def random_learn(request):
     kind, jwt_token = auth_header.split(' ', 1)
     if kind != 'Bearer':
         raise Http404()
-    decoded_payload = jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
+    try:
+        decoded_payload = jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
+    except jwt.exceptions.InvalidSignatureError:
+        raise Http404()
     label = decoded_payload.get('label', None)
     try:
         learn = get_random_learn_for_label(label)
