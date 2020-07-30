@@ -1,7 +1,7 @@
 from unittest import mock
 
 from frisky.test import FriskyTestCase
-from learns.queries import get_all_learns, get_random_learn_for_label
+from learns.queries import get_all_learns_for_label, get_random_learn_for_label
 
 
 class LearnTestCase(FriskyTestCase):
@@ -39,7 +39,7 @@ class LearnTestCase(FriskyTestCase):
 
     def test_adding_a_learn(self):
         self.send_message("?learn test foobar")
-        count = get_all_learns('test').count()
+        count = get_all_learns_for_label('test').count()
 
         self.assertEqual(count, 1)
 
