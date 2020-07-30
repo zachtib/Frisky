@@ -17,7 +17,7 @@ class MarkovPlugin(FriskyPlugin):
         quotes = list(query.values_list('content', flat=True))
         text = '\n'.join(quotes)
 
-        text_model = markovify.NewlineText(text)
+        text_model = markovify.NewlineText(text, well_formed=False)
 
-        sentence = text_model.make_short_sentence(280, tries=100, test_output=False)
+        sentence = text_model.make_sentence(tries=100)
         return sentence
