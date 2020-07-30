@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'api',
     'learns',
     'memes',
     'scores',
@@ -141,6 +142,8 @@ FRISKY_LOGGING_CHANNEL = os.environ.get('FRISKY_LOGGING_CHANNEL', 'frisky-logs')
 FRISKY_IGNORED_CHANNELS = (
     FRISKY_LOGGING_CHANNEL,
 )
+
+JWT_SECRET = os.environ.get('JWT_SECRET', 'local_jwt_secret')
 
 if 'HEROKU' in os.environ:
     import django_heroku
