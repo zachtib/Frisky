@@ -100,6 +100,19 @@ def handle_reaction_event(event: ReactionAdded):
 
 
 @shared_task
+def process_from_cli(data):
+    channel = data.get('channel', 'bot-testing')
+    frisky.handle_message(
+        MessageEvent(
+            username=data.get('username', 'system'),
+            channel_name=channel,
+            text=data.get('text', None),
+        ),
+        reply_channel=lambda reply: slack_api_client.post_message(channel, reply)
+    )
+
+
+@shared_task
 def process_event(data):
     # noinspection PyBroadException
     try:
