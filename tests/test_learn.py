@@ -149,7 +149,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 bananaphone')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        response = self.send_message('?learn_search thing')
+        response = self.send_message('?ls thing')
         self.assertEqual(response, 'thing1\nthing2\nthing1\nthing2')
 
     def test_learn_search_with_zero_args_returns_the_help_text(self):
