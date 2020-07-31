@@ -59,7 +59,11 @@ class FriskyPlugin(object):
 
     @classmethod
     def register_commands(cls) -> Tuple:
-        return tuple(cls.commands)
+        result = cls.commands.copy()
+        for key in cls.command_aliases.keys():
+            if key not in result:
+                result.append(key)
+        return tuple(result)
 
     @classmethod
     def help_text(cls) -> Optional[str]:
