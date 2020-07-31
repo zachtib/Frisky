@@ -61,12 +61,13 @@ class LearnPlugin(FriskyPlugin):
             query = ' '.join(message.args[1:])
             learns = search_learns(label, query)
             if len(learns) > 0:
+                if label is None:
+                    return '\n'.join([f'{learn.label}: {learn.content}' for learn in learns])
                 return '\n'.join([learn.content for learn in learns])
 
         query = ' '.join(message.args)
         learns = search_learns(None, query)
-        return '\n'.join([learn.content for learn in learns])
-
+        return '\n'.join([f'{learn.label}: {learn.content}' for learn in learns])
 
     @staticmethod
     def get_random_learn_for_label(label: str) -> str:
