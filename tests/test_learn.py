@@ -141,7 +141,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
         response = self.send_message('?learn_search - thing')
-        self.assertEqual(response, 'thing1\nthing2\nthing1\nthing2')
+        self.assertEqual(response, 'test_1: thing1\ntest_1: thing2\ntest_2: thing1\ntest_2: thing2')
 
     def test_that_no_match_falls_back_to_global_search(self):
         self.send_message('?learn test_1 thing1')
@@ -150,7 +150,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
         response = self.send_message('?ls thing')
-        self.assertEqual(response, 'thing1\nthing2\nthing1\nthing2')
+        self.assertEqual(response, 'test_1: thing1\ntest_1: thing2\ntest_2: thing1\ntest_2: thing2')
 
     def test_learn_search_with_zero_args_returns_the_help_text(self):
         self.send_message('?learn test_1 thing1')
