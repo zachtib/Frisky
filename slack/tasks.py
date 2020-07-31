@@ -99,7 +99,6 @@ def handle_reaction_event(event: ReactionAdded):
     )
 
 
-@shared_task
 def process_from_cli(data):
     channel = data.get('channel', 'bot-testing')
     frisky.handle_message(

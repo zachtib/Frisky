@@ -19,7 +19,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print(args)
         print(options)
-        process_from_cli.delay({
+        process_from_cli({
             'channel': options.get('channel', 'bot-testing'),
             'username': options.get('username', 'system'),
             'text': options['message']
