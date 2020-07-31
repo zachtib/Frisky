@@ -61,4 +61,6 @@ def add_learn(label, content) -> bool:
 
 
 def search_learns(label, query):
+    if label is None:
+        return Learn.objects.filter(content__icontains=query)
     return Learn.objects.filter(label=label, content__icontains=query)

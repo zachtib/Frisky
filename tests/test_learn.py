@@ -2,6 +2,7 @@ from unittest import mock
 
 from frisky.test import FriskyTestCase
 from learns.queries import get_all_learns_for_label, get_random_learn_for_label
+from plugins.learn import LearnPlugin
 
 
 class LearnTestCase(FriskyTestCase):
@@ -121,7 +122,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing3')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        response = self.send_message('?learnsearch test_1 thing')
+        response = self.send_message('?learn_search test_1 thing')
         self.assertEqual(response, 'thing1\nthing2\nthing3')
 
     def test_learn_search_exclusion(self):
@@ -130,14 +131,32 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 bananaphone')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        response = self.send_message('?learnsearch test_1 thing')
+        response = self.send_message('?learn_search test_1 thing')
         self.assertEqual(response, 'thing1\nthing2')
 
-    def test_learn_search_with_zero_args_returns_nothing(self):
+    def test_learn_search_without_label(self):
         self.send_message('?learn test_1 thing1')
         self.send_message('?learn test_1 thing2')
         self.send_message('?learn test_1 bananaphone')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        response = self.send_message('?learnsearch')
-        self.assertIsNone(response)
+        response = self.send_message('?learn_search - thing')
+        self.assertEqual(response, 'thing1\nthing2\nthing1\nthing2')
+
+    def test_that_no_match_falls_back_to_global_search(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 bananaphone')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        response = self.send_message('?learn_search thing')
+        self.assertEqual(response, 'thing1\nthing2\nthing1\nthing2')
+
+    def test_learn_search_with_zero_args_returns_the_help_text(self):
+        self.send_message('?learn test_1 thing1')
+        self.send_message('?learn test_1 thing2')
+        self.send_message('?learn test_1 bananaphone')
+        self.send_message('?learn test_2 thing1')
+        self.send_message('?learn test_2 thing2')
+        response = self.send_message('?learn_search')
+        self.assertEqual(response, LearnPlugin.help)
