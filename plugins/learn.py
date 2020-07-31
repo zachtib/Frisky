@@ -13,16 +13,20 @@ class LearnPlugin(FriskyPlugin):
         ' • `?<label> <index>` - short hand for the `?learn <label> ...`',
         ' • `?learn <label> <value>` - add `<value>` to `<label>`',
         ' • `?learn_count` - show the counts of learned phrases by label (alias: `?lc`)',
+        ' • `?learn_search <label> <query>` - Search for learns under label that match query (alias: `?ls`)',
+        ' • `?learn_search - <query>` - Search for learns that match query (alias: `?ls`)',
         '*Emoji*',
         ' • Tag a user message with :brain: for frisky to learn a quote from that user'
     ])
 
     reactions = ['brain']
 
-    commands = ['learn', 'lc', 'learn_count', 'learnsearch', 'random', '*']
+    commands = ['learn', 'lc', 'learn_count', 'learn_search', 'random', '*']
 
     command_aliases = {
         'lc': 'learn_count',
+        'ls': 'learn_search',
+        'learnsearch': 'learn_search',
         '*': 'learn'
     }
 
@@ -47,13 +51,22 @@ class LearnPlugin(FriskyPlugin):
         return None
 
     @staticmethod
-    def command_learnsearch(message: MessageEvent):
-        if len(message.args) < 2:
-            return
-        label = message.args[0]
-        query = ' '.join(message.args[1:])
-        learns = search_learns(label, query)
+    def command_learn_search(message: MessageEvent):
+        if len(message.args) == 0:
+            return LearnPlugin.help
+        if len(message.args) >= 2:
+            label = message.args[0]
+            if label == '-':
+                label = None
+            query = ' '.join(message.args[1:])
+            learns = search_learns(label, query)
+            if len(learns) > 0:
+                return '\n'.join([learn.content for learn in learns])
+
+        query = ' '.join(message.args)
+        learns = search_learns(None, query)
         return '\n'.join([learn.content for learn in learns])
+
 
     @staticmethod
     def get_random_learn_for_label(label: str) -> str:
