@@ -2,6 +2,8 @@ import jwt
 from django.conf import settings
 from django.core.management import BaseCommand
 
+from api.models import ApiToken
+
 
 class Command(BaseCommand):
 
@@ -23,7 +25,7 @@ class Command(BaseCommand):
                 key=settings.JWT_SECRET,
                 algorithm='HS256'
             )
-
+            ApiToken.objects.create(jwt=str(jwt))
             print(f'learn: {result}')
         if options['general']:
             result = jwt.encode(
@@ -33,5 +35,5 @@ class Command(BaseCommand):
                 key=settings.JWT_SECRET,
                 algorithm='HS256'
             )
-
+            ApiToken.objects.create(jwt=str(jwt))
             print(f'general: {result}')
