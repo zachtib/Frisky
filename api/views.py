@@ -1,22 +1,38 @@
-import jwt
-from django.conf import settings
+import json
+
 from django.http import Http404, JsonResponse
 
+from api.util import get_jwt_from_headers
+from frisky.events import MessageEvent
 from learns.queries import get_random_learn_for_label
 
 
+def get_response(request):
+    if request.method != 'POST':
+        raise Http404()
+
+    get_jwt_from_headers(request.headers)
+    received_json_data = json.loads(request.body.decode("utf-8"))
+
+    message = received_json_data['message']
+    username = received_json_data['username']
+    channel = received_json_data['channel']
+
+    from frisky.bot import get_configured_frisky_instance
+    frisky = get_configured_frisky_instance()
+    responses = frisky.handle_message_synchronously(MessageEvent(
+        username=username,
+        channel_name=channel,
+        text=message
+    ))
+    return JsonResponse({
+        'replies': responses,
+    })
+
+
 def random_learn(request):
-    auth_header: str = request.headers.get('Authorization', None)
-    if auth_header is None:
-        raise Http404()
-    kind, jwt_token = auth_header.split(' ', 1)
-    if kind != 'Bearer':
-        raise Http404()
-    try:
-        decoded_payload = jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
-    except jwt.exceptions.InvalidSignatureError:
-        raise Http404()
-    label = decoded_payload.get('label', None)
+    jwt = get_jwt_from_headers(request.headers)
+    label = jwt.get('label', None)
     try:
         learn = get_random_learn_for_label(label)
     except ValueError:

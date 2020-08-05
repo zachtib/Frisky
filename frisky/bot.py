@@ -72,10 +72,9 @@ class Frisky(object):
         message.command = '*'
         return message
 
-    def handle_message(self, message: MessageEvent, reply_channel: Callable[[FriskyResponse], bool]) -> None:
-        if message.channel_name in self.ignored_channels or message.username == self.name:
-            return
+    def handle_message_synchronously(self, message: MessageEvent) -> List[FriskyResponse]:
         message.command, message.args = self.parse_message_string(message.text)
+        replies = []
         if message.command != '':
             plugins = self.get_plugins_for_command(message.command)
             if len(plugins) == 0:
@@ -85,7 +84,15 @@ class Frisky(object):
             for plugin in plugins:
                 reply = plugin.handle_message(message)
                 if reply is not None:
-                    reply_channel(reply)
+                    replies.append(reply)
+        return replies
+
+    def handle_message(self, message: MessageEvent, reply_channel: Callable[[FriskyResponse], bool]) -> None:
+        if message.channel_name in self.ignored_channels or message.username == self.name:
+            return
+        for reply in self.handle_message_synchronously(message):
+            if reply is not None:
+                reply_channel(reply)
 
     def handle_reaction(self, reaction: ReactionEvent, reply_channel: Callable[[str], bool]) -> None:
         if reaction.message.channel_name in self.ignored_channels:
@@ -109,3 +116,12 @@ class Frisky(object):
         command = tokens[0]
         args = tokens[1:]
         return command, args
+
+
+def get_configured_frisky_instance():
+    from django.conf import settings
+    return Frisky(
+        name=settings.FRISKY_NAME,
+        prefix=settings.FRISKY_PREFIX,
+        ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
+    )
