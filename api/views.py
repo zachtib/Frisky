@@ -1,12 +1,14 @@
 import json
 
 from django.http import Http404, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from api.util import get_jwt_from_headers
 from frisky.events import MessageEvent
 from learns.queries import get_random_learn_for_label
 
 
+@csrf_exempt
 def get_response(request):
     if request.method != 'POST':
         raise Http404()
