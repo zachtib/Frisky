@@ -20,6 +20,7 @@ celery = "~=4.4"
 redis = "==3.3.11"
 dataclasses-json = "~=0.3"
 markovify = "~=0.8"
+pyjwt = "~=1.7"
 
 [requires]
 python_version = "3.8"
