@@ -17,13 +17,15 @@ def get_jwt_from_headers(headers):
         logging.debug('Auth header is not Bearer')
         raise Http404()
     try:
+        decoded_token = jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
         token = ApiToken.objects.get(jwt=jwt_token)
         if token.revoked:
             logging.debug('Token is revoked')
             raise Http404()
-        return jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
+        return decoded_token
     except ApiToken.DoesNotExist:
         logging.debug('Token does not exist')
+        raise Http404()
     except jwt.exceptions.InvalidSignatureError:
         logging.debug('JWT Invalid Signature')
         raise Http404()
