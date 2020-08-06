@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.conf import settings
 from django.http import Http404, JsonResponse
@@ -14,7 +15,10 @@ def get_response(request):
     if request.method != 'POST':
         raise Http404()
 
-    get_jwt_from_headers(request.headers)
+    api_token = get_jwt_from_headers(request.headers)
+    if api_token.get('general', None) != 'true':
+        logging.debug('Token was valid, but not for general api')
+        raise Http404()
     received_json_data = json.loads(request.body.decode("utf-8"))
 
     message = received_json_data['message']

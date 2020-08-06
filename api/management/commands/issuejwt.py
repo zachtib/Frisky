@@ -21,25 +21,22 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        payload = None
         if options['learn'] is not None:
+            payload = {
+                'label': options['learn']
+            }
+        elif options['general']:
+            payload = {
+                'general': 'true'
+            }
+
+        if payload is not None:
             result = jwt.encode(
-                payload={
-                    'label': options['learn']
-                },
+                payload=payload,
                 key=settings.JWT_SECRET,
                 algorithm='HS256'
             )
             result = result.decode('UTF-8')
             ApiToken.objects.create(jwt=result, name=options['name'])
-            print(f'learn: {result}')
-        if options['general']:
-            result = jwt.encode(
-                payload={
-                    'general': 'true'
-                },
-                key=settings.JWT_SECRET,
-                algorithm='HS256'
-            )
-            result = result.decode('UTF-8')
-            ApiToken.objects.create(jwt=result, name=options['name'])
-            print(f'general: {result}')
+            print(f'token: {result}')
