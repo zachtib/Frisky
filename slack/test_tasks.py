@@ -2,6 +2,7 @@ from typing import Callable
 from unittest import mock
 
 import responses
+from django.core.management import call_command
 from django.test import TestCase
 
 from frisky.events import ReactionEvent, MessageEvent
@@ -156,5 +157,27 @@ class EventHandlingTestCase(TestCase):
                     event_ts='123'
                 ))
                 self.assertEqual(expected, result)
+            finally:
+                patcher.stop()
+
+
+class SlackCliTestCase(TestCase):
+
+    def test(self):
+        result = None
+
+        def mock_handle_message(_, message: MessageEvent, reply_channel: Callable[[str], bool]):
+            nonlocal result
+            result = message
+
+        patcher = mock.patch(target='frisky.bot.Frisky.handle_message', new=mock_handle_message)
+        with responses.RequestsMock() as rm:
+            rm.add('POST', f'{URL}/chat.postMessage')
+
+            try:
+                patcher.start()
+                call_command('friskcli', 'ping')
+                self.assertEqual(b'{"channel": null, "text": "pong"}', rm.calls[0].request.body)
+                self.assertIsNone(result)
             finally:
                 patcher.stop()
