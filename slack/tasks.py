@@ -100,14 +100,22 @@ def handle_reaction_event(event: ReactionAdded):
 
 
 def process_from_cli(data):
+    text = data['message']
+    if not text.startswith(settings.FRISKY_PREFIX):
+        text = f'{settings.FRISKY_PREFIX}{text}'
     message = MessageEvent(
         username=data['username'],
         channel_name=data['channel'],
-        text=data['message'],
+        text=text,
+    )
+    conversation = Conversation(
+        id=data['channel'],
+        name=data['channel'],
+        is_channel=True,
     )
     for reply in frisky.handle_message_synchronously(message):
         if reply is not None:
-            slack_api_client.post_message(data['channel'], reply)
+            slack_api_client.post_message(conversation, reply)
 
 
 @shared_task
