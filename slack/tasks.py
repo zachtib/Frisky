@@ -100,15 +100,14 @@ def handle_reaction_event(event: ReactionAdded):
 
 
 def process_from_cli(data):
-    channel = data.get('channel', 'bot-testing')
-    frisky.handle_message(
-        MessageEvent(
-            username=data.get('username', 'system'),
-            channel_name=channel,
-            text=data.get('text', None),
-        ),
-        reply_channel=lambda reply: slack_api_client.post_message(channel, reply)
+    message = MessageEvent(
+        username=data['username'],
+        channel_name=data['channel'],
+        text=data['message'],
     )
+    for reply in frisky.handle_message_synchronously(message):
+        if reply is not None:
+            slack_api_client.post_message(data['channel'], reply)
 
 
 @shared_task

@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand
+
 from slack.tasks import process_from_cli
 
 
@@ -17,10 +18,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        print(args)
-        print(options)
+        message = ' '.join(options['message'])
         process_from_cli({
             'channel': options.get('channel', 'bot-testing'),
             'username': options.get('username', 'system'),
-            'text': options['message']
+            'message': message
         })
