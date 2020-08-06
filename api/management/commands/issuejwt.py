@@ -9,11 +9,15 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '--name',
+            required=True,
+        )
+        parser.add_argument(
             '--learn',
         )
         parser.add_argument(
             '--general',
-            action='store_true'
+            action='store_true',
         )
 
     def handle(self, *args, **options):
@@ -25,7 +29,8 @@ class Command(BaseCommand):
                 key=settings.JWT_SECRET,
                 algorithm='HS256'
             )
-            ApiToken.objects.create(jwt=str(jwt))
+            result = result.decode('UTF-8')
+            ApiToken.objects.create(jwt=result, name=options['name'])
             print(f'learn: {result}')
         if options['general']:
             result = jwt.encode(
@@ -35,5 +40,6 @@ class Command(BaseCommand):
                 key=settings.JWT_SECRET,
                 algorithm='HS256'
             )
-            ApiToken.objects.create(jwt=str(jwt))
+            result = result.decode('UTF-8')
+            ApiToken.objects.create(jwt=result, name=options['name'])
             print(f'general: {result}')

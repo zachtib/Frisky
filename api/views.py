@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -19,6 +20,9 @@ def get_response(request):
     message = received_json_data['message']
     username = received_json_data['username']
     channel = received_json_data['channel']
+
+    if not message.startswith(settings.FRISKY_PREFIX):
+        message = f'{settings.FRISKY_PREFIX}{message}'
 
     from frisky.bot import get_configured_frisky_instance
     frisky = get_configured_frisky_instance()
