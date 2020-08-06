@@ -18,7 +18,7 @@ def get_jwt_from_headers(headers):
         raise Http404()
     try:
         decoded_token = jwt.decode(jwt_token, settings.JWT_SECRET, algorithms=['HS256'])
-        token = ApiToken.objects.get(jwt=jwt_token)
+        token = ApiToken.objects.get(uuid=decoded_token.get('uuid', None))
         if token.revoked:
             logging.debug('Token is revoked')
             raise Http404()

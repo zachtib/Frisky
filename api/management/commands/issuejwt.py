@@ -32,11 +32,12 @@ class Command(BaseCommand):
             }
 
         if payload is not None:
+            api_token = ApiToken.objects.create(name=options['name'])
+            payload['uuid'] = str(api_token.uuid)
             result = jwt.encode(
                 payload=payload,
                 key=settings.JWT_SECRET,
                 algorithm='HS256'
             )
             result = result.decode('UTF-8')
-            ApiToken.objects.create(jwt=result, name=options['name'])
-            print(f'token: {result}')
+            print(f'token: {result}', file=self.stdout)

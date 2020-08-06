@@ -11,14 +11,16 @@ from frisky.test import FriskyTestCase
 
 
 def get_valid_token(payload):
+    created_token = ApiToken.objects.create(name='Testing Token')
+    payload['uuid'] = str(created_token.uuid)
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
-    ApiToken.objects.create(jwt=token, name='Testing Token')
     return token
 
 
 def get_revoked_token(payload):
+    created_token = ApiToken.objects.create(name='Revoked Token', revoked=True)
+    payload['uuid'] = str(created_token.uuid)
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
-    ApiToken.objects.create(jwt=token, name='Testing Token', revoked=True)
     return token
 
 
@@ -137,27 +139,27 @@ class GeneralApiTests(FriskyTestCase):
 class CommandsTestCase(TestCase):
 
     def test_issue_jwt_noop(self):
-        args = []
-        opts = {
-            'name': 'testing',
-        }
         out = StringIO()
-        call_command('issuejwt', *args, **opts, stdout=out)
+        call_command('issuejwt', stdout=out, name='testing')
         self.assertEqual('', out.getvalue())
 
     def test_issue_jwt_learn(self):
         out = StringIO()
-        call_command('issuejwt', name='testing', learn='abcde', stdout=out)
-        token = ApiToken.objects.get(id=1)
-        decoded_value = jwt.decode(token.jwt, key=settings.JWT_SECRET, algorithms=['HS256'])
+        call_command('issuejwt', stdout=out, name='testing', learn='abcde')
+        _, output = out.getvalue().split(' ')
+        decoded_value = jwt.decode(output, key=settings.JWT_SECRET, algorithms=['HS256'])
+        token = ApiToken.objects.get(uuid=decoded_value['uuid'])
         self.assertEqual(decoded_value['label'], 'abcde')
+        self.assertEqual(token.name, 'testing')
 
     def test_issue_jwt_general(self):
         out = StringIO()
         call_command('issuejwt', name='testing', general=True, stdout=out)
-        token = ApiToken.objects.get(id=1)
-        decoded_value = jwt.decode(token.jwt, key=settings.JWT_SECRET, algorithms=['HS256'])
+        _, output = out.getvalue().split(' ')
+        decoded_value = jwt.decode(output, key=settings.JWT_SECRET, algorithms=['HS256'])
+        token = ApiToken.objects.get(uuid=decoded_value['uuid'])
         self.assertEqual(decoded_value['general'], 'true')
+        self.assertEqual(token.name, 'testing')
 
 
 class MiscApiTestCase(TestCase):
@@ -167,6 +169,6 @@ class MiscApiTestCase(TestCase):
         self.assertEqual(ApiConfig.name, 'api')
 
     def test_api_str(self):
-        token = get_valid_token({'label': 'api_test'})
-        api_token = ApiToken.objects.get(jwt=token)
+        get_valid_token({'label': 'api_test'})
+        api_token = ApiToken.objects.get(id=1)
         self.assertEqual('ApiToken: Testing Token', str(api_token))

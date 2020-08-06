@@ -1,9 +1,11 @@
+import uuid
+
 from django.db import models
 
 
 class ApiToken(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, db_index=True, editable=False, unique=True)
     name = models.CharField(max_length=100)
-    jwt = models.CharField(max_length=255, db_index=True)
     revoked = models.BooleanField(default=False)
     notes = models.TextField(null=True, blank=True, default='')
 
