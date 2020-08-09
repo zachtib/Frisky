@@ -55,6 +55,22 @@ class PingPlugin(FriskyPlugin):
 The base class `FriskyTestCase` has one method, `send_message` which takes in a string and handles it as if it was a
 message sent in channel.
 
+### Architecture
+
+Frisky is built on top of the Django Web Framework, but isn't a traditional web application, in that it does not serve web pages.
+
+`slack/views.py`
+
+There are a couple of entry points into Frisky, but the Slack webhook is by far the most common. Slack sends a series of events to
+Frisky that it has subscribed to. Slack expects a response within 2 seconds, or else it will retry. To account for this, and the fact
+that Frisky's production Heroku instance can take a moment to "wake up", any requests with the Retry header are ignored. The Slack
+webhook deserializes the event, places it on a Celery worker queue, and then returns an HTTP 200 response to Slack to acknowledge
+the event was received.
+
+`slack/tasks.py`
+
+Here we have the 
+
 ## Troubleshooting
 When running `pipenv install` you may encounter an error like:
 ```
