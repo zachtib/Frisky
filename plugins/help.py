@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
 from frisky.responses import FriskyResponse
@@ -7,11 +5,9 @@ from frisky.responses import FriskyResponse
 
 class HelpPlugin(FriskyPlugin, PluginRepositoryMixin):
 
-    @classmethod
-    def register_commands(cls) -> Tuple:
-        return 'help', '?'
+    commands = ['help']
 
-    def handle_message(self, message: MessageEvent) -> FriskyResponse:
+    def command_help(self, message: MessageEvent) -> FriskyResponse:
         if len(message.args) == 1:
             plugin_name = message.args[0]
             if plugin_name == 'help':
