@@ -113,6 +113,8 @@ class Frisky(object):
             return '', []
         message = message.strip()
         tokens = quotesplit(message)
+        if len(tokens) == 0:
+            return '', []
         command = tokens[0]
         args = tokens[1:]
         return command, args
