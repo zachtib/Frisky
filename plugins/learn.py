@@ -3,7 +3,7 @@ from typing import Optional
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
 from learns.queries import add_learn, search_learns, get_random_learn_for_label, get_random_learn, get_learn_indexed, \
-    get_learned_label_counts
+    get_learned_label_counts, get_learn_count_for_label
 
 
 class LearnPlugin(FriskyPlugin):
@@ -37,9 +37,24 @@ class LearnPlugin(FriskyPlugin):
 
     @staticmethod
     def command_learn_count(message: MessageEvent):
-        learn_counts = get_learned_label_counts()
-        learn_counts = [lc for lc in learn_counts if lc["total"] > 1]
-        learn_counts = learn_counts[:10]
+        if len(message.args) == 0:
+            learn_counts = get_learned_label_counts()
+            learn_counts = [lc for lc in learn_counts if lc["total"] > 1]
+            learn_counts = learn_counts[:10]
+        elif len(message.args) == 1:
+            counts = get_learn_count_for_label(message.args[0])
+            if counts is None:
+                return None
+            return f'Count: {counts["total"]}'
+        else:
+            learn_counts = []
+            for item in message.args:
+                counts = get_learn_count_for_label(item)
+                if counts is not None:
+                    learn_counts.append(counts)
+
+        if len(learn_counts) == 0:
+            return None
 
         return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in learn_counts]))
 
