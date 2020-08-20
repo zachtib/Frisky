@@ -12,6 +12,12 @@ def get_learned_label_counts():
         .order_by('-total')
 
 
+def get_learn_count_for_label(label):
+    return Learn.objects.filter(label=label) \
+        .values('label') \
+        .annotate(total=Count('label'))[0]
+
+
 def get_all_learns():
     return Learn.objects.all()
 
