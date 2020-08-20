@@ -87,6 +87,12 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing2')
         self.assertEqual(self.send_message('?lc test_1'), 'Count: 3')
 
+    def test_learn_count_with_nonexistant_arg(self):
+        self.assertEqual(self.send_message('?lc test_1'), None)
+
+    def test_learn_count_with_multiple_nonexistant_arga(self):
+        self.assertEqual(self.send_message('?lc test_1 test_2'), None)
+
     def test_learn_count_with_args(self):
         self.send_message('?learn test_1 thing1')
         self.send_message('?learn test_1 thing2')

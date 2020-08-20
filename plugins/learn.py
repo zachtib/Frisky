@@ -43,12 +43,18 @@ class LearnPlugin(FriskyPlugin):
             learn_counts = learn_counts[:10]
         elif len(message.args) == 1:
             counts = get_learn_count_for_label(message.args[0])
+            if counts is None:
+                return None
             return f'Count: {counts["total"]}'
         else:
             learn_counts = []
             for item in message.args:
                 counts = get_learn_count_for_label(item)
-                learn_counts.append(counts)
+                if counts is not None:
+                    learn_counts.append(counts)
+
+        if len(learn_counts) == 0:
+            return None
 
         return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in learn_counts]))
 
