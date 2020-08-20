@@ -1,12 +1,10 @@
 import json
 import logging
 
-from django.conf import settings
 from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from api.util import get_jwt_from_headers
-from frisky.events import MessageEvent
+from api.util import get_jwt_from_headers, handle_generic_frisky_request
 from learns.queries import get_random_learn_for_label
 
 
@@ -25,19 +23,20 @@ def get_response(request):
     username = received_json_data['username']
     channel = received_json_data['channel']
 
-    if not message.startswith(settings.FRISKY_PREFIX):
-        message = f'{settings.FRISKY_PREFIX}{message}'
+    responses = handle_generic_frisky_request(message, username, channel)
 
-    from frisky.bot import get_configured_frisky_instance
-    frisky = get_configured_frisky_instance()
-    responses = frisky.handle_message_synchronously(MessageEvent(
-        username=username,
-        channel_name=channel,
-        text=message
-    ))
-    return JsonResponse({
-        'replies': responses,
-    })
+    return JsonResponse(responses)
+
+
+def bespoke(request):
+    jwt = get_jwt_from_headers(request.headers)
+
+    message = jwt.get('command')
+    username = jwt.get('username', '')
+    channel = jwt.get('channel', '')
+
+    responses = handle_generic_frisky_request(message, username, channel)
+    return JsonResponse(responses)
 
 
 def random_learn(request):

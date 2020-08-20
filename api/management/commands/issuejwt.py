@@ -16,6 +16,15 @@ class Command(BaseCommand):
             '--learn',
         )
         parser.add_argument(
+            '--command',
+        )
+        parser.add_argument(
+            '--username',
+        )
+        parser.add_argument(
+            '--channel',
+        )
+        parser.add_argument(
             '--general',
             action='store_true',
         )
@@ -25,6 +34,12 @@ class Command(BaseCommand):
         if options['learn'] is not None:
             payload = {
                 'label': options['learn']
+            }
+        elif options['command'] is not None:
+            payload = {
+                'command': options['command'],
+                'username': options['username'],
+                'channel': options['channel'],
             }
         elif options['general']:
             payload = {

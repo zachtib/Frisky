@@ -136,6 +136,28 @@ class GeneralApiTests(FriskyTestCase):
         self.assertEqual(response.status_code, 404)
 
 
+class BespokeApiTests(FriskyTestCase):
+
+    def test_bespoke_ping(self):
+        token = get_valid_token({'command': 'ping'})
+        response = self.client.get('/api/bespoke/', HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertEqual(content['replies'], ['pong'])
+
+    def test_bespoke_with_missing_message_404s(self):
+        token = get_valid_token({})
+        response = self.client.get('/api/bespoke/', HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_bespoke_with_missing_auth_404s(self):
+        response = self.client.get('/api/bespoke/')
+
+        self.assertEqual(response.status_code, 404)
+
+
 class CommandsTestCase(TestCase):
 
     def test_issue_jwt_noop(self):
@@ -159,6 +181,17 @@ class CommandsTestCase(TestCase):
         decoded_value = jwt.decode(output, key=settings.JWT_SECRET, algorithms=['HS256'])
         token = ApiToken.objects.get(uuid=decoded_value['uuid'])
         self.assertEqual(decoded_value['general'], 'true')
+        self.assertEqual(token.name, 'testing')
+
+    def test_issue_jwt_bespoke(self):
+        out = StringIO()
+        call_command('issuejwt', name='testing', command='ping', username='testuser', channel='testchannel', stdout=out)
+        _, output = out.getvalue().split(' ')
+        decoded_value = jwt.decode(output, key=settings.JWT_SECRET, algorithms=['HS256'])
+        token = ApiToken.objects.get(uuid=decoded_value['uuid'])
+        self.assertEqual(decoded_value['command'], 'ping')
+        self.assertEqual(decoded_value['username'], 'testuser')
+        self.assertEqual(decoded_value['channel'], 'testchannel')
         self.assertEqual(token.name, 'testing')
 
 
