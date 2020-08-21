@@ -2,7 +2,7 @@ import markovify
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
-from learns.queries import get_all_learns_for_label, get_all_learns
+from learns.models import Learn
 
 
 class MarkovPlugin(FriskyPlugin):
@@ -16,10 +16,10 @@ class MarkovPlugin(FriskyPlugin):
         if len(message.args) > 0:
             quotes = []
             for item in message.args:
-                query = get_all_learns_for_label(item)
+                query = Learn.objects.for_label(item)
                 quotes.extend(list(query.values_list('content', flat=True)))
         else:
-            query = get_all_learns()
+            query = Learn.objects.all()
             quotes = list(query.values_list('content', flat=True))
         text = '\n'.join(quotes)
 

@@ -3,7 +3,7 @@ from typing import Tuple, Optional
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
 from frisky.responses import FriskyResponse
-from learns.queries import get_random_learn_for_label
+from learns.models import Learn
 from memes.models import MemeAlias
 
 
@@ -25,7 +25,7 @@ class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
         if meme_id == -1:
             return 'NO SUCH MEME'
         try:
-            meme_message: str = get_random_learn_for_label(message.args[0]).content
+            meme_message: str = Learn.objects.random(message.args[0]).content
         except ValueError:
             return 'NO SUCH LEARN'
         return self.get_plugin_for_command('meme').handle_message(MessageEvent(
