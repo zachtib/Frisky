@@ -1,7 +1,7 @@
 from unittest import mock
 
 from frisky.test import FriskyTestCase
-from learns.queries import get_all_learns_for_label, get_random_learn_for_label
+from learns.models import Learn
 from plugins.learn import LearnPlugin
 
 
@@ -36,11 +36,11 @@ class LearnTestCase(FriskyTestCase):
                          'This is a learning-free zone!')
 
     def test_get_nonexistant_learn(self):
-        self.assertRaises(ValueError, lambda: get_random_learn_for_label('xyzzy'))
+        self.assertRaises(ValueError, lambda: Learn.objects.random('?xyzzy'))
 
     def test_adding_a_learn(self):
         self.send_message("?learn test foobar")
-        count = get_all_learns_for_label('test').count()
+        count = Learn.objects.for_label('test').count()
 
         self.assertEqual(count, 1)
 
@@ -115,7 +115,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing1')
         self.send_message('?learn test_1 thing2')
         self.send_message('?learn test_1 thing3')
-        patcher = mock.patch(target='learns.queries.randint', new=lambda *a, **k: 1)
+        patcher = mock.patch(target='learns.models.randint', new=lambda *a, **k: 1)
         patcher.start()
         self.assertEqual(self.send_message('?test_1'), 'thing2')
         patcher.stop()
@@ -124,7 +124,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing1')
         self.send_message('?learn test_2 thing2')
         self.send_message('?learn test_3 thing3')
-        patcher = mock.patch(target='learns.queries.randint', new=lambda *a, **k: 1)
+        patcher = mock.patch(target='learns.models.randint', new=lambda *a, **k: 1)
         patcher.start()
         self.assertEqual(self.send_message('?random'), 'test_2: thing2')
         patcher.stop()
@@ -175,6 +175,12 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing2')
         response = self.send_message('?ls thing')
         self.assertEqual(response, 'test_1: thing1\ntest_1: thing2\ntest_2: thing1\ntest_2: thing2')
+
+    def test_that_wildcard_syntax_does_not_create_a_learn(self):
+        self.send_message('?this should not do anything')
+        count = Learn.objects.for_label('this').count()
+
+        self.assertEqual(count, 0)
 
     def test_learn_search_with_zero_args_returns_the_help_text(self):
         self.send_message('?learn test_1 thing1')

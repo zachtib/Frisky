@@ -2,8 +2,7 @@ from typing import Optional
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
-from learns.queries import add_learn, search_learns, get_random_learn_for_label, get_random_learn, get_learn_indexed, \
-    get_learned_label_counts, get_learn_count_for_label
+from learns.models import Learn
 
 
 class LearnPlugin(FriskyPlugin):
@@ -38,18 +37,18 @@ class LearnPlugin(FriskyPlugin):
     @staticmethod
     def command_learn_count(message: MessageEvent):
         if len(message.args) == 0:
-            learn_counts = get_learned_label_counts()
+            learn_counts = Learn.objects.label_counts()
             learn_counts = [lc for lc in learn_counts if lc["total"] > 1]
             learn_counts = learn_counts[:10]
         elif len(message.args) == 1:
-            counts = get_learn_count_for_label(message.args[0])
+            counts = Learn.objects.count_for_label(message.args[0])
             if counts is None:
                 return None
             return f'Count: {counts["total"]}'
         else:
             learn_counts = []
             for item in message.args:
-                counts = get_learn_count_for_label(item)
+                counts = Learn.objects.count_for_label(item)
                 if counts is not None:
                     learn_counts.append(counts)
 
@@ -60,7 +59,7 @@ class LearnPlugin(FriskyPlugin):
 
     @staticmethod
     def command_random(message: MessageEvent):
-        learn = get_random_learn()
+        learn = Learn.objects.random()
         if learn:
             return f'{learn.label}: {learn.content}'
         return None
@@ -74,24 +73,24 @@ class LearnPlugin(FriskyPlugin):
             if label == '-':
                 label = None
             query = ' '.join(message.args[1:])
-            learns = search_learns(label, query)
+            learns = Learn.objects.search(label=label, query=query)
             if len(learns) > 0:
                 if label is None:
                     return '\n'.join([f'{learn.label}: {learn.content}' for learn in learns])
                 return '\n'.join([learn.content for learn in learns])
 
         query = ' '.join(message.args)
-        learns = search_learns(None, query)
+        learns = Learn.objects.search(query)
         return '\n'.join([f'{learn.label}: {learn.content}' for learn in learns])
 
     @staticmethod
     def get_random_learn_for_label(label: str) -> str:
         try:
-            return get_random_learn_for_label(label).content
+            return Learn.objects.random(label).content
         except ValueError:
             pass
         try:
-            return get_random_learn_for_label('error').content
+            return Learn.objects.random('error').content
         except ValueError:
             pass
         return 'I got nothing, boss'
@@ -99,7 +98,7 @@ class LearnPlugin(FriskyPlugin):
     @staticmethod
     def get_indexed_learn_for_label(label, index) -> str:
         try:
-            return get_learn_indexed(label, index).content
+            return Learn.objects.for_label_indexed(label, index).content
         except IndexError:
             return 'NO SUCH THING'
 
@@ -107,7 +106,7 @@ class LearnPlugin(FriskyPlugin):
     def create_new_learn(label: str, content: str) -> Optional[str]:
         if content.startswith('?'):
             return "DON'T HURT ME AGAIN"
-        if add_learn(label, content):
+        if Learn.objects.add(label, content):
             return f'Okay, learned {label}'
         return None
 

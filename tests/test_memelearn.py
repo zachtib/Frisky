@@ -2,7 +2,7 @@ import responses
 
 from frisky.responses import Image
 from frisky.test import FriskyTestCase
-from learns.queries import add_learn
+from learns.models import Learn
 from memes.models import MemeAlias
 from plugins.meme import MemePlugin
 
@@ -37,7 +37,7 @@ class MemeLearnTestCase(FriskyTestCase):
             }'''.strip())
 
             MemeAlias.objects.create_alias('foobar', 12345)
-            add_learn('foobar', 'xyzzy')
+            self.assertTrue(Learn.objects.add('foobar', 'xyzzy'))
 
             result = self.send_message('?memelearn foobar')
             self.assertEqual(rm.calls[0].request.body,

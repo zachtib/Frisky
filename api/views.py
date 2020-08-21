@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from api.util import get_jwt_from_headers
 from frisky.events import MessageEvent
-from learns.queries import get_random_learn_for_label
+from learns.models import Learn
 
 
 @csrf_exempt
@@ -44,7 +44,7 @@ def random_learn(request):
     jwt = get_jwt_from_headers(request.headers)
     label = jwt.get('label', None)
     try:
-        learn = get_random_learn_for_label(label)
+        learn = Learn.objects.random(label)
     except ValueError:
         raise Http404()
     return JsonResponse({
