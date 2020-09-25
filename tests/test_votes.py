@@ -43,3 +43,10 @@ class VoteTestCase(FriskyTestCase):
         self.send_message('?-- stonks')
         record = get_votes_record('stonks')
         self.assertEqual(record.votes, -3)
+
+    def test_multi_upvotes(self):
+        self.send_message('?++ thing1 thing2')
+        record = get_votes_record('thing1')
+        self.assertEqual(record.votes, 1)
+        record = get_votes_record('thing2')
+        self.assertEqual(record.votes, 1)

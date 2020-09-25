@@ -52,10 +52,18 @@ class VotesPlugin(FriskyPlugin):
                 record = get_votes_record(arg)
                 response.append(f'{record.label} has {self.__format_score(record.votes)}')
             return '\n'.join(response)
-        elif message.command in ('upvote', '++') and len(message.args) == 1:
-            return self.__do_upvote(message.username, message.args[0])
-        elif message.command in ('downvote', '--') and len(message.args) == 1:
-            return self.__do_downvote(message.username, message.args[0])
+        elif message.command in ('upvote', '++') and len(message.args) >= 1:
+            response = []
+            for arg in message.args:
+                result = self.__do_upvote(message.username, arg)
+                response.append(result)
+            return '\n'.join(response)
+        elif message.command in ('downvote', '--') and len(message.args) >= 1:
+            response = []
+            for arg in message.args:
+                result = self.__do_downvote(message.username, arg)
+                response.append(result)
+            return '\n'.join(response)
 
     def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
         if reaction.added:
