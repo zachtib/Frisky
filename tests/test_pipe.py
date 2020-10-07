@@ -33,3 +33,8 @@ class PipeTestCase(FriskyTestCase):
                              'text1=This+Test+Passed')
             self.assertIsInstance(reply, Image)
             self.assertEqual(reply.url, 'https://i.imgflip.com/123abc.jpg')
+
+    def test_multi_piping(self):
+        self.send_message('?learn foobar Hello, World')
+        reply = self.send_message('?pipe foobar | format')
+        self.assertEqual(reply, '')
