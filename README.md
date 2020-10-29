@@ -1,6 +1,6 @@
 # Frisky: A general purpose Slack bot written in Python
-![image build](https://api.travis-ci.org/zachtib/Frisky.svg?branch=master)
-![image cover](https://codecov.io/gh/zachtib/Frisky/branch/master/graph/badge.svg)
+![image build](https://api.travis-ci.org/zachtib/Frisky.svg?branch=main)
+![image cover](https://codecov.io/gh/zachtib/Frisky/branch/main/graph/badge.svg)
 
 1. [Running Frisky Locally](#running-frisky-locally)
 2. [Writing a Plugin](#writing-a-plugin)
