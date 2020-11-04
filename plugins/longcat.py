@@ -4,7 +4,6 @@ from frisky.responses import FriskyResponse
 
 
 class LongcatPlugin(FriskyPlugin):
-
     commands = ['longcat']
     help = 'Create the longest of cats'
 
@@ -15,4 +14,6 @@ class LongcatPlugin(FriskyPlugin):
             count = int(message.args[0])
         except ValueError:
             return
+        if count < 0:
+            return '\n'.join([':dne-tacgnol:'] + [':elddim-tacgnol:'] * (-count) + [':nigeb-tacgnol:'])
         return '\n'.join([':longcat-begin:'] + [':longcat-middle:'] * count + [':longcat-end:'])
