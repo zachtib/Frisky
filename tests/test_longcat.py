@@ -31,3 +31,23 @@ class LearnTestCase(FriskyTestCase):
             ':longcat-end:'
         )
         self.assertEqual(expected, actual)
+
+    def test_tacgnol_1(self):
+        actual = self.send_message('?longcat -1')
+        expected = (
+            ':dne-tacgnol:\n'
+            ':elddim-tacgnol:\n'
+            ':nigeb-tacgnol:'
+        )
+        self.assertEqual(expected, actual)
+
+    def test_tacgnol_3(self):
+        actual = self.send_message('?longcat -3')
+        expected = (
+            ':dne-tacgnol:\n'
+            ':elddim-tacgnol:\n'
+            ':elddim-tacgnol:\n'
+            ':elddim-tacgnol:\n'
+            ':nigeb-tacgnol:'
+        )
+        self.assertEqual(expected, actual)
