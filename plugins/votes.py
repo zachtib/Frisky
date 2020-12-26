@@ -61,7 +61,7 @@ class VotesPlugin(FriskyPlugin):
 
     def command_leaderboard(self, message: MessageEvent) -> FriskyResponse:
         votes = Vote.objects.order_by('-votes')[:10]
-        return '\n'.join([f'{vote.label}: {vote.votes}' for vote in votes])
+        return '*Upvote Leaderboard*\n' + '\n'.join([f'{vote.label}: {vote.votes}' for vote in votes])
 
     def command_votes(self, message: MessageEvent) -> FriskyResponse:
         response = []
