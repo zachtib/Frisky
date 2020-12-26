@@ -97,6 +97,7 @@ class VoteTestCase(FriskyTestCase):
         Vote.objects.create(label='bar', votes=1)
         Vote.objects.create(label='foobar', votes=4)
         response = self.send_message('?leaderboard')
-        self.assertEqual('foobar: 4\n'
+        self.assertEqual('*Upvote Leaderboard*\n'
+                         'foobar: 4\n'
                          'foo: 3\n'
                          'bar: 1', response)

@@ -77,7 +77,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing3')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        self.assertEqual(self.send_message('?lc'), '*Counts*\n • test_1: 3\n • test_2: 2')
+        self.assertEqual(self.send_message('?lc'), '*Learn Counts*\n • test_1: 3\n • test_2: 2')
 
     def test_learn_count_with_arg(self):
         self.send_message('?learn test_1 thing1')
@@ -101,7 +101,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_2 thing2')
         self.send_message('?learn test_3 thing1')
         self.send_message('?learn test_3 thing2')
-        self.assertEqual(self.send_message('?lc test_1 test_2'), '*Counts*\n • test_1: 3\n • test_2: 2')
+        self.assertEqual(self.send_message('?lc test_1 test_2'), '*Learn Counts*\n • test_1: 3\n • test_2: 2')
 
     def test_learn_count(self):
         self.send_message('?learn test_1 thing1')
@@ -109,7 +109,7 @@ class LearnTestCase(FriskyTestCase):
         self.send_message('?learn test_1 thing3')
         self.send_message('?learn test_2 thing1')
         self.send_message('?learn test_2 thing2')
-        self.assertEqual(self.send_message('?learn_count'), '*Counts*\n • test_1: 3\n • test_2: 2')
+        self.assertEqual(self.send_message('?learn_count'), '*Learn Counts*\n • test_1: 3\n • test_2: 2')
 
     def test_get_random_labeled(self):
         self.send_message('?learn test_1 thing1')

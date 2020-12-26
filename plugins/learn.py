@@ -55,7 +55,7 @@ class LearnPlugin(FriskyPlugin):
         if len(learn_counts) == 0:
             return None
 
-        return '*Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in learn_counts]))
+        return '*Learn Counts*\n' + ('\n'.join([f' • {lc["label"]}: {lc["total"]}' for lc in learn_counts]))
 
     @staticmethod
     def command_random(message: MessageEvent):
