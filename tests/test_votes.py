@@ -1,3 +1,6 @@
+from datetime import date
+from unittest.mock import patch
+
 from frisky.test import FriskyTestCase
 from votes.queries import get_votes_record
 
@@ -43,3 +46,49 @@ class VoteTestCase(FriskyTestCase):
         self.send_message('?-- stonks')
         record = get_votes_record('stonks')
         self.assertEqual(record.votes, -3)
+
+    def test_festive_messages(self):
+        with patch('plugins.votes.date') as mock_date:
+            mock_date.today.return_value = date(2020, 10, 7)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            response = self.send_message('?upvote user')
+            self.assertEqual('dummyuser upvoted user! user has 1 halloween candy', response)
+
+    def test_festive_messages_dec(self):
+        with patch('plugins.votes.date') as mock_date:
+            mock_date.today.return_value = date(2020, 12, 7)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            response = self.send_message('?upvote user')
+            self.assertEqual('dummyuser upvoted user! user has 1 candy cane', response)
+
+    def test_nonfestive_messages(self):
+        with patch('plugins.votes.date') as mock_date:
+            mock_date.today.return_value = date(2020, 7, 7)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            response = self.send_message('?upvote user')
+            self.assertEqual('dummyuser upvoted user! user has 1 friskypoint', response)
+
+
+    def test_festive_messages_pl(self):
+        self.send_message('?upvote user')
+        with patch('plugins.votes.date') as mock_date:
+            mock_date.today.return_value = date(2020, 10, 7)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            response = self.send_message('?upvote user')
+            self.assertEqual('dummyuser upvoted user! user has 2 halloween candies', response)
+
+    def test_festive_messages_dec_pl(self):
+        self.send_message('?upvote user')
+        with patch('plugins.votes.date') as mock_date:
+            mock_date.today.return_value = date(2020, 12, 7)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            response = self.send_message('?upvote user')
+            self.assertEqual('dummyuser upvoted user! user has 2 candy canes', response)
+
+    def test_nonfestive_messages_pl(self):
+        self.send_message('?upvote user')
+        with patch('plugins.votes.date') as mock_date:
+            mock_date.today.return_value = date(2020, 7, 7)
+            mock_date.side_effect = lambda *args, **kw: date(*args, **kw)
+            response = self.send_message('?upvote user')
+            self.assertEqual('dummyuser upvoted user! user has 2 friskypoints', response)
