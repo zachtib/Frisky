@@ -1,30 +1,38 @@
+from dataclasses import dataclass
+from datetime import date
+
 from typing import Optional, Tuple
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
+from frisky.responses import FriskyResponse
 from votes.queries import get_votes_record, upvote, downvote
 
 
 class VotesPlugin(FriskyPlugin):
 
-    @classmethod
-    def help_text(cls) -> Optional[str]:
-        return 'Usage: `?votes <thing>` to get the vote count for `thing`, :upvote: and :downvote: to vote'
+    commands = ['votes', 'upvote', 'downvote', '++', '--']
+    command_aliases = {
+        '++': 'upvote',
+        '--': 'downvote',
+    }
+    reactions = ['upvote', 'downvote']
+    help = 'Usage: `?votes <thing>` to get the vote count for `thing`, :upvote: and :downvote: to vote'
 
-    @classmethod
-    def register_emoji(cls) -> Tuple:
-        return 'upvote', 'downvote'
+    def __get_festive_score_unit(self) -> Tuple[str, str]:
+        today = date.today()
+        if today.month == 10:
+            return 'halloween candy', 'halloween candies',
+        if today.month == 12:
+            return 'candy cane', 'candy canes'
+        return 'friskypoint', 'friskypoints'
 
-    @classmethod
-    def register_commands(cls) -> Tuple:
-        return 'votes', 'upvote', 'downvote', '++', '--'
-
-    @staticmethod
-    def __format_score(count):
+    def __format_score(self, count):
+        units = self.__get_festive_score_unit()
         if count == 1:
-            return '1 friskypoint'
+            return f'1 {units[0]}'
         else:
-            return f'{count} friskypoints'
+            return f'{count} {units[1]}'
 
     def __do_upvote(self, user, thing, silent=False) -> Optional[str]:
         if user == thing:
@@ -45,26 +53,29 @@ class VotesPlugin(FriskyPlugin):
             if not silent:
                 return f'{user} downvoted {thing}! {thing} has {self.__format_score(record.votes)}'
 
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
-        if message.command == 'votes':
-            response = []
-            for arg in message.args:
-                record = get_votes_record(arg)
-                response.append(f'{record.label} has {self.__format_score(record.votes)}')
-            return '\n'.join(response)
-        elif message.command in ('upvote', '++') and len(message.args) == 1:
+    def command_upvote(self, message: MessageEvent) -> FriskyResponse:
+        if len(message.args) == 1:
             return self.__do_upvote(message.username, message.args[0])
-        elif message.command in ('downvote', '--') and len(message.args) == 1:
+
+    def command_downvote(self, message: MessageEvent) -> FriskyResponse:
+        if len(message.args) == 1:
             return self.__do_downvote(message.username, message.args[0])
 
-    def handle_reaction(self, reaction: ReactionEvent) -> Optional[str]:
+    def command_votes(self, message: MessageEvent) -> FriskyResponse:
+        response = []
+        for arg in message.args:
+            record = get_votes_record(arg)
+            response.append(f'{record.label} has {self.__format_score(record.votes)}')
+        return '\n'.join(response)
+
+    def reaction_upvote(self, reaction: ReactionEvent) -> FriskyResponse:
         if reaction.added:
-            if reaction.emoji == 'upvote':
-                return self.__do_upvote(reaction.username, reaction.message.username)
-            elif reaction.emoji == 'downvote':
-                return self.__do_downvote(reaction.username, reaction.message.username)
+            return self.__do_upvote(reaction.username, reaction.message.username)
         else:
-            if reaction.emoji == 'upvote':
-                return self.__do_downvote(reaction.username, reaction.message.username, silent=True)
-            elif reaction.emoji == 'downvote':
-                return self.__do_upvote(reaction.username, reaction.message.username, silent=True)
+            return self.__do_downvote(reaction.username, reaction.message.username, silent=True)
+
+    def reaction_downvote(self, reaction: ReactionEvent) -> FriskyResponse:
+        if reaction.added:
+            return self.__do_downvote(reaction.username, reaction.message.username)
+        else:
+            return self.__do_upvote(reaction.username, reaction.message.username, silent=True)
