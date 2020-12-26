@@ -1,17 +1,15 @@
-from dataclasses import dataclass
 from datetime import date
-
 from typing import Optional, Tuple
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
-from votes.queries import get_votes_record, upvote, downvote
+from votes.models import Vote
 
 
 class VotesPlugin(FriskyPlugin):
 
-    commands = ['votes', 'upvote', 'downvote', '++', '--']
+    commands = ['votes', 'upvote', 'downvote', '++', '--', 'leaderboard']
     command_aliases = {
         '++': 'upvote',
         '--': 'downvote',
@@ -39,17 +37,17 @@ class VotesPlugin(FriskyPlugin):
             if not silent:
                 return f'Nice try, {user}, you can\'t upvote yourself'
         else:
-            record = upvote(thing)
+            record = Vote.objects.upvote(thing)
             if not silent:
                 return f'{user} upvoted {thing}! {thing} has {self.__format_score(record.votes)}'
 
     def __do_downvote(self, user, thing, silent=False) -> Optional[str]:
         if user == thing:
-            record = downvote(thing)
+            record = Vote.objects.downvote(thing)
             if not silent:
                 return f'You CAN however, downvote yourself. You have {self.__format_score(record.votes)}. Bwahaha.'
         else:
-            record = downvote(thing)
+            record = Vote.objects.downvote(thing)
             if not silent:
                 return f'{user} downvoted {thing}! {thing} has {self.__format_score(record.votes)}'
 
@@ -61,10 +59,14 @@ class VotesPlugin(FriskyPlugin):
         if len(message.args) == 1:
             return self.__do_downvote(message.username, message.args[0])
 
+    def command_leaderboard(self, message: MessageEvent) -> FriskyResponse:
+        votes = Vote.objects.order_by('-votes')[:10]
+        return '\n'.join([f'{vote.label}: {vote.votes}' for vote in votes])
+
     def command_votes(self, message: MessageEvent) -> FriskyResponse:
         response = []
         for arg in message.args:
-            record = get_votes_record(arg)
+            record = Vote.objects.get_record(arg)
             response.append(f'{record.label} has {self.__format_score(record.votes)}')
         return '\n'.join(response)
 
