@@ -89,6 +89,21 @@ class FriskyPlugin(object):
         return call(reaction)
 
 
+class FriskyApiPlugin(FriskyPlugin):
+    url = None
+    json_property = None
+
+    def handle_message(self, message: MessageEvent) -> FriskyResponse:
+        if self.url is None:
+            return
+        response = self.http.get(self.url)
+        if response.status_code != 200:
+            return
+        if self.json_property is None:
+            return response.text
+        return response.json().get(self.json_property, None)
+
+
 class PluginRepositoryMixin(object):
     loaded_plugins: Dict[str, FriskyPlugin]
 
