@@ -1,8 +1,10 @@
+import responses
+
 from unittest import TestCase
 
 from frisky.bot import Frisky
 from frisky.util import quotesplit
-
+from frisky.plugin import FriskyApiPlugin
 
 class FriskyBotTestCase(TestCase):
 
@@ -55,3 +57,37 @@ class FriskyUtilTestCase(TestCase):
     def test_quotesplit_errors_with_dupe_chars(self):
         with self.assertRaises(ValueError):
             quotesplit("", separators=('a', 'b'), groupers=('b', 'c'))
+
+            
+class FriskyApiPluginTestCase(TestCase):
+    
+    TEXT_RESPONSE = 'Hello, World'
+    
+    JSON_RESPONSE = '''
+    {
+        "hello": {
+            "world": "Hello, Json"
+        }
+    }
+    '''
+    
+    class JsonTestPlugin(FriskyApiPlugin):
+        url = 'https://example.com/api/')
+        json_property = 'hello.world'
+    
+    class TextTestPlugin(FriskyApiPlugin):
+        url = 'https://example.com/api/')
+    
+    def test_json_parsing(self):
+        plugin = JsonTestPlugin()
+        with responses.RequestsMock() as rm:
+            rm.add('GET', 'https://example.com/api/', body=self.JSON_RESPONSE)
+            actual = plugin.handle_message(None)
+            self.assertEqual(actual, 'Hello, Json')    
+            
+    def test_text_parsing(self):
+        plugin = TextTestPlugin()
+        with responses.RequestsMock() as rm:
+            rm.add('GET', 'https://example.com/api/', body=self.TEXT_RESPONSE)
+            actual = plugin.handle_message(None)
+            self.assertEqual(actual, 'Hello, World')
