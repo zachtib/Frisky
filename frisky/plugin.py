@@ -95,7 +95,14 @@ class FriskyApiPlugin(FriskyPlugin):
 
     @staticmethod
     def do_api_call(http: FriskyPlugin.HttpWrapper, url: str, element: Optional[str] = None) -> FriskyResponse:
-        response = http.get(url)
+        headers = {
+            'User-Agent': 'Frisky (https://github.com/zachtib/Frisky)',
+        }
+        if element is None:
+            headers['Accept'] = 'text/plain'
+        else:
+            headers['Accept'] = 'application/json'
+        response = http.get(url, headers=headers)
         if response.status_code != 200:
             return
         if element is None:
