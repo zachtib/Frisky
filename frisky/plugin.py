@@ -93,21 +93,25 @@ class FriskyApiPlugin(FriskyPlugin):
     url = None
     json_property = None
 
+    @staticmethod
+    def do_api_call(http: FriskyPlugin.HttpWrapper, url: str, element: Optional[str] = None) -> FriskyResponse:
+        response = http.get(url)
+        if response.status_code != 200:
+            return
+        if element is None:
+            return response.text
+        json = response.json()
+        for element in element.split('.'):
+            next_json = json.get(element, None)
+            if next_json is None:
+                return None
+            json = next_json
+        return json
+
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if self.url is None:
             return
-        response = self.http.get(self.url)
-        if response.status_code != 200:
-            return
-        if self.json_property is None:
-            return response.text
-        json = response.json()
-        for element in self.json_property.split('.'):
-            next = json.get(element, None)
-            if next is None:
-                return None
-            json = next
-        return json
+        return FriskyApiPlugin.do_api_call(self.http, self.url, self.json_property)
 
 
 class PluginRepositoryMixin(object):
