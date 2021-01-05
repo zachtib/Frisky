@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from apilearns.models import ApiLearn
+
+
+@admin.register(ApiLearn)
+class ApiLearnAdmin(admin.ModelAdmin):
+    pass
