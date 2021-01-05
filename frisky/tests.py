@@ -3,8 +3,10 @@ import responses
 from unittest import TestCase
 
 from frisky.bot import Frisky
+from frisky.events import MessageEvent
 from frisky.util import quotesplit
 from frisky.plugin import FriskyApiPlugin
+
 
 class FriskyBotTestCase(TestCase):
 
@@ -58,11 +60,12 @@ class FriskyUtilTestCase(TestCase):
         with self.assertRaises(ValueError):
             quotesplit("", separators=('a', 'b'), groupers=('b', 'c'))
 
-            
+
 class FriskyApiPluginTestCase(TestCase):
-    
+    MESSAGE = MessageEvent('user', 'test', '?api')
+
     TEXT_RESPONSE = 'Hello, World'
-    
+
     JSON_RESPONSE = '''
     {
         "hello": {
@@ -70,24 +73,24 @@ class FriskyApiPluginTestCase(TestCase):
         }
     }
     '''
-    
+
     class JsonTestPlugin(FriskyApiPlugin):
-        url = 'https://example.com/api/')
+        url = 'https://example.com/api/'
         json_property = 'hello.world'
-    
+
     class TextTestPlugin(FriskyApiPlugin):
-        url = 'https://example.com/api/')
-    
+        url = 'https://example.com/api/'
+
     def test_json_parsing(self):
-        plugin = JsonTestPlugin()
+        plugin = FriskyApiPluginTestCase.JsonTestPlugin()
         with responses.RequestsMock() as rm:
             rm.add('GET', 'https://example.com/api/', body=self.JSON_RESPONSE)
-            actual = plugin.handle_message(None)
-            self.assertEqual(actual, 'Hello, Json')    
-            
+            actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
+            self.assertEqual(actual, 'Hello, Json')
+
     def test_text_parsing(self):
-        plugin = TextTestPlugin()
+        plugin = FriskyApiPluginTestCase.TextTestPlugin()
         with responses.RequestsMock() as rm:
             rm.add('GET', 'https://example.com/api/', body=self.TEXT_RESPONSE)
-            actual = plugin.handle_message(None)
+            actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
             self.assertEqual(actual, 'Hello, World')
