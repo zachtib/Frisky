@@ -101,7 +101,13 @@ class FriskyApiPlugin(FriskyPlugin):
             return
         if self.json_property is None:
             return response.text
-        return response.json().get(self.json_property, None)
+        json = response.json()
+        for element in self.json_property.split('.'):
+            next = json.get(element, None)
+            if next is None:
+                return None
+            json = next
+        return json
 
 
 class PluginRepositoryMixin(object):
