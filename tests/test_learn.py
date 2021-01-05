@@ -15,7 +15,7 @@ class LearnTestCase(FriskyTestCase):
         self.assertEqual(self.send_message('?learn'), None)
 
     def test_randoms_empty(self):
-        self.assertEqual(self.send_message('?notinthere'), 'I got nothing, boss')
+        self.assertIsNone(self.send_message('?notinthere'))
 
     def test_randoms_empty_with_errors(self):
         self.send_message('?learn error Finally some good fucking coverage')

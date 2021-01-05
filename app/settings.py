@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'api',
+    'apilearns',
     'learns',
     'memes',
     'scores',

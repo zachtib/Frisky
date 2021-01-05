@@ -84,7 +84,7 @@ class LearnPlugin(FriskyPlugin):
         return '\n'.join([f'{learn.label}: {learn.content}' for learn in learns])
 
     @staticmethod
-    def get_random_learn_for_label(label: str) -> str:
+    def get_random_learn_for_label(label: str) -> Optional[str]:
         try:
             return Learn.objects.random(label).content
         except ValueError:
@@ -93,7 +93,7 @@ class LearnPlugin(FriskyPlugin):
             return Learn.objects.random('error').content
         except ValueError:
             pass
-        return 'I got nothing, boss'
+        return None
 
     @staticmethod
     def get_indexed_learn_for_label(label, index) -> str:
