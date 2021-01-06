@@ -36,6 +36,14 @@ class ApiLearnTestCase(FriskyTestCase):
         self.assertEqual(self.URL, learn.url)
         self.assertIsNone(learn.element)
 
+    def test_creation_slack_url_formatting(self):
+        actual = self.send_message(f'?learnapi apitest <{self.URL}>')
+        self.assertEqual(actual, 'OK, learned apitest')
+        learn = ApiLearn.objects.get(id=1)
+        self.assertEqual('apitest', learn.label)
+        self.assertEqual(self.URL, learn.url)
+        self.assertIsNone(learn.element)
+
     def test_creation_with_json(self):
         actual = self.send_message(f'?learnapi apitest {self.URL} hello.world')
         self.assertEqual(actual, 'OK, learned apitest')
@@ -79,3 +87,21 @@ class ApiLearnTestCase(FriskyTestCase):
             rm.add('GET', 'http://foo.bar/test/', body=self.TEXT_RESPONSE)
             actual = self.send_message('?paramtest test')
             self.assertEqual('Hello, World', actual)
+
+    def test_headers_for_text(self):
+        ApiLearn.objects.create(label='apitest', url=self.URL)
+        with responses.RequestsMock() as rm:
+            rm.add('GET', self.URL, body=self.TEXT_RESPONSE)
+            self.send_message('?apitest')
+            request = rm.calls[0].request
+            accept_header = request.headers['Accept']
+            self.assertEqual('text/plain', accept_header)
+
+    def test_headers_for_json(self):
+        ApiLearn.objects.create(label='apitest', url=self.URL, element='hello.world')
+        with responses.RequestsMock() as rm:
+            rm.add('GET', self.URL, body=self.JSON_RESPONSE)
+            self.send_message('?apitest')
+            request = rm.calls[0].request
+            accept_header = request.headers['Accept']
+            self.assertEqual('application/json', accept_header)

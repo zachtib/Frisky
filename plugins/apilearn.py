@@ -23,6 +23,7 @@ class ApiLearnPlugin(FriskyPlugin):
             element = message.args[2]
         else:
             return None
+        url = url.removeprefix('<').removesuffix('>')
         ApiLearn.objects.create(label=label, url=url, element=element)
         return f'OK, learned {label}'
 
