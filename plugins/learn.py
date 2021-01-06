@@ -2,6 +2,7 @@ from typing import Optional
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.plugin import FriskyPlugin
+from frisky.responses import FriskyError, FriskyResponse
 from learns.models import Learn
 
 
@@ -84,28 +85,28 @@ class LearnPlugin(FriskyPlugin):
         return '\n'.join([f'{learn.label}: {learn.content}' for learn in learns])
 
     @staticmethod
-    def get_random_learn_for_label(label: str) -> Optional[str]:
+    def get_random_learn_for_label(label: str) -> FriskyResponse:
         try:
             return Learn.objects.random(label).content
         except ValueError:
             pass
         try:
-            return Learn.objects.random('error').content
+            return FriskyError(Learn.objects.random('error').content)
         except ValueError:
             pass
         return None
 
     @staticmethod
-    def get_indexed_learn_for_label(label, index) -> str:
+    def get_indexed_learn_for_label(label, index) -> FriskyResponse:
         try:
             return Learn.objects.for_label_indexed(label, index).content
         except IndexError:
-            return 'NO SUCH THING'
+            return FriskyError('NO SUCH THING')
 
     @staticmethod
-    def create_new_learn(label: str, content: str) -> Optional[str]:
+    def create_new_learn(label: str, content: str) -> FriskyResponse:
         if content.startswith('?'):
-            return "DON'T HURT ME AGAIN"
+            return FriskyError("DON'T HURT ME AGAIN")
         if Learn.objects.add(label, content):
             return f'Okay, learned {label}'
         return None

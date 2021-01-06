@@ -6,7 +6,7 @@ from dataclasses_json import DataClassJsonMixin
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
-from frisky.responses import Image, FriskyResponse
+from frisky.responses import Image, FriskyResponse, FriskyError
 from memes.models import MemeAlias
 
 
@@ -79,7 +79,7 @@ class MemePlugin(FriskyPlugin):
                 meme_id = memes[meme_name].id
 
         if meme_id == -1:
-            return 'NO SUCH MEME'
+            return FriskyError('NO SUCH MEME')
 
         result = self.http.post(self.CAPTION_IMAGE_URL, data={
             'template_id': meme_id,
