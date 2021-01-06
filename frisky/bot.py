@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Callable
 
 from frisky.events import MessageEvent, ReactionEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
-from frisky.responses import FriskyResponse
+from frisky.responses import FriskyResponse, FriskyError
 from frisky.util import quotesplit
 
 logger = logging.getLogger(__name__)
@@ -90,9 +90,17 @@ class Frisky(object):
     def handle_message(self, message: MessageEvent, reply_channel: Callable[[FriskyResponse], bool]) -> None:
         if message.channel_name in self.ignored_channels or message.username == self.name:
             return
+        errors = []
+        had_success = False
         for reply in self.handle_message_synchronously(message):
-            if reply is not None:
+            if isinstance(reply, FriskyError):
+                errors.append(reply.message)
+            elif reply is not None:
                 reply_channel(reply)
+                had_success = True
+        if not had_success:
+            for error in errors:
+                reply_channel(error)
 
     def handle_reaction(self, reaction: ReactionEvent, reply_channel: Callable[[str], bool]) -> None:
         if reaction.message.channel_name in self.ignored_channels:

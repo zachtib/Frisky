@@ -8,4 +8,9 @@ class Image:
     alt_text: str = ""
 
 
-FriskyResponse = Optional[Union[Image, str]]
+@dataclass
+class FriskyError:
+    message: str
+
+
+FriskyResponse = Optional[Union[Image, str, FriskyError]]

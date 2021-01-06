@@ -2,7 +2,7 @@ from typing import Tuple, Optional
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
-from frisky.responses import FriskyResponse
+from frisky.responses import FriskyResponse, FriskyError
 from learns.models import Learn
 from memes.models import MemeAlias
 
@@ -23,7 +23,7 @@ class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
             return self._help_text
         meme_id = MemeAlias.objects.get_id_for_alias(message.args[0])
         if meme_id == -1:
-            return 'NO SUCH MEME'
+            return FriskyError('NO SUCH MEME')
         try:
             meme_message: str = Learn.objects.random(message.args[0]).content
         except ValueError:
