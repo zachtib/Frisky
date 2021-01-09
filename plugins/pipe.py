@@ -49,8 +49,6 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
             )
             if plugin is None:
                 plugins = self.get_generic_handlers()
-                if len(plugins) == 0:
-                    return
                 event = self.convert_message_to_generic(event)
                 responses = [plugin.handle_message(event) for plugin in plugins]
                 filtered_responses = [r for r in responses if r is not None and not isinstance(r, FriskyError)]
