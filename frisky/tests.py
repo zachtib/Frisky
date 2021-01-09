@@ -81,6 +81,13 @@ class FriskyApiPluginTestCase(TestCase):
     class TextTestPlugin(FriskyApiPlugin):
         url = 'https://example.com/api/'
 
+    def test_non_200_response(self):
+        plugin = FriskyApiPluginTestCase.JsonTestPlugin()
+        with responses.RequestsMock() as rm:
+            rm.add('GET', 'https://example.com/api/', status=500)
+            actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
+            self.assertIsNone(actual)
+
     def test_json_parsing(self):
         plugin = FriskyApiPluginTestCase.JsonTestPlugin()
         with responses.RequestsMock() as rm:
