@@ -109,7 +109,15 @@ class FriskyApiPlugin(FriskyPlugin):
             return response.text
         json = response.json()
         for element in element.split('.'):
-            next_json = json.get(element, None)
+            next_json = None
+            try:
+                index = int(element)
+                if isinstance(json, list):
+                    next_json = json[index]
+            except ValueError:
+                next_json = None
+            if next_json is None:
+                next_json = json.get(element, None)
             if next_json is None:
                 return None
             json = next_json
