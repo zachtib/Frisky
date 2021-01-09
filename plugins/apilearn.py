@@ -1,5 +1,5 @@
 from frisky.events import MessageEvent
-from frisky.plugin import FriskyPlugin, FriskyApiPlugin
+from frisky.plugin import FriskyPlugin
 from frisky.responses import FriskyResponse
 
 from apilearns.models import ApiLearn
@@ -47,4 +47,4 @@ class ApiLearnPlugin(FriskyPlugin):
                 index = index + 1
         except ApiLearn.DoesNotExist:
             return None
-        return FriskyApiPlugin.do_api_call(self.http, url, api.element)
+        return self.http.call_api(url, api.element)
