@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, List
 
 import requests
 from django.core.cache import cache as default_cache, BaseCache
@@ -31,6 +31,35 @@ class FriskyPlugin(object):
 
         def post(self, *args, **kwargs):
             return requests.post(*args, **kwargs)
+
+        def call_api(self, url: str, element: Optional[str] = None) -> FriskyResponse:
+            headers = {
+                'User-Agent': 'Frisky (https://github.com/zachtib/Frisky)',
+            }
+            if element is None:
+                headers['Accept'] = 'text/plain'
+            else:
+                headers['Accept'] = 'application/json'
+            response = self.get(url, headers=headers)
+            if response.status_code != 200:
+                return
+            if element is None:
+                return response.text
+            json = response.json()
+            for element in element.split('.'):
+                next_json = None
+                try:
+                    index = int(element)
+                    if isinstance(json, list):
+                        next_json = json[index]
+                except ValueError:
+                    next_json = None
+                if next_json is None:
+                    next_json = json.get(element, None)
+                if next_json is None:
+                    return None
+                json = next_json
+            return json
 
     reactions = []
     commands = []
@@ -93,40 +122,10 @@ class FriskyApiPlugin(FriskyPlugin):
     url = None
     json_property = None
 
-    @staticmethod
-    def do_api_call(http: FriskyPlugin.HttpWrapper, url: str, element: Optional[str] = None) -> FriskyResponse:
-        headers = {
-            'User-Agent': 'Frisky (https://github.com/zachtib/Frisky)',
-        }
-        if element is None:
-            headers['Accept'] = 'text/plain'
-        else:
-            headers['Accept'] = 'application/json'
-        response = http.get(url, headers=headers)
-        if response.status_code != 200:
-            return
-        if element is None:
-            return response.text
-        json = response.json()
-        for element in element.split('.'):
-            next_json = None
-            try:
-                index = int(element)
-                if isinstance(json, list):
-                    next_json = json[index]
-            except ValueError:
-                next_json = None
-            if next_json is None:
-                next_json = json.get(element, None)
-            if next_json is None:
-                return None
-            json = next_json
-        return json
-
     def handle_message(self, message: MessageEvent) -> FriskyResponse:
         if self.url is None:
             return
-        return FriskyApiPlugin.do_api_call(self.http, self.url, self.json_property)
+        return self.http.call_api(self.url, self.json_property)
 
 
 class PluginRepositoryMixin(object):
@@ -144,11 +143,12 @@ class PluginRepositoryMixin(object):
                 return plugin
         return None
 
-    def get_generic_handler(self) -> Optional[FriskyPlugin]:
+    def get_generic_handlers(self) -> List[FriskyPlugin]:
+        result = []
         for plugin in self.loaded_plugins.values():
             if '*' in plugin.register_commands():
-                return plugin
-        return None
+                result.append(plugin)
+        return result
 
     @staticmethod
     def convert_message_to_generic(message: MessageEvent) -> MessageEvent:

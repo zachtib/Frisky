@@ -2,6 +2,7 @@ from typing import Tuple, Optional, List
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin, PluginRepositoryMixin
+from frisky.responses import FriskyError, FriskyResponse
 from frisky.util import quotesplit
 
 
@@ -11,7 +12,7 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
     def register_commands(cls) -> Tuple:
         return 'pipe', '|'
 
-    def handle_message(self, message: MessageEvent) -> Optional[str]:
+    def handle_message(self, message: MessageEvent) -> FriskyResponse:
         """
         example usage: `?pipe votes thing | learn thing | ping`
         :param message:
@@ -47,9 +48,15 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
                 args=args
             )
             if plugin is None:
-                plugin = self.get_generic_handler()
-                if plugin is None:
-                    return
+                plugins = self.get_generic_handlers()
                 event = self.convert_message_to_generic(event)
-            previous_result = plugin.handle_message(event)
+                responses = [plugin.handle_message(event) for plugin in plugins]
+                filtered_responses = [r for r in responses if r is not None and not isinstance(r, FriskyError)]
+                if len(filtered_responses) > 1:
+                    return FriskyError(f'Too many plugins returned a response for {command}')
+                elif len(filtered_responses) == 0:
+                    return FriskyError(f'No plugins returned a response for {command}')
+                previous_result = filtered_responses[0]
+            else:
+                previous_result = plugin.handle_message(event)
         return previous_result
