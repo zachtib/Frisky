@@ -3,17 +3,6 @@ import responses
 from apilearns.models import ApiLearn
 from frisky.test import FriskyTestCase
 
-URL = "https://hasasiahadthebabyyet.herokuapp.com/api/"
-YEP_RESPONSE = '''
-{
-    "display": "Yep."
-}'''
-NOPE_RESPONSE = '''
-{
-    "display": "Nope."
-}'''
-EMPTY_JSON = '{}'
-
 
 class ApiLearnTestCase(FriskyTestCase):
     TEXT_RESPONSE = 'Hello, World'
@@ -23,6 +12,22 @@ class ApiLearnTestCase(FriskyTestCase):
         "hello": {
             "world": "Hello, Json"
         }
+    }
+    '''
+
+    JSON_RESPONSE_WITH_ARRAY = '''
+    {
+        "hello": [
+            {
+                "world": "Hello, Array"
+            }
+        ]
+    }
+    '''
+
+    JSON_RESPONSE_CONTAINING_NULL = '''
+    {
+        "hello": null
     }
     '''
 
@@ -66,6 +71,20 @@ class ApiLearnTestCase(FriskyTestCase):
             actual = self.send_message('?apitest')
             self.assertEqual('Hello, Json', actual)
 
+    def test_usage_with_json_containing_array(self):
+        ApiLearn.objects.create(label='apitest', url=self.URL, element='hello.0.world')
+        with responses.RequestsMock() as rm:
+            rm.add('GET', self.URL, body=self.JSON_RESPONSE_WITH_ARRAY)
+            actual = self.send_message('?apitest')
+            self.assertEqual('Hello, Array', actual)
+
+    def test_json_null_termination(self):
+        ApiLearn.objects.create(label='apitest', url=self.URL, element='hello.world')
+        with responses.RequestsMock() as rm:
+            rm.add('GET', self.URL, body=self.JSON_RESPONSE_CONTAINING_NULL)
+            actual = self.send_message('?apitest')
+            self.assertIsNone(actual)
+
     def test_delete_doesnotexist(self):
         actual = self.send_message('?unlearnapi apitest')
         self.assertIsNone(actual)
@@ -105,3 +124,6 @@ class ApiLearnTestCase(FriskyTestCase):
             request = rm.calls[0].request
             accept_header = request.headers['Accept']
             self.assertEqual('application/json', accept_header)
+
+    def test_nonexistant_api(self):
+        self.assertIsNone(self.send_message('?get_api xyzzy'))
