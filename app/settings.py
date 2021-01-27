@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'memes',
     'scores',
     'slack',
+    'stonkgame',
     'votes',
 ]
 
