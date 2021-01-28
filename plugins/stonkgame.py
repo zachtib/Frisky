@@ -4,7 +4,7 @@ from typing import Tuple
 
 from frisky.events import MessageEvent
 from frisky.plugin import FriskyPlugin
-from frisky.responses import FriskyResponse
+from frisky.responses import FriskyResponse, Image
 from stonkgame.models import StonkGame, StonkPlayer
 
 
@@ -53,6 +53,12 @@ class StonkGamePlugin(FriskyPlugin):
                 return self.__portfolio(message.channel_name, message.username)
             elif command == 'leaderboard' or command == 'l':
                 return self.__leaderboard(message.channel_name)
+            elif command == 'bankruptcy':
+                return 'Hey. I just wanted you to know that you can\'t just say the word "bankruptcy" and expect ' \
+                       'anything to happen.'
+            elif command == 'declare':
+                if len(message.args) > 1:
+                    return self.__declare(message.channel_name, message.username, message.args[1])
         except StonkGame.DoesNotExist:
             return 'No active game in this channel'
         except StonkPlayer.DoesNotExist:
@@ -121,8 +127,12 @@ class StonkGamePlugin(FriskyPlugin):
         symbol = symbol.upper()
         player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if player.balance < price:
+            if holding.amount == 0:
+                holding.delete()
             return "You don't have enough cash"
         if price == Decimal('0.00'):
+            if holding.amount == 0:
+                holding.delete()
             return "I don't deal in peasant stonks"
         player.balance -= price
         holding.amount += amount
@@ -181,3 +191,11 @@ class StonkGamePlugin(FriskyPlugin):
                 responses += [f'{net_worth[0]}, with ${net_worth[1]}']
             return '\n'.join(responses)
         return self.cacheify(calculate_leaderboard, channel_name)
+
+    def __declare(self, channel_name, username, param) -> FriskyResponse:
+        if param == 'bankruptcy':
+            game = StonkGame.objects.get(channel_name=channel_name)
+            player = game.players.get(username=username)
+            player.delete()
+            return Image(url="https://i.redd.it/t0koevtqbsjz.jpg", alt_text="I didn't say it. I declared it.")
+        return None

@@ -2,9 +2,10 @@ from decimal import Decimal
 
 import responses
 
+from frisky.responses import Image
 from frisky.test import FriskyTestCase
 from plugins.stonkgame import StonkGamePlugin
-from stonkgame.models import StonkGame, StonkHolding
+from stonkgame.models import StonkGame, StonkHolding, StonkPlayer
 from .test_stock import positive_change, market_closed, negative_change
 
 portfolio = '''
@@ -35,6 +36,30 @@ stock_response = '''
                         {
                             "close":[
                                 420.69
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+'''.strip()
+
+zero_response = '''
+{
+    "chart":{
+        "result":[
+            {
+                "meta":{
+                    "currency":"USD",
+                    "previousClose":0.00
+                },
+                "indicators":{
+                    "quote":[
+                        {
+                            "close":[
+                                0.00
                             ]
                         }
                     ]
@@ -324,3 +349,36 @@ class StonkGameTestCase(FriskyTestCase):
             self.send_message('?sg leaderboard')
             result = self.send_message('?sg leaderboard')
         self.assertEqual(leaderboard, result)
+
+    def test_saying_bankruptcy(self):
+        game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
+        game.players.create(username='player', balance='69.00')
+        response = self.send_message('?sg bankruptcy', user='player')
+        expected = 'Hey. I just wanted you to know that you can\'t just say the word "bankruptcy" and expect ' \
+                   'anything to happen.'
+        self.assertEqual(expected, response)
+
+    def test_declaring_bankruptcy(self):
+        game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
+        game.players.create(username='player', balance='69.00')
+        response = self.send_message('?sg declare bankruptcy', user='player')
+        expected = Image(url="https://i.redd.it/t0koevtqbsjz.jpg", alt_text="I didn't say it. I declared it.")
+        self.assertEqual(expected, response)
+        with self.assertRaises(StonkPlayer.DoesNotExist):
+            game.players.get(username='player')
+
+    def test_frisky_does_not_tolerate_peasantry(self):
+        game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
+        player = game.players.create(username='player', balance='69.00')
+        url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
+        with responses.RequestsMock() as rm:
+            rm.add('GET', url, body=zero_response)
+            result = self.send_message('?sg buy GME 1', user='player')
+        self.assertEqual("I don't deal in peasant stonks", result)
+        with self.assertRaises(StonkHolding.DoesNotExist):
+            holding = player.holdings.get(symbol='GME')
+            print(holding)
+
+    def test_declaring_nonsense(self):
+        response = self.send_message('?sg declare nonsense')
+        self.assertIsNone(response)
