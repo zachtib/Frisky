@@ -4,7 +4,7 @@ import responses
 
 from frisky.test import FriskyTestCase
 from plugins.stonkgame import StonkGamePlugin
-from stonkgame.models import StonkGame, StonkPlayer, StonkHolding
+from stonkgame.models import StonkGame, StonkHolding
 from .test_stock import positive_change, market_closed, negative_change
 
 portfolio = '''

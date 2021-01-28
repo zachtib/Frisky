@@ -7,10 +7,6 @@ from frisky.responses import FriskyResponse
 from stonkgame.models import StonkGame, StonkPlayer
 
 
-class StockNotFoundException(Exception):
-    pass
-
-
 class StonkException(Exception):
     def __init__(self, message):
         self.message = message
@@ -93,7 +89,7 @@ class StonkGamePlugin(FriskyPlugin):
                 return currency, round(Decimal(trades.pop()), 2), True
             else:
                 return currency, round(Decimal(last_close), 2), False
-        raise StockNotFoundException()
+        raise StonkException('I don\'t have any information for that stock')
 
     def __balance(self, channel_name, username):
         game = StonkGame.objects.get(channel_name=channel_name)
@@ -120,10 +116,7 @@ class StonkGamePlugin(FriskyPlugin):
         if amount < 0:
             return 'I don\'t do negatives'
         symbol = symbol.upper()
-        try:
-            player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
-        except StockNotFoundException:
-            return 'I don\'t have any information for that stock'
+        player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if player.balance < price:
             return 'You don\'t have enough cash'
         player.balance -= price
@@ -138,10 +131,7 @@ class StonkGamePlugin(FriskyPlugin):
         if amount < 0:
             return 'I don\'t do negatives'
         symbol = symbol.upper()
-        try:
-            player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
-        except StockNotFoundException:
-            return 'I don\'t have any information for that stock'
+        player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if holding.amount < amount:
             return 'You don\'t have enough shares'
         player.balance += price
