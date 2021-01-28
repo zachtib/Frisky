@@ -15,6 +15,30 @@ Total Holdings for player:
 Total portfolio value: 5282.78. Cash on hand: 1000.00
 '''.strip()
 
+stock_response = '''
+{
+    "chart":{
+        "result":[
+            {
+                "meta":{
+                    "currency":"USD",
+                    "previousClose":42.00
+                },
+                "indicators":{
+                    "quote":[
+                        {
+                            "close":[
+                                420.69
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
+'''.strip()
+
 non_usd = '''
 {
     "chart":{
@@ -22,12 +46,13 @@ non_usd = '''
             {
                 "meta":{
                     "currency":"GBP",
-                    "previousClose":420.69
+                    "previousClose":42.00
                 },
                 "indicators":{
                     "quote":[
                         {
                             "close":[
+                                420.69
                             ]
                         }
                     ]
@@ -76,8 +101,8 @@ class StonkGameTestCase(FriskyTestCase):
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
 
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
-            currency, amount = plugin.get_stock_price('GME')
+            rm.add('GET', url, body=stock_response)
+            currency, amount, _ = plugin.get_stock_price('GME')
         self.assertEqual(currency, 'USD')
         self.assertEqual(amount, Decimal('420.69'))
 
@@ -97,7 +122,7 @@ class StonkGameTestCase(FriskyTestCase):
         game.players.create(username='player', balance='1000.00')
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
+            rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg buy GME 1', user='player')
         self.assertEqual('Bought 1 share of GME', result)
         player = game.players.get(username='player')
@@ -111,7 +136,7 @@ class StonkGameTestCase(FriskyTestCase):
         player.holdings.create(symbol='GME', amount=2)
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
+            rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg sell GME 1', user='player')
         self.assertEqual('Sold 1 share of GME', result)
         player = game.players.get(username='player')
@@ -148,7 +173,7 @@ class StonkGameTestCase(FriskyTestCase):
         game.players.create(username='player', balance='10.00')
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
+            rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg buy GME 1', user='player')
         self.assertEqual('You don\'t have enough cash', result)
 
@@ -157,7 +182,7 @@ class StonkGameTestCase(FriskyTestCase):
         game.players.create(username='player', balance='1000.00')
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
+            rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg buy GME', user='player')
         self.assertEqual('Bought 1 share of GME', result)
         player = game.players.get(username='player')
@@ -171,7 +196,7 @@ class StonkGameTestCase(FriskyTestCase):
         player.holdings.create(symbol='GME', amount=1)
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
+            rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg sell GME', user='player')
         self.assertEqual('Sold 1 share of GME', result)
         player = game.players.get(username='player')
@@ -185,7 +210,7 @@ class StonkGameTestCase(FriskyTestCase):
         player.holdings.create(symbol='GME', amount=1)
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
-            rm.add('GET', url, body=market_closed)
+            rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg sell GME 2', user='player')
         self.assertEqual('You don\'t have enough shares', result)
 
@@ -203,7 +228,7 @@ class StonkGameTestCase(FriskyTestCase):
         tsla = 'https://query1.finance.yahoo.com/v8/finance/chart/TSLA'
         bb = 'https://query1.finance.yahoo.com/v8/finance/chart/BB'
         with responses.RequestsMock() as rm:
-            rm.add('GET', gme, body=market_closed)
+            rm.add('GET', gme, body=stock_response)
             rm.add('GET', tsla, body=positive_change)
             rm.add('GET', bb, body=negative_change)
             result = self.send_message('?sg portfolio', user='player')
@@ -240,3 +265,14 @@ class StonkGameTestCase(FriskyTestCase):
         holding = player.holdings.get(symbol='GME')
         self.assertEqual(Decimal('1000.00'), player.balance)
         self.assertEqual(holding.amount, 0)
+
+    def test_buying_when_closed(self):
+        game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
+        game.players.create(username='player', balance='1000.00')
+        url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
+        with responses.RequestsMock() as rm:
+            rm.add('GET', url, body=market_closed)
+            result = self.send_message('?sg buy GME 1', user='player')
+        self.assertEqual('The market is closed, man.', result)
+        player = game.players.get(username='player')
+        self.assertEqual(Decimal('1000.00'), player.balance)
