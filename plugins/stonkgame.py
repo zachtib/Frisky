@@ -7,10 +7,6 @@ from frisky.responses import FriskyResponse
 from stonkgame.models import StonkGame, StonkPlayer
 
 
-class StockNotFoundException(Exception):
-    pass
-
-
 class StonkException(Exception):
     def __init__(self, message):
         self.message = message
@@ -80,7 +76,7 @@ class StonkGamePlugin(FriskyPlugin):
         else:
             return f'You\'re already in the game, {player.username}'
 
-    def get_stock_price(self, symbol) -> Tuple[str, Decimal]:
+    def get_stock_price(self, symbol) -> Tuple[str, Decimal, bool]:
         url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&includePrePost=false&interval=2m'
         response = self.http.get(url)
         if response.status_code == 200:
@@ -90,10 +86,10 @@ class StonkGamePlugin(FriskyPlugin):
             last_close = result['meta']['previousClose']
             trades = result['indicators']['quote'][0]['close']
             if len(trades):
-                return currency, round(Decimal(trades.pop()), 2)
+                return currency, round(Decimal(trades.pop()), 2), True
             else:
-                return currency, round(Decimal(last_close), 2)
-        raise StockNotFoundException()
+                return currency, round(Decimal(last_close), 2), False
+        raise StonkException('I don\'t have any information for that stock')
 
     def __balance(self, channel_name, username):
         game = StonkGame.objects.get(channel_name=channel_name)
@@ -103,7 +99,9 @@ class StonkGamePlugin(FriskyPlugin):
     def __prep_transaction(self, channel_name: str, username: str, symbol: str, amount: int):
         game = StonkGame.objects.get(channel_name=channel_name)
         player = game.players.get(username=username)
-        currency, stock_price = self.get_stock_price(symbol)
+        currency, stock_price, market_open = self.get_stock_price(symbol)
+        if not market_open:
+            raise StonkException('The market is closed, man.')
         if currency != 'USD':
             raise StonkException('I only do dollars!')
         holding, created = player.holdings.get_or_create(symbol=symbol, defaults={
@@ -118,10 +116,7 @@ class StonkGamePlugin(FriskyPlugin):
         if amount < 0:
             return 'I don\'t do negatives'
         symbol = symbol.upper()
-        try:
-            player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
-        except StockNotFoundException:
-            return 'I don\'t have any information for that stock'
+        player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if player.balance < price:
             return 'You don\'t have enough cash'
         player.balance -= price
@@ -136,16 +131,15 @@ class StonkGamePlugin(FriskyPlugin):
         if amount < 0:
             return 'I don\'t do negatives'
         symbol = symbol.upper()
-        try:
-            player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
-        except StockNotFoundException:
-            return 'I don\'t have any information for that stock'
+        player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if holding.amount < amount:
             return 'You don\'t have enough shares'
         player.balance += price
         holding.amount -= amount
         player.save()
         holding.save()
+        if holding.amount == 0:
+            holding.delete()
         return f'Sold {amount} share of {symbol}'
 
     def __portfolio(self, channel_name: str, username: str):
@@ -154,7 +148,7 @@ class StonkGamePlugin(FriskyPlugin):
         responses = [f'Total Holdings for {username}:']
         running_total = Decimal('0.00')
         for holding in player.holdings.all():
-            currency, stock_price = self.get_stock_price(holding.symbol)
+            currency, stock_price, _ = self.get_stock_price(holding.symbol)
             total_value = stock_price * holding.amount
             responses += [f'{holding.amount} shares of {holding.symbol} (${stock_price}) total ${total_value}']
             running_total += total_value
