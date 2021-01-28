@@ -15,6 +15,12 @@ Total Holdings for player:
 Total portfolio value: 5282.78. Cash on hand: 1000.00
 '''.strip()
 
+leaderboard = '''
+Leaderboard for the #testing game:
+player2, with $1033.55
+player, with $725.50
+'''.strip()
+
 stock_response = '''
 {
     "chart":{
@@ -94,7 +100,7 @@ class StonkGameTestCase(FriskyTestCase):
     def test_joining(self):
         self.send_message('?sg start 100.00')
         result = self.send_message('?sg join')
-        self.assertEqual('Welcome to the stonk game, dummyuser', result)
+        self.assertEqual('Welcome to the stonk game, dummyuser. You have $100.00', result)
 
     def test_fetching(self):
         plugin = StonkGamePlugin()
@@ -124,7 +130,7 @@ class StonkGameTestCase(FriskyTestCase):
         with responses.RequestsMock() as rm:
             rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg buy GME 1', user='player')
-        self.assertEqual('Bought 1 share of GME', result)
+        self.assertEqual('Bought 1 share of GME. Current balance is: $579.31', result)
         player = game.players.get(username='player')
         holding = player.holdings.get(symbol='GME')
         self.assertEqual(Decimal('579.31'), player.balance)
@@ -138,7 +144,7 @@ class StonkGameTestCase(FriskyTestCase):
         with responses.RequestsMock() as rm:
             rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg sell GME 1', user='player')
-        self.assertEqual('Sold 1 share of GME', result)
+        self.assertEqual('Sold 1 share of GME. Current balance is: $1420.69', result)
         player = game.players.get(username='player')
         holding = player.holdings.get(symbol='GME')
         self.assertEqual(Decimal('1420.69'), player.balance)
@@ -184,7 +190,7 @@ class StonkGameTestCase(FriskyTestCase):
         with responses.RequestsMock() as rm:
             rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg buy GME', user='player')
-        self.assertEqual('Bought 1 share of GME', result)
+        self.assertEqual('Bought 1 share of GME. Current balance is: $579.31', result)
         player = game.players.get(username='player')
         holding = player.holdings.get(symbol='GME')
         self.assertEqual(Decimal('579.31'), player.balance)
@@ -198,7 +204,7 @@ class StonkGameTestCase(FriskyTestCase):
         with responses.RequestsMock() as rm:
             rm.add('GET', url, body=stock_response)
             result = self.send_message('?sg sell GME', user='player')
-        self.assertEqual('Sold 1 share of GME', result)
+        self.assertEqual('Sold 1 share of GME. Current balance is: $1420.69', result)
         player = game.players.get(username='player')
         with self.assertRaises(StonkHolding.DoesNotExist):
             player.holdings.get(symbol='GME')
@@ -215,6 +221,7 @@ class StonkGameTestCase(FriskyTestCase):
         self.assertEqual('You don\'t have enough shares', result)
 
     def test_invalid_command(self):
+        StonkGame.objects.create(channel_name='testing', starting_balance='420.00')
         result = self.send_message('?sg notacommand')
         self.assertEqual('I didn\'t understand that', result)
 
@@ -276,3 +283,44 @@ class StonkGameTestCase(FriskyTestCase):
         self.assertEqual('The market is closed, man.', result)
         player = game.players.get(username='player')
         self.assertEqual(Decimal('1000.00'), player.balance)
+
+    def test_leaderboard(self):
+        game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
+        player = game.players.create(username='player', balance='69.00')
+        player2 = game.players.create(username='player2', balance='420.00')
+        player.holdings.create(symbol='GME', amount=1)
+        player.holdings.create(symbol='TSLA', amount=3)
+        player.holdings.create(symbol='BB', amount=2)
+        player2.holdings.create(symbol='GME', amount=1)
+        player2.holdings.create(symbol='TSLA', amount=2)
+        player2.holdings.create(symbol='BB', amount=4)
+        gme = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
+        tsla = 'https://query1.finance.yahoo.com/v8/finance/chart/TSLA'
+        bb = 'https://query1.finance.yahoo.com/v8/finance/chart/BB'
+        with responses.RequestsMock() as rm:
+            rm.add('GET', gme, body=stock_response)
+            rm.add('GET', tsla, body=positive_change)
+            rm.add('GET', bb, body=negative_change)
+            result = self.send_message('?sg leaderboard')
+        self.assertEqual(leaderboard, result)
+
+    def test_leaderboard_caching(self):
+        game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
+        player = game.players.create(username='player', balance='69.00')
+        player2 = game.players.create(username='player2', balance='420.00')
+        player.holdings.create(symbol='GME', amount=1)
+        player.holdings.create(symbol='TSLA', amount=3)
+        player.holdings.create(symbol='BB', amount=2)
+        player2.holdings.create(symbol='GME', amount=1)
+        player2.holdings.create(symbol='TSLA', amount=2)
+        player2.holdings.create(symbol='BB', amount=4)
+        gme = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
+        tsla = 'https://query1.finance.yahoo.com/v8/finance/chart/TSLA'
+        bb = 'https://query1.finance.yahoo.com/v8/finance/chart/BB'
+        with responses.RequestsMock() as rm:
+            rm.add('GET', gme, body=stock_response)
+            rm.add('GET', tsla, body=positive_change)
+            rm.add('GET', bb, body=negative_change)
+            self.send_message('?sg leaderboard')
+            result = self.send_message('?sg leaderboard')
+        self.assertEqual(leaderboard, result)

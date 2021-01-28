@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from operator import itemgetter
 from typing import Tuple
 
 from frisky.events import MessageEvent
@@ -48,15 +49,17 @@ class StonkGamePlugin(FriskyPlugin):
                     message.args[1],
                     int(message.args[2]) if 2 < len(message.args) else 1
                 )
-            elif command == 'portfolio':
+            elif command == 'portfolio' or command == 'p':
                 return self.__portfolio(message.channel_name, message.username)
-            return 'I didn\'t understand that'
+            elif command == 'leaderboard' or command == 'l':
+                return self.__leaderboard(message.channel_name)
         except StonkGame.DoesNotExist:
             return 'No active game in this channel'
         except StonkPlayer.DoesNotExist:
-            return 'You haven\'t joined this game yet, try `?sg join`'
+            return "You haven't joined this game yet, try `?sg join`"
         except StonkException as e:
             return e.message
+        return "I didn't understand that"
 
     def __start(self, channel_name: str, starting_balance: str) -> FriskyResponse:
         try:
@@ -72,9 +75,9 @@ class StonkGamePlugin(FriskyPlugin):
             'balance': game.starting_balance
         })
         if created:
-            return f'Welcome to the stonk game, {player.username}'
+            return f'Welcome to the stonk game, {player.username}. You have ${player.balance}'
         else:
-            return f'You\'re already in the game, {player.username}'
+            return f"You're already in the game, {player.username}"
 
     def get_stock_price(self, symbol) -> Tuple[str, Decimal, bool]:
         url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&includePrePost=false&interval=2m'
@@ -89,7 +92,7 @@ class StonkGamePlugin(FriskyPlugin):
                 return currency, round(Decimal(trades.pop()), 2), True
             else:
                 return currency, round(Decimal(last_close), 2), False
-        raise StonkException('I don\'t have any information for that stock')
+        raise StonkException("I don't have any information for that stock")
 
     def __balance(self, channel_name, username):
         game = StonkGame.objects.get(channel_name=channel_name)
@@ -114,33 +117,35 @@ class StonkGamePlugin(FriskyPlugin):
         if amount == 0:
             return 'OK, I guess...'
         if amount < 0:
-            return 'I don\'t do negatives'
+            return "I don't do negatives"
         symbol = symbol.upper()
         player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if player.balance < price:
-            return 'You don\'t have enough cash'
+            return "You don't have enough cash"
+        if price == Decimal('0.00'):
+            return "I don't deal in peasant stonks"
         player.balance -= price
         holding.amount += amount
         player.save()
         holding.save()
-        return f'Bought {amount} share of {symbol}'
+        return f'Bought {amount} share of {symbol}. Current balance is: ${player.balance}'
 
     def __sell(self, channel_name: str, username: str, symbol: str, amount: int):
         if amount == 0:
             return 'OK, I guess...'
         if amount < 0:
-            return 'I don\'t do negatives'
+            return "I don't do negatives"
         symbol = symbol.upper()
         player, holding, price = self.__prep_transaction(channel_name, username, symbol, amount)
         if holding.amount < amount:
-            return 'You don\'t have enough shares'
+            return "You don't have enough shares"
         player.balance += price
         holding.amount -= amount
         player.save()
         holding.save()
         if holding.amount == 0:
             holding.delete()
-        return f'Sold {amount} share of {symbol}'
+        return f'Sold {amount} share of {symbol}. Current balance is: ${player.balance}'
 
     def __portfolio(self, channel_name: str, username: str):
         game = StonkGame.objects.get(channel_name=channel_name)
@@ -154,3 +159,25 @@ class StonkGamePlugin(FriskyPlugin):
             running_total += total_value
         responses += [f'Total portfolio value: {running_total}. Cash on hand: {player.balance}']
         return '\n'.join(responses)
+
+    def __leaderboard(self, channel_name: str):
+        def calculate_leaderboard(channel: str):
+            game = StonkGame.objects.get(channel_name=channel)
+            responses = [f'Leaderboard for the #{channel} game:']
+            net_worths = []
+            stonk_prices = {}
+            for player in game.players.all():
+                net_worth = player.balance
+                for holding in player.holdings.all():
+                    if holding.symbol in stonk_prices:
+                        price = stonk_prices[holding.symbol]
+                    else:
+                        _, price, _ = self.get_stock_price(holding.symbol)
+                        stonk_prices[holding.symbol] = price
+                    net_worth += (price * holding.amount)
+                net_worths.append((player.username, net_worth))
+            net_worths = sorted(net_worths, key=itemgetter(1), reverse=True)
+            for net_worth in net_worths:
+                responses += [f'{net_worth[0]}, with ${net_worth[1]}']
+            return '\n'.join(responses)
+        return self.cacheify(calculate_leaderboard, channel_name)
