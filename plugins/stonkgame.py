@@ -146,6 +146,8 @@ class StonkGamePlugin(FriskyPlugin):
         holding.amount -= amount
         player.save()
         holding.save()
+        if holding.amount == 0:
+            holding.delete()
         return f'Sold {amount} share of {symbol}'
 
     def __portfolio(self, channel_name: str, username: str):

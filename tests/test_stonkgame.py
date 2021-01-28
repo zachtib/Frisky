@@ -4,7 +4,7 @@ import responses
 
 from frisky.test import FriskyTestCase
 from plugins.stonkgame import StonkGamePlugin
-from stonkgame.models import StonkGame, StonkPlayer
+from stonkgame.models import StonkGame, StonkPlayer, StonkHolding
 from .test_stock import positive_change, market_closed, negative_change
 
 portfolio = '''
@@ -108,7 +108,7 @@ class StonkGameTestCase(FriskyTestCase):
     def test_selling(self):
         game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
         player = game.players.create(username='player', balance='1000.00')
-        player.holdings.create(symbol='GME', amount=1)
+        player.holdings.create(symbol='GME', amount=2)
         url = 'https://query1.finance.yahoo.com/v8/finance/chart/GME'
         with responses.RequestsMock() as rm:
             rm.add('GET', url, body=market_closed)
@@ -117,7 +117,7 @@ class StonkGameTestCase(FriskyTestCase):
         player = game.players.get(username='player')
         holding = player.holdings.get(symbol='GME')
         self.assertEqual(Decimal('1420.69'), player.balance)
-        self.assertEqual(holding.amount, 0)
+        self.assertEqual(holding.amount, 1)
 
     def test_selling_nothing(self):
         game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
@@ -175,9 +175,9 @@ class StonkGameTestCase(FriskyTestCase):
             result = self.send_message('?sg sell GME', user='player')
         self.assertEqual('Sold 1 share of GME', result)
         player = game.players.get(username='player')
-        holding = player.holdings.get(symbol='GME')
+        with self.assertRaises(StonkHolding.DoesNotExist):
+            player.holdings.get(symbol='GME')
         self.assertEqual(Decimal('1420.69'), player.balance)
-        self.assertEqual(holding.amount, 0)
 
     def test_buying_more_shares_than_you_have(self):
         game = StonkGame.objects.create(channel_name='testing', starting_balance='1000.00')
