@@ -12,8 +12,7 @@ pylint = "*"
 pylint-django = "*"
 
 [packages]
-django = "~=3.1"
-django-heroku = "*"
+django = "==3.1.5"
 gunicorn = "*"
 requests = "~=2.22"
 celery = "~=4.4"
