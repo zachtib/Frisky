@@ -17,6 +17,9 @@ Frisky uses `pipenv` to manage its Python environment. This is just a standard p
 Because Frisky is event driven, you will need to emulate events coming from Slack in order to test your featured
 end-to-end. However, a test case class is provided to more easily test simple plugins.
 
+When running locally, Frisky uses a sqlite database by default. If you wish to use a Postgres database, you will need
+to install the psycopg2 bindings.
+
 ## Writing a plugin
 To create a plugin, add a python file underneath the `plugins/` directory. Inside this file, import and extend the base
 frisky plugin `frisky.plugins.FriskyPlugin`.  This class contains the base functionality you'll need for a new plugin.
