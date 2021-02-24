@@ -148,6 +148,6 @@ FRISKY_IGNORED_CHANNELS = (
 JWT_SECRET = os.environ.get('JWT_SECRET', 'local_jwt_secret')
 
 if 'HEROKU' in os.environ:
-    import django_heroku
+    import django_on_heroku
 
-    django_heroku.settings(locals())
+    django_on_heroku.settings(locals())

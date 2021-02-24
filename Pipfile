@@ -12,7 +12,7 @@ pylint = "*"
 pylint-django = "*"
 
 [packages]
-django = "==3.1.5"
+django = "==3.1.7"
 gunicorn = "*"
 requests = "~=2.22"
 celery = "~=4.4"
@@ -20,6 +20,7 @@ redis = "==3.3.11"
 dataclasses-json = "~=0.3"
 markovify = "~=0.8"
 pyjwt = "~=1.7"
+django-on-heroku = "==1.1.2"
 
 [requires]
 python_version = "3.9"
