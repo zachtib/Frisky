@@ -13,14 +13,20 @@ class Command(BaseCommand):
             '--username',
         )
         parser.add_argument(
+            '--repeat',
+            type=int,
+            default=1
+        )
+        parser.add_argument(
             'message',
             nargs='+'
         )
 
     def handle(self, *args, **options):
         message = ' '.join(options['message'])
-        process_from_cli({
-            'channel': options.get('channel', 'bot-testing'),
-            'username': options.get('username', 'system'),
-            'message': message
-        })
+        for _ in range(options['repeat']):
+            process_from_cli({
+                'channel': options.get('channel', 'bot-testing'),
+                'username': options.get('username', 'system'),
+                'message': message
+            })
