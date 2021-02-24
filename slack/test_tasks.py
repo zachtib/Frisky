@@ -164,20 +164,17 @@ class EventHandlingTestCase(TestCase):
 class SlackCliTestCase(TestCase):
 
     def test(self):
-        result = None
-
-        def mock_handle_message(_, message: MessageEvent, reply_channel: Callable[[str], bool]):
-            nonlocal result
-            result = message
-
-        patcher = mock.patch(target='frisky.bot.Frisky.handle_message', new=mock_handle_message)
         with responses.RequestsMock() as rm:
             rm.add('POST', f'{URL}/chat.postMessage')
 
-            try:
-                patcher.start()
-                call_command('friskcli', 'ping')
-                self.assertEqual(b'{"channel": null, "text": "pong"}', rm.calls[0].request.body)
-                self.assertIsNone(result)
-            finally:
-                patcher.stop()
+            call_command('friskcli', 'ping')
+            self.assertEqual(b'{"channel": null, "text": "pong"}', rm.calls[0].request.body)
+
+    def test_repeat(self):
+        with responses.RequestsMock() as rm:
+            rm.add('POST', f'{URL}/chat.postMessage')
+            rm.add('POST', f'{URL}/chat.postMessage')
+
+            call_command('friskcli', 'ping', '--repeat', '2')
+            self.assertEqual(b'{"channel": null, "text": "pong"}', rm.calls[0].request.body)
+            self.assertEqual(b'{"channel": null, "text": "pong"}', rm.calls[1].request.body)
