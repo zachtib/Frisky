@@ -7,7 +7,8 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from slack.tasks import process_event
+from frisky.http import PostProcessingResponse
+from slack.tasks import process_event, process_event_now
 
 
 class SlackEvent(View):
@@ -27,8 +28,14 @@ class SlackEvent(View):
         elif 'X-Slack-Retry-Num' in request.headers:
             return HttpResponse(status=200)
         elif form_data['type'] == 'event_callback':
-            process_event.delay(form_data)
-            return HttpResponse(status=200)
+            if settings.ENABLE_CELERY_QUEUE:
+                process_event.delay(form_data)
+                return HttpResponse(status=200)
+            else:
+                return PostProcessingResponse(
+                    status=200,
+                    block=lambda: process_event_now(form_data)
+                )
         else:
             return HttpResponse(status=404)
 
