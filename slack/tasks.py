@@ -118,8 +118,7 @@ def process_from_cli(data):
             slack_api_client.post_message(conversation, reply)
 
 
-@shared_task
-def process_event(data):
+def process_event_now(data):
     # noinspection PyBroadException
     try:
         event_id = data["event"].get("event_id")
@@ -151,3 +150,8 @@ def process_event(data):
         log_message = f'{stacktrace}\nCaused by:\n{str(data)}'
         slack_api_client.emergency_log(log_message)
         logger.warning('General exception thrown handling event', exc_info=err)
+
+
+@shared_task
+def process_event(data):
+    process_event_now(data)

@@ -147,6 +147,8 @@ FRISKY_IGNORED_CHANNELS = (
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'local_jwt_secret')
 
+ENABLE_CELERY_QUEUE = os.environ.get('ENABLE_CELERY_QUEUE', '0') != 0
+
 if 'HEROKU' in os.environ:
     import django_on_heroku
 
