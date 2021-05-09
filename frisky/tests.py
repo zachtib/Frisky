@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from unittest import TestCase
@@ -104,6 +105,7 @@ class FriskyApiPluginTestCase(TestCase):
             self.assertEqual(actual, 'Hello, World')
 
 
+@pytest.mark.django_db
 class HttpTestCase(TestCase):
 
     def test_post_processing_response_executes_block(self):
