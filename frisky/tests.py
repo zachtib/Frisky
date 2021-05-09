@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from frisky.bot import Frisky
 from frisky.events import MessageEvent
+from frisky.http import PostProcessingResponse
 from frisky.util import quotesplit
 from frisky.plugin import FriskyApiPlugin
 
@@ -101,3 +102,17 @@ class FriskyApiPluginTestCase(TestCase):
             rm.add('GET', 'https://example.com/api/', body=self.TEXT_RESPONSE)
             actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
             self.assertEqual(actual, 'Hello, World')
+
+
+class HttpTestCase(TestCase):
+
+    def test_post_processing_response_executes_block(self):
+        result = False
+
+        def block():
+            nonlocal result
+            result = True
+
+        response = PostProcessingResponse(block=block)
+        response.close()
+        self.assertTrue(result)
