@@ -1,13 +1,13 @@
+from unittest import TestCase
+
 import pytest
 import responses
 
-from unittest import TestCase
-
 from frisky.bot import Frisky
 from frisky.events import MessageEvent
-from frisky.http import PostProcessingResponse
-from frisky.util import quotesplit
+from frisky.friskyhttp import PostProcessingResponse
 from frisky.plugin import FriskyApiPlugin
+from frisky.util import quotesplit
 
 
 class FriskyBotTestCase(TestCase):

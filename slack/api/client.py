@@ -9,9 +9,11 @@ from slack.api.models import User, Conversation, Team, Message
 
 class SlackApiClient(object):
     __access_token: str
+    __enable_emergency_log: bool
 
-    def __init__(self, access_token):
+    def __init__(self, access_token, enable_emergency_log=True):
         self.__access_token = access_token
+        self.__enable_emergency_log = enable_emergency_log
 
     def __headers(self):
         return {'Authorization': f'Bearer {self.__access_token}'}
@@ -76,7 +78,7 @@ class SlackApiClient(object):
             default=lambda: self.__get(Conversation, 'conversations.info', 'channel', channel=channel_id)
         )
 
-    def get_workspace(self, workspace_id) -> Optional[Team]:
+    def get_workspace(self, workspace_id: object) -> Optional[Team]:
         """
         https://slack.com/api/team.info
         :param workspace_id: The id of the Workspace to locate
@@ -111,6 +113,7 @@ class SlackApiClient(object):
         :param message:
         :return:
         """
-        self.__post('chat.postMessage',
-                    channel=settings.FRISKY_LOGGING_CHANNEL,
-                    text=f'```{message}```')
+        if self.__enable_emergency_log:
+            self.__post('chat.postMessage',
+                        channel=settings.FRISKY_LOGGING_CHANNEL,
+                        text=f'```{message}```')
