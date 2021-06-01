@@ -134,38 +134,32 @@ def process_from_cli(workspace_name, channel_name, username, message):
 
 @shared_task
 def process_slack_event(data: dict):
-    # noinspection PyBroadException
-    try:
-        team_id = data['team_id']
-        event_id = data['event_id']
-        event = data['event']
-        channel_id = event['channel']
-        user_id = event['user']
-        event_type = event['type']
-        event_subtype = event.get('subtype', None)
-        item_user = event.get('item_user', None)
+    team_id = data['team_id']
+    event_id = data['event_id']
+    event = data['event']
+    channel_id = event['channel']
+    user_id = event['user']
+    event_type = event['type']
+    event_subtype = event.get('subtype', None)
+    item_user = event.get('item_user', None)
 
-        if event_subtype in SUBTYPE_BLACKLIST:
-            return logger.debug(f'Ignoring {event_id}, subtype was in blacklist')
-        elif event_type == 'reaction_added' and not item_user:
-            return logger.debug(f'Ignoring {event_id}, it had no item_user')
+    if event_subtype in SUBTYPE_BLACKLIST:
+        return logger.debug(f'Ignoring {event_id}, subtype was in blacklist')
+    elif event_type == 'reaction_added' and not item_user:
+        return logger.debug(f'Ignoring {event_id}, it had no item_user')
 
-        # Now, let's grab our rich Workspace objects
-        workspace = Workspace.objects.get_or_fetch_by_kind_and_id(Workspace.Kind.SLACK, team_id)
-        channel = Channel.objects.get_or_fetch_by_workspace_and_id(workspace, channel_id)
-        member = Member.objects.get_or_fetch_by_workspace_and_id(workspace, user_id)
+    # Now, let's grab our rich Workspace objects
+    workspace = Workspace.objects.get_or_fetch_by_kind_and_id(Workspace.Kind.SLACK, team_id)
+    channel = Channel.objects.get_or_fetch_by_workspace_and_id(workspace, channel_id)
+    member = Member.objects.get_or_fetch_by_workspace_and_id(workspace, user_id)
 
-        event_wrapper: Event = Event.from_dict(data)
-        event = event_wrapper.get_event()
+    event_wrapper: Event = Event.from_dict(data)
+    event = event_wrapper.get_event()
 
-        wrapper = SlackWrapper(workspace, channel, member)
+    wrapper = SlackWrapper(workspace, channel, member)
 
-        if isinstance(event, MessageSent):
-            wrapper.handle_message(event)
-        elif isinstance(event, ReactionAdded):
-            wrapper.handle_reaction(event)
+    if isinstance(event, MessageSent):
+        wrapper.handle_message(event)
+    elif isinstance(event, ReactionAdded):
+        wrapper.handle_reaction(event)
 
-    except KeyError as err:
-        logger.warning(f'KeyError thrown deserializing event: {str(data)}', exc_info=err)
-    except Exception as err:
-        logger.warning(f'General exception thrown handling event: {str(data)}', exc_info=err)
