@@ -7,10 +7,16 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '--workspace',
+            required=True,
+        )
+        parser.add_argument(
             '--channel',
+            required=True,
         )
         parser.add_argument(
             '--username',
+            default='system_user',
         )
         parser.add_argument(
             '--repeat',
@@ -25,8 +31,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         message = ' '.join(options['message'])
         for _ in range(options['repeat']):
-            process_from_cli({
-                'channel': options.get('channel', 'bot-testing'),
-                'username': options.get('username', 'system'),
-                'message': message
-            })
+            process_from_cli(options['workspace'], options['channel'], options['username'], message)
