@@ -22,8 +22,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Default value is provided purely for running Frisky locally
 SECRET_KEY = os.environ.get('SECRET_KEY', 'local_development_secret_key')
 
+
+def get_bool_from_environment(key: str) -> bool:
+    if key not in os.environ:
+        # Key does not exist in env, so false
+        return False
+    value = os.environ[key]
+    if value == '':
+        return False
+    if value in ['True', 'true', '1']:
+        return True
+    return False
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', '0') == '1'
+DEBUG = get_bool_from_environment('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -79,7 +92,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'app.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
@@ -117,7 +129,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -149,7 +160,7 @@ FRISKY_IGNORED_CHANNELS = (
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'local_jwt_secret')
 
-ENABLE_CELERY_QUEUE = os.environ.get('ENABLE_CELERY_QUEUE', '0') != 0
+ENABLE_CELERY_QUEUE = get_bool_from_environment('ENABLE_CELERY_QUEUE')
 
 if 'HEROKU' in os.environ:
     import django_on_heroku
