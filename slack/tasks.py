@@ -8,6 +8,7 @@ from django.conf import settings
 
 from frisky.bot import Frisky
 from frisky.events import ReactionEvent, MessageEvent
+from frisky.models import Workspace, Channel, Member
 from frisky.responses import FriskyResponse, Image
 from slack.api.client import SlackApiClient
 from slack.api.models import Event, ReactionAdded, MessageSent, Conversation
@@ -122,14 +123,25 @@ def process_from_cli(data):
 def process_slack_event(data: dict):
     # noinspection PyBroadException
     try:
-        event_id = data["event"].get("event_id")
-        event_type = data.get('event', {}).get('type')
-        event_subtype = data.get('event', {}).get('subtype')
-        item_user = data.get('event', {}).get('item_user')
+        team_id = data['team_id']
+        event_id = data['event_id']
+        event = data['event']
+        channel_id = event['channel']
+        user_id = event['user']
+        event_type = event['type']
+        event_subtype = event.get('subtype', None)
+        item_user = event.get('item_user', None)
+
         if event_subtype in SUBTYPE_BLACKLIST:
             return logger.debug(f'Ignoring {event_id}, subtype was in blacklist')
         elif event_type == 'reaction_added' and not item_user:
             return logger.debug(f'Ignoring {event_id}, it had no item_user')
+
+        # Now, let's grab our rich Workspace objects
+        workspace = Workspace.objects.get_or_fetch_by_kind_and_id(Workspace.Kind.SLACK, team_id)
+        channel = Channel.objects.get_or_fetch_by_workspace_and_id(workspace, channel_id)
+        member = Member.objects.get_or_fetch_by_workspace_and_id(workspace, user_id)
+
         event_wrapper: Event = Event.from_dict(data)
         event = event_wrapper.get_event()
 
