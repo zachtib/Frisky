@@ -1,26 +1,7 @@
-import json
 from unittest import TestCase
 
-import pytest
-import responses
-
 from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
-from .api.tests import URL
-from .tasks import process_slack_event
 from .test_data import *
-
-
-@pytest.mark.parametrize('event_json', [bot_event_json, no_user_reaction_json, message_deleted_event])
-def test_ignore_msg(event_json):
-    # Test will fail because emergency log will be called and response mock setup with 0 calls
-    with responses.RequestsMock() as rm:
-        assert process_slack_event(json.loads(event_json)) is None
-
-
-def test_rubbish_handled():
-    with responses.RequestsMock() as rm:
-        rm.add('POST', f'{URL}/chat.postMessage')
-        assert process_slack_event(json.loads(complete_and_utter_rubbish)) is None
 
 
 class SlackApiModelsTestCase(TestCase):
