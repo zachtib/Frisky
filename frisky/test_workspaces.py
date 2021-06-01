@@ -217,6 +217,65 @@ class FriskyMemberTestCase(TestCase):
             member = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, 'W012A3CDE')
         self.assertEqual(self.valid_member.id, member.id)
 
+    @responses.activate
+    def test_fetching_unsupported_workspace(self):
+        with self.assertRaises(NotImplementedError, msg='Fetching is not implemented for Workspace Kind None'):
+            Workspace.objects.get_or_fetch_by_kind_and_id(Workspace.Kind.NONE, '1')
+
+    @responses.activate
+    def test_fetching_unsupported_channel(self):
+        workspace = Workspace.objects.create(kind=Workspace.Kind.NONE, team_id='TXXXXXXXX', name='Testing',
+                                             domain='testing', access_token='xoxo-my_secret_token')
+        with self.assertRaises(NotImplementedError, msg='Fetching is not implemented for Workspace Kind None'):
+            Channel.objects.get_or_fetch_by_workspace_and_id(workspace, '1')
+
+    @responses.activate
+    def test_fetching_unsupported_member(self):
+        workspace = Workspace.objects.create(kind=Workspace.Kind.NONE, team_id='TXXXXXXXX', name='Testing',
+                                             domain='testing', access_token='xoxo-my_secret_token')
+        with self.assertRaises(NotImplementedError, msg='Fetching is not implemented for Workspace Kind None'):
+            Member.objects.get_or_fetch_by_workspace_and_id(workspace, '1')
+
+    @responses.activate
+    def test_updating_unsupported_workspace(self):
+        expired_date = datetime(year=2021, month=5, day=1, hour=12, minute=0, second=0)
+        with mock.patch('django.utils.timezone.now', mock.Mock(return_value=expired_date)):
+            Workspace.objects.create(kind=Workspace.Kind.NONE, team_id='TXXXXXXXX', name='Testing',
+                                     domain='testing', access_token='xoxo-my_secret_token')
+        with self.assertRaises(NotImplementedError, msg='Fetching is not implemented for Workspace Kind None'):
+            with mock.patch('frisky.models.timezone') as mock_datetime:
+                mock_datetime.now.return_value = datetime(year=2021, month=6, day=1, hour=12, minute=0, second=0,
+                                                          tzinfo=timezone.utc)
+                Workspace.objects.get_or_fetch_by_kind_and_id(Workspace.Kind.NONE, 'TXXXXXXXX')
+
+    @responses.activate
+    def test_updating_unsupported_channel(self):
+        workspace = Workspace.objects.create(kind=Workspace.Kind.NONE, team_id='TXXXXXXXX', name='Testing',
+                                             domain='testing', access_token='xoxo-my_secret_token')
+        expired_date = datetime(year=2021, month=5, day=1, hour=12, minute=0, second=0)
+        with mock.patch('django.utils.timezone.now', mock.Mock(return_value=expired_date)):
+            Channel.objects.create(workspace=workspace, channel_id='C0XXXXXXX', name='general',
+                                   is_channel=True, is_group=False, is_private=False, is_im=False)
+        with self.assertRaises(NotImplementedError, msg='Fetching is not implemented for Workspace Kind None'):
+            with mock.patch('frisky.models.timezone') as mock_datetime:
+                mock_datetime.now.return_value = datetime(year=2021, month=6, day=1, hour=12, minute=0, second=0,
+                                                          tzinfo=timezone.utc)
+                Channel.objects.get_or_fetch_by_workspace_and_id(workspace, 'C0XXXXXXX')
+
+    @responses.activate
+    def test_updating_unsupported_member(self):
+        workspace = Workspace.objects.create(kind=Workspace.Kind.NONE, team_id='TXXXXXXXX', name='Testing',
+                                             domain='testing', access_token='xoxo-my_secret_token')
+        expired_date = datetime(year=2021, month=5, day=1, hour=12, minute=0, second=0)
+        with mock.patch('django.utils.timezone.now', mock.Mock(return_value=expired_date)):
+            Member.objects.create(workspace=workspace, user_id='U214XXXXXXX', name='testuser',
+                                  real_name='Test User')
+        with self.assertRaises(NotImplementedError, msg='Fetching is not implemented for Workspace Kind None'):
+            with mock.patch('frisky.models.timezone') as mock_datetime:
+                mock_datetime.now.return_value = datetime(year=2021, month=6, day=1, hour=12, minute=0, second=0,
+                                                          tzinfo=timezone.utc)
+                Member.objects.get_or_fetch_by_workspace_and_id(workspace, 'U214XXXXXXX')
+
 
 channel_ok = '''
 {
@@ -322,6 +381,18 @@ class FriskyChannelTestCase(TestCase):
     def test_channel_string(self):
         self.assertEqual('#general in Slack Workspace Slack Space', str(self.valid_channel))
 
+    def test_channel_no_name_string(self):
+        channel = Channel.objects.create(
+            workspace=self.workspace,
+            channel_id='C012AB3',
+            name=None,
+            is_channel=True,
+            is_group=False,
+            is_private=True,
+            is_im=False,
+        )
+        self.assertEqual('C012AB3 in Slack Workspace Slack Space', str(channel))
+
     @responses.activate
     def test_getting_channel_when_none_exists(self):
         self.valid_channel.delete()
@@ -342,7 +413,8 @@ class FriskyChannelTestCase(TestCase):
 
     @responses.activate
     def test_getting_expired_channel_returns_even_if_api_fails(self):
-        responses.add(responses.GET, url='https://slack.com/api/conversations.info?channel=C012AB3CE', body=slack_not_ok)
+        responses.add(responses.GET, url='https://slack.com/api/conversations.info?channel=C012AB3CE',
+                      body=slack_not_ok)
         with mock.patch('frisky.models.timezone') as mock_datetime:
             mock_datetime.now.return_value = datetime(year=2021, month=6, day=1, hour=12, minute=0, second=0,
                                                       tzinfo=timezone.utc)
