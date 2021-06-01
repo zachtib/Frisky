@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from frisky.http import PostProcessingResponse
+from frisky.friskyhttp import PostProcessingResponse
 from slack.tasks import process_event, process_event_now
 
 
