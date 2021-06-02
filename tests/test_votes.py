@@ -101,3 +101,9 @@ class VoteTestCase(FriskyTestCase):
                          'foobar: 4\n'
                          'foo: 3\n'
                          'bar: 1', response)
+
+    def test_voting_across_channels_in_a_workspace(self):
+        self.send_reaction('upvote', 'user_a', 'user_b', channel='channel1')
+        self.send_reaction('upvote', 'user_a', 'user_b', channel='channel2')
+        record = Vote.objects.get_record('user_b')
+        self.assertEqual(record.votes, 2)

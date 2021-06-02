@@ -136,9 +136,6 @@ class Member(models.Model):
 
 
 class ChannelManager(models.Manager):
-    def get_or_fetch_by_workspace_and_name(self, workspace: Workspace, channel_name: str) -> 'Channel':
-        pass
-
     def get_or_fetch_by_workspace_and_id(self, workspace: Workspace, channel_id: str) -> 'Channel':
         try:
             channel = self.get(workspace=workspace, channel_id=channel_id)

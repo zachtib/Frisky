@@ -102,8 +102,7 @@ class FriskyTestCase(TestCase):
         if channel is None:
             message_channel = None
         else:
-            message_channel = Channel.objects.create(workspace=self.workspace, channel_id='C00002', name=channel,
-                                                     is_channel=True, is_group=False, is_private=False, is_im=False)
+            message_channel = self.get_channel(channel)
 
         result = None
         event = self.construct_reaction_event(reaction, not reaction_removed, sending_user, receiving_user,

@@ -16,10 +16,6 @@ class MessageEvent(object):
     command: str = ""
     args: List[str] = field(default_factory=list)
 
-    def copy(self, **kwargs) -> 'MessageEvent':
-        return MessageEvent(
-            
-        )
 
 @dataclass
 class ReactionEvent(object):
