@@ -1,7 +1,6 @@
-import uuid
 from typing import Callable
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import responses
 from django.core.management import call_command
@@ -185,6 +184,63 @@ class EventHandlingTestCase(TestCase):
             self.assertEqual(expected, result)
         finally:
             patcher.stop()
+
+    @responses.activate
+    @patch('frisky.bot.Frisky.handle_reaction')
+    def test_reactions_in_a_private_channel(self, handle_reaction):
+        api = f'{URL}/conversations.history?channel=C00002&oldest=123&latest=123&inclusive=true&limit=1'
+        private_channel = Channel.objects.create(workspace=self.workspace, channel_id='C00002', name='private',
+                                                 is_channel=True, is_group=False, is_private=True, is_im=False)
+        self.wrapper.channel = private_channel
+        responses.add(responses.GET, api, message)
+
+        self.wrapper.handle_reaction(event=ReactionAdded(
+            type='reaction_added',
+            user='W012A3CDE',
+            item=ReactionItem(
+                type='message',
+                channel='C00002',
+                ts='123'
+            ),
+            reaction='poop',
+            item_user='W012A3CDE',
+            event_ts='123'
+        ))
+
+        handle_reaction.assert_called_once()
+
+    @responses.activate
+    @patch('frisky.bot.Frisky.get_plugins_for_reaction')
+    def test_that_reactions_in_a_private_channel_blank_message_contents(self, get_plugins_for_reaction):
+        api = f'{URL}/conversations.history?channel=C00002&oldest=123&latest=123&inclusive=true&limit=1'
+        private_channel = Channel.objects.create(workspace=self.workspace, channel_id='C00002', name='private',
+                                                 is_channel=True, is_group=False, is_private=True, is_im=False)
+        self.wrapper.channel = private_channel
+        responses.add(responses.GET, api, message)
+        mock_reply = MagicMock()
+        self.wrapper.reply = mock_reply
+
+        mock_plugin = MagicMock()
+        get_plugins_for_reaction.return_value = [mock_plugin]
+        mock_plugin.handle_reaction = MagicMock()
+
+        self.wrapper.handle_reaction(event=ReactionAdded(
+            type='reaction_added',
+            user='W012A3CDE',
+            item=ReactionItem(
+                type='message',
+                channel='C00002',
+                ts='123'
+            ),
+            reaction='poop',
+            item_user='W012A3CDE',
+            event_ts='123'
+        ))
+
+        mock_plugin.handle_reaction.assert_called_once()
+        actual: ReactionEvent = mock_plugin.handle_reaction.call_args[0][0]
+        self.assertIsNone(actual.message.text)
+        self.assertIsNone(actual.message.raw_message)
 
 
 class SlackCliTestCase(TestCase):
