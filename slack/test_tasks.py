@@ -1,13 +1,11 @@
-import uuid
 from typing import Callable
 from unittest import mock
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, patch
 
 import responses
 from django.core.management import call_command
 from django.test import TestCase
 
-from frisky.bot import Frisky
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.models import Workspace, Member, Channel
 from .api.models import ReactionAdded, ReactionItem, MessageSent
