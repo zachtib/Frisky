@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.http import Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -25,7 +26,14 @@ def get_response(request):
     if workspace_id is None:
         logging.debug('Old Token did not contain a workspace_id')
         raise Http404()
-    workspace = Workspace.objects.get(id=workspace_id)
+    try:
+        workspace = Workspace.objects.get(id=workspace_id)
+    except ValidationError:
+        logging.debug(f'Malformed workspace id: {workspace_id}')
+        raise Http404()
+    except Workspace.DoesNotExist:
+        logging.debug(f'Workspace with id {workspace_id} did not exist')
+        raise Http404()
     if workspace.kind == Workspace.Kind.SLACK:
         received_json_data = json.loads(request.body.decode("utf-8"))
 
@@ -59,6 +67,9 @@ def random_learn(request):
         raise Http404()
     try:
         Workspace.objects.get(id=workspace_id)
+    except ValidationError:
+        logging.debug(f'Malformed workspace id: {workspace_id}')
+        raise Http404()
     except Workspace.DoesNotExist:
         logging.debug(f'Workspace with id {workspace_id} did not exist')
         raise Http404()
