@@ -147,14 +147,18 @@ def process_from_cli(workspace_name, channel_name, username, message):
 
 @shared_task
 def process_slack_event(data: dict):
-    team_id = data['team_id']
-    event_id = data['event_id']
-    event = data['event']
-    channel_id = event.get('channel') or event['item']['channel']
-    user_id = event['user']
-    event_type = event['type']
-    event_subtype = event.get('subtype', None)
-    item_user = event.get('item_user', None)
+    try:
+        team_id = data['team_id']
+        event_id = data['event_id']
+        event = data['event']
+        channel_id = event.get('channel') or event['item']['channel']
+        user_id = event['user']
+        event_type = event['type']
+        event_subtype = event.get('subtype', None)
+        item_user = event.get('item_user', None)
+    except KeyError as err:
+        logger.warning(f'Encountered a KeyError while processing:\n{data}', exc_info=err)
+        return
 
     if event_subtype in SUBTYPE_BLACKLIST:
         return logger.debug(f'Ignoring {event_id}, subtype was in blacklist')
