@@ -242,6 +242,7 @@ class EventHandlingTestCase(TestCase):
         mock_plugin.handle_reaction.assert_called_once()
         actual: ReactionEvent = mock_plugin.handle_reaction.call_args[0][0]
         self.assertIsNone(actual.message.text)
+        self.assertIsNone(actual.message.raw_message)
 
 
 class SlackCliTestCase(TestCase):

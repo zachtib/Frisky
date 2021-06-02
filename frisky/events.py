@@ -9,7 +9,7 @@ class MessageEvent(object):
     channel: Channel
     user: Member
     users: Dict[str, Member]
-    raw_message: str
+    raw_message: Optional[str]
     username: str
     channel_name: str
     text: Optional[str]
