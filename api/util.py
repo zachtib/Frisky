@@ -26,6 +26,6 @@ def get_jwt_from_headers(headers):
     except ApiToken.DoesNotExist:
         logging.debug('Token does not exist')
         raise Http404()
-    except jwt.exceptions.InvalidSignatureError:
+    except jwt.InvalidSignatureError:
         logging.debug('JWT Invalid Signature')
         raise Http404()

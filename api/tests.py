@@ -1,34 +1,44 @@
 import json
 from io import StringIO
+from typing import Dict
 
 import jwt
 from django.conf import settings
-from django.core.management import call_command
+from django.core.management import call_command, CommandError
 from django.test import TestCase
 
 from api.models import ApiToken
+from frisky.models import Workspace
 from frisky.test import FriskyTestCase
 
 
-def get_valid_token(payload):
-    created_token = ApiToken.objects.create(name='Testing Token')
-    payload['uuid'] = str(created_token.uuid)
-    token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
-    return token
+class ApiTestCase(FriskyTestCase):
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.workspace.kind = Workspace.Kind.SLACK
+        self.workspace.save()
+
+    def create_valid_token(self, payload: Dict[str, str]) -> str:
+        created_token = ApiToken.objects.create(name='Testing Token')
+        payload['uuid'] = str(created_token.uuid)
+        payload['workspace_id'] = str(self.workspace.id)
+        token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
+        return token
+
+    def create_revoked_token(self, payload: Dict[str, str]) -> str:
+        created_token = ApiToken.objects.create(name='Revoked Token', revoked=True)
+        payload['uuid'] = str(created_token.uuid)
+        payload['workspace_id'] = str(self.workspace.id)
+        token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
+        return token
 
 
-def get_revoked_token(payload):
-    created_token = ApiToken.objects.create(name='Revoked Token', revoked=True)
-    payload['uuid'] = str(created_token.uuid)
-    token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
-    return token
-
-
-class LearnApiTests(FriskyTestCase):
+class LearnApiTests(ApiTestCase):
 
     def test_success(self):
         self.send_message('?learn api_test abcdefg')
-        token = get_valid_token({'label': 'api_test'})
+        token = self.create_valid_token({'label': 'api_test'})
 
         response = self.client.get('/api/random/', HTTP_AUTHORIZATION=f'Bearer {token}')
 
@@ -37,14 +47,14 @@ class LearnApiTests(FriskyTestCase):
         self.assertEqual(content['result'], 'abcdefg')
 
     def test_revoked_token_404s(self):
-        token = get_revoked_token({'label': 'api_test'})
+        token = self.create_revoked_token({'label': 'api_test'})
 
         response = self.client.get('/api/random/', HTTP_AUTHORIZATION=f'Bearer {token}')
 
         self.assertEqual(response.status_code, 404)
 
     def test_valid_token_not_in_db_404s(self):
-        payload = {'label': 'api_test'}
+        payload = {'label': 'api_test', 'workspace_id': str(self.workspace.id)}
         token = jwt.encode(payload, settings.JWT_SECRET, algorithm='HS256').decode()
 
         response = self.client.get('/api/random/', HTTP_AUTHORIZATION=f'Bearer {token}')
@@ -52,7 +62,13 @@ class LearnApiTests(FriskyTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_invalid_jwt_404s(self):
-        token = jwt.encode({'label': 'api_test'}, 'my_fake_secret', algorithm='HS256').decode()
+        token = jwt.encode(
+            {
+                'label': 'api_test',
+                'workspace_id': str(self.workspace.id)
+            },
+            'my_fake_secret',
+            algorithm='HS256').decode()
 
         response = self.client.get('/api/random/', HTTP_AUTHORIZATION=f'Bearer {token}')
 
@@ -60,7 +76,7 @@ class LearnApiTests(FriskyTestCase):
 
     def test_no_learns_for_label_404s(self):
         self.send_message('?learn api_test abcdefg')
-        token = get_valid_token({'label': 'api_test_2'})
+        token = self.create_valid_token({'label': 'api_test_2'})
 
         response = self.client.get('/api/random/', HTTP_AUTHORIZATION=f'Bearer {token}')
 
@@ -77,20 +93,20 @@ class LearnApiTests(FriskyTestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class GeneralApiTests(FriskyTestCase):
+class GeneralApiTests(ApiTestCase):
 
     def test_general_get_404s(self):
         response = self.client.get('/api/response/')
         self.assertEqual(response.status_code, 404)
 
     def test_general_ping(self):
-        token = get_valid_token({'general': 'true'})
+        token = self.create_valid_token({'general': 'true'})
 
         response = self.client.post(
             '/api/response/',
             data=json.dumps({
-                'username': 'testuser',
-                'channel': 'bot-testing',
+                'username': self.get_user('testuser').name,
+                'channel': self.get_channel('bot-testing').name,
                 'message': '?ping'
             }),
             content_type='application/json',
@@ -102,13 +118,13 @@ class GeneralApiTests(FriskyTestCase):
         self.assertEqual(content['replies'], ['pong'])
 
     def test_api_prepends_prefix_ping(self):
-        token = get_valid_token({'general': 'true'})
+        token = self.create_valid_token({'general': 'true'})
 
         response = self.client.post(
             '/api/response/',
             data=json.dumps({
-                'username': 'testuser',
-                'channel': 'bot-testing',
+                'username': self.get_user('testuser').name,
+                'channel': self.get_channel('bot-testing').name,
                 'message': 'ping'
             }),
             content_type='application/json',
@@ -120,7 +136,7 @@ class GeneralApiTests(FriskyTestCase):
         self.assertEqual(content['replies'], ['pong'])
 
     def test_learn_token_invalid(self):
-        token = get_valid_token({'label': 'api_test'})
+        token = self.create_valid_token({'label': 'api_test'})
 
         response = self.client.post(
             '/api/response/',
@@ -136,16 +152,16 @@ class GeneralApiTests(FriskyTestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class CommandsTestCase(TestCase):
+class CommandsTestCase(ApiTestCase):
 
     def test_issue_jwt_noop(self):
         out = StringIO()
-        call_command('issuejwt', stdout=out, name='testing')
-        self.assertEqual('', out.getvalue())
+        with self.assertRaises(CommandError, msg='Error: the following arguments are required: --workspace_id'):
+            call_command('issuejwt', stdout=out, name='testing')
 
     def test_issue_jwt_learn(self):
         out = StringIO()
-        call_command('issuejwt', stdout=out, name='testing', learn='abcde')
+        call_command('issuejwt', stdout=out, name='testing', learn='abcde', workspace_id=str(self.workspace.id))
         _, output = out.getvalue().split(' ')
         decoded_value = jwt.decode(output, key=settings.JWT_SECRET, algorithms=['HS256'])
         token = ApiToken.objects.get(uuid=decoded_value['uuid'])
@@ -154,7 +170,7 @@ class CommandsTestCase(TestCase):
 
     def test_issue_jwt_general(self):
         out = StringIO()
-        call_command('issuejwt', name='testing', general=True, stdout=out)
+        call_command('issuejwt', name='testing', general=True, workspace_id=str(self.workspace.id),  stdout=out)
         _, output = out.getvalue().split(' ')
         decoded_value = jwt.decode(output, key=settings.JWT_SECRET, algorithms=['HS256'])
         token = ApiToken.objects.get(uuid=decoded_value['uuid'])
@@ -162,13 +178,13 @@ class CommandsTestCase(TestCase):
         self.assertEqual(token.name, 'testing')
 
 
-class MiscApiTestCase(TestCase):
+class MiscApiTestCase(ApiTestCase):
 
     def test_api_config(self):
         from api.apps import ApiConfig
         self.assertEqual(ApiConfig.name, 'api')
 
     def test_api_str(self):
-        get_valid_token({'label': 'api_test'})
+        self.create_valid_token({'label': 'api_test'})
         api_token = ApiToken.objects.get(id=1)
         self.assertEqual('ApiToken: Testing Token', str(api_token))

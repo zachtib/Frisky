@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import MagicMock
 
 import pytest
 import responses
@@ -64,7 +65,16 @@ class FriskyUtilTestCase(TestCase):
 
 
 class FriskyApiPluginTestCase(TestCase):
-    MESSAGE = MessageEvent('user', 'test', '?api')
+    MESSAGE = MessageEvent(
+        workspace=MagicMock(),
+        channel=MagicMock(),
+        user=MagicMock(),
+        users={},
+        raw_message='?api',
+        username='user',
+        channel_name='test',
+        text='?api'
+    )
 
     TEXT_RESPONSE = 'Hello, World'
 
@@ -83,26 +93,26 @@ class FriskyApiPluginTestCase(TestCase):
     class TextTestPlugin(FriskyApiPlugin):
         url = 'https://example.com/api/'
 
+    @responses.activate
     def test_non_200_response(self):
         plugin = FriskyApiPluginTestCase.JsonTestPlugin()
-        with responses.RequestsMock() as rm:
-            rm.add('GET', 'https://example.com/api/', status=500)
-            actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
-            self.assertIsNone(actual)
+        responses.add('GET', 'https://example.com/api/', status=500)
+        actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
+        self.assertIsNone(actual)
 
+    @responses.activate
     def test_json_parsing(self):
         plugin = FriskyApiPluginTestCase.JsonTestPlugin()
-        with responses.RequestsMock() as rm:
-            rm.add('GET', 'https://example.com/api/', body=self.JSON_RESPONSE)
-            actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
-            self.assertEqual(actual, 'Hello, Json')
+        responses.add('GET', 'https://example.com/api/', body=self.JSON_RESPONSE)
+        actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
+        self.assertEqual(actual, 'Hello, Json')
 
+    @responses.activate
     def test_text_parsing(self):
         plugin = FriskyApiPluginTestCase.TextTestPlugin()
-        with responses.RequestsMock() as rm:
-            rm.add('GET', 'https://example.com/api/', body=self.TEXT_RESPONSE)
-            actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
-            self.assertEqual(actual, 'Hello, World')
+        responses.add('GET', 'https://example.com/api/', body=self.TEXT_RESPONSE)
+        actual = plugin.handle_message(FriskyApiPluginTestCase.MESSAGE)
+        self.assertEqual(actual, 'Hello, World')
 
 
 @pytest.mark.django_db

@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from django.test import TestCase
 
 from frisky.events import MessageEvent, ReactionEvent
@@ -11,6 +13,11 @@ class BasePluginTestCase(TestCase):
 
     def test_unhandled_command_returns_none(self):
         message_event = MessageEvent(
+            workspace=MagicMock(),
+            channel=MagicMock(),
+            user=MagicMock(),
+            users={},
+            raw_message='?hello world',
             username='testuser',
             channel_name='general',
             text='?hello world'
@@ -20,11 +27,20 @@ class BasePluginTestCase(TestCase):
 
     def test_unhandled_reaction_returns_none(self):
         message_event = MessageEvent(
+            workspace=MagicMock(),
+            channel=MagicMock(),
+            user=MagicMock(),
+            users={},
+            raw_message='?hello world',
             username='testuser',
             channel_name='general',
             text='?hello world'
         )
         reaction_event = ReactionEvent(
+            workspace=MagicMock(),
+            channel=MagicMock(),
+            user=MagicMock(),
+            users={},
             emoji='bacon',
             username='testuser2',
             added=True,
