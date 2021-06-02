@@ -150,7 +150,7 @@ def process_slack_event(data: dict):
     team_id = data['team_id']
     event_id = data['event_id']
     event = data['event']
-    channel_id = event['channel']
+    channel_id = event.get('channel') or event['item']['channel']
     user_id = event['user']
     event_type = event['type']
     event_subtype = event.get('subtype', None)
