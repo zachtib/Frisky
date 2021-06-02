@@ -191,7 +191,7 @@ class SlackViewsTestCase(TestCase):
     EVENTS_URL = '/slack/events/'
 
     @responses.activate
-    @patch('slack.views.process_slack_event.delay')
+    @patch('slack.views.ingest_from_slack_events_api.delay')
     def test_message_payload_with_celery_correctly_enqueues_task(self, process_slack_event):
         payload_dict = json.loads(event_payload)
         with self.settings(ENABLE_CELERY_QUEUE=True):
@@ -204,7 +204,7 @@ class SlackViewsTestCase(TestCase):
         process_slack_event.assert_called_once_with(payload_dict)
 
     @responses.activate
-    @patch('slack.views.process_slack_event')
+    @patch('slack.views.ingest_from_slack_events_api')
     def test_message_payload_without_celery(self, process_slack_event):
         payload_dict = json.loads(event_payload)
         with self.settings(ENABLE_CELERY_QUEUE=False):
@@ -217,7 +217,7 @@ class SlackViewsTestCase(TestCase):
         process_slack_event.assert_called_once_with(payload_dict)
 
     @responses.activate
-    @patch('slack.views.process_slack_event.delay')
+    @patch('slack.views.ingest_from_slack_events_api.delay')
     def test_reaction_payload_with_celery_correctly_enqueues_task(self, process_slack_event):
         payload_dict = json.loads(reaction_event_payload)
         with self.settings(ENABLE_CELERY_QUEUE=True):
@@ -230,7 +230,7 @@ class SlackViewsTestCase(TestCase):
         process_slack_event.assert_called_once_with(payload_dict)
 
     @responses.activate
-    @patch('slack.views.process_slack_event')
+    @patch('slack.views.ingest_from_slack_events_api')
     def test_reaction_payload_without_celery(self, process_slack_event):
         payload_dict = json.loads(reaction_event_payload)
         with self.settings(ENABLE_CELERY_QUEUE=False):

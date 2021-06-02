@@ -26,7 +26,7 @@ class SlackEventProcessingTestCase(TestCase):
     @responses.activate
     @patch('slack.tasks.SlackWrapper.handle_message')
     def test_processing_message_event(self, handle_message):
-        expected = MessageSent(channel='C0XXXXXXX', user='U214XXXXXXX', text='Live long and prospect.',
+        expected = MessageSent(channel='C0XXXXXXX', user='U0XXXXXXX', text='Live long and prospect.',
                                ts='1355517523.XXXXXX', event_ts='1355517523.XXXXXX', channel_type='channel')
         event = json.loads(message_sent_payload)
         ingest_from_slack_events_api(event)
