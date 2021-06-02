@@ -45,17 +45,18 @@ class Frisky(object):
     def __load_plugin_from_class(self, name, cls) -> None:
         try:
             plugin = cls()
-            self.__loaded_plugins[name] = plugin
-            for command in cls.register_commands():
-                handlers = self.__message_handlers.get(command, list())
-                handlers.append(plugin)
-                self.__message_handlers[command] = handlers
-            for reaction in cls.register_emoji():
-                handlers = self.__reaction_handlers.get(reaction, list())
-                handlers.append(plugin)
-                self.__reaction_handlers[reaction] = handlers
-        except TypeError as err:
+        except Exception as err:
             logger.warning(f'Error instantiating plugin {cls}', exc_info=err)
+            return
+        self.__loaded_plugins[name] = plugin
+        for command in cls.register_commands():
+            handlers = self.__message_handlers.get(command, list())
+            handlers.append(plugin)
+            self.__message_handlers[command] = handlers
+        for reaction in cls.register_emoji():
+            handlers = self.__reaction_handlers.get(reaction, list())
+            handlers.append(plugin)
+            self.__reaction_handlers[reaction] = handlers
 
     def get_plugins_for_command(self, command: str) -> List[FriskyPlugin]:
         return self.__message_handlers.get(command, list())
@@ -126,12 +127,3 @@ class Frisky(object):
         command = tokens[0]
         args = tokens[1:]
         return command, args
-
-
-def get_configured_frisky_instance():
-    from django.conf import settings
-    return Frisky(
-        name=settings.FRISKY_NAME,
-        prefix=settings.FRISKY_PREFIX,
-        ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
-    )

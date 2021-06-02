@@ -5,7 +5,7 @@ import pytest
 import responses
 
 from frisky.bot import Frisky
-from frisky.events import MessageEvent
+from frisky.events import MessageEvent, ReactionEvent
 from frisky.friskyhttp import PostProcessingResponse
 from frisky.plugin import FriskyApiPlugin
 from frisky.util import quotesplit
@@ -14,7 +14,7 @@ from frisky.util import quotesplit
 class FriskyBotTestCase(TestCase):
 
     def setUp(self) -> None:
-        self.frisky = Frisky('frisky', plugin_modules=None)
+        self.frisky = Frisky('frisky', ignored_channels=('ignored',), plugin_modules=None)
 
     def test_simple_message_parsing(self):
         result = self.frisky.parse_message_string('?help')
@@ -35,6 +35,44 @@ class FriskyBotTestCase(TestCase):
         result = self.frisky.parse_message_string('I like cats')
         expected = ('', [])
         self.assertTupleEqual(result, expected)
+
+    def test_loading_something_that_is_not_a_plugin(self):
+        class NotAPlugin:
+            def __init__(self):
+                raise Exception('whoopsie')
+
+        self.frisky._Frisky__load_plugin_from_class('notaplugin', NotAPlugin)
+        self.assertNotIn('notaplugin', self.frisky._Frisky__loaded_plugins.keys())
+
+    def test_frisky_ignores_message_in_ignored_channels(self):
+        message = MessageEvent(
+            MagicMock(),
+            MagicMock(),
+            MagicMock(),
+            {},
+            '',
+            '',
+            'ignored',
+            '',
+        )
+        reply_channel = MagicMock()
+        self.frisky.handle_message(message, reply_channel)
+        reply_channel.assert_not_called()
+
+    def test_frisky_ignores_reaction_in_ignored_channels(self):
+        reaction = ReactionEvent(
+            MagicMock(),
+            MagicMock(),
+            MagicMock(),
+            {},
+            '',
+            '',
+            True,
+            MagicMock()
+        )
+        reply_channel = MagicMock()
+        self.frisky.handle_reaction(reaction, reply_channel)
+        reply_channel.assert_not_called()
 
 
 class FriskyUtilTestCase(TestCase):
