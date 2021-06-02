@@ -233,3 +233,331 @@ dm_json = '''{
         "is_open": false,
         "priority": 0
     }'''
+
+reaction_added_but_no_item_user_payload = '''
+{
+    "token": "XXYYZZ",
+    "team_id": "TXXXXXXXX",
+    "api_app_id": "AXXXXXXXXX",
+    "event": {
+        "type": "reaction_added",
+        "user": "U0XXXXXXX",
+        "reaction": "thumbsup",
+        "item": {
+            "type": "message",
+            "channel": "C0XXXXXXX",
+            "ts": "1360782400.XXXXXX"
+        },
+        "event_ts": "1360782804.XXXXXX"
+    },
+    "event_context": "EC12345",
+    "event_id": "Ev0XXXXXXX",
+    "event_time": 1234567890
+}
+'''.strip()
+
+message_sent_payload = '''
+{
+    "token": "XXYYZZ",
+    "team_id": "TXXXXXXXX",
+    "api_app_id": "AXXXXXXXXX",
+    "event": {
+        "type": "message",
+        "channel": "C0XXXXXXX",
+        "user": "U0XXXXXXX",
+        "text": "Live long and prospect.",
+        "ts": "1355517523.XXXXXX",
+        "event_ts": "1355517523.XXXXXX",
+        "channel_type": "channel"
+    },
+    "type": "event_callback",
+    "authed_users": [
+            "UXXXXXXX1"
+    ],
+    "authed_teams": [
+            "TXXXXXXXX"
+    ],
+    "authorizations": [
+        {
+            "enterprise_id": "E12345",
+            "team_id": "T12345",
+            "user_id": "U12345",
+            "is_bot": false
+        }
+    ],
+    "event_context": "EC12345",
+    "event_id": "Ev0XXXXXXX",
+    "event_time": 1234567890
+}'''.strip()
+
+reaction_event_payload = '''
+{
+    "token": "XXYYZZ",
+    "team_id": "TXXXXXXXX",
+    "api_app_id": "AXXXXXXXXX",
+    "event": {
+        "type": "reaction_added",
+        "user": "U0XXXXXXX",
+        "reaction": "thumbsup",
+        "item_user": "U0XXXXXXX",
+        "item": {
+            "type": "message",
+            "channel": "C0XXXXXXX",
+            "ts": "1360782400.XXXXXX"
+        },
+        "event_ts": "1360782804.XXXXXX"
+    },
+    "type": "event_callback",
+    "authed_users": [
+            "UXXXXXXX1"
+    ],
+    "authed_teams": [
+            "TXXXXXXXX"
+    ],
+    "authorizations": [
+        {
+            "enterprise_id": "E12345",
+            "team_id": "T12345",
+            "user_id": "U12345",
+            "is_bot": false
+        }
+    ],
+    "event_context": "EC12345",
+    "event_id": "Ev0XXXXXXX",
+    "event_time": 1234567890
+}'''.strip()
+
+user_joined_payload = '''
+{
+    "token": "XXYYZZ",
+    "team_id": "TXXXXXXXX",
+    "api_app_id": "AXXXXXXXXX",
+    "event": {
+        "type": "message",
+        "subtype": "channel_join",
+        "text": "<@U0XXXXXXX|bobby> has joined the channel",
+        "ts": "1403051575.000407",
+        "user": "U0XXXXXXX"
+    },
+    "type": "event_callback",
+    "authed_users": [
+            "UXXXXXXX1"
+    ],
+    "authed_teams": [
+            "TXXXXXXXX"
+    ],
+    "authorizations": [
+        {
+            "enterprise_id": "E12345",
+            "team_id": "T12345",
+            "user_id": "U12345",
+            "is_bot": false
+        }
+    ],
+    "event_context": "EC12345",
+    "event_id": "Ev0XXXXXXX",
+    "event_time": 1234567890
+}
+'''
+
+message_changed_payload = '''
+{
+  "token": "XXYYZZ",
+  "team_id": "TXXXXXXXX",
+  "api_app_id": "AXXXXXXXXX",
+  "event": {
+    "type": "message",
+    "subtype": "message_changed",
+    "hidden": true,
+    "message": {
+      "client_msg_id": "6dc63734-a2bc-0000-0000-000000000000",
+      "type": "message",
+      "text": "nice",
+      "user": "U0XXXXXXX",
+      "team": "TXXXXXXXX",
+      "edited": {
+        "user": "U214XXXXXXX",
+        "ts": "1622000000.000000"
+      },
+      "blocks": [
+        {
+          "type": "rich_text",
+          "block_id": "mAsp",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "nice"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "ts": "1622000000.002500",
+      "source_team": "TXXXXXXXX",
+      "user_team": "TXXXXXXXX"
+    },
+    "channel": "C0XXXXXXX",
+    "previous_message": {
+      "client_msg_id": "6dc63734-a2bc-4c3c-0000-000000000000",
+      "type": "message",
+      "text": "?ping ping",
+      "user": "U214XXXXXXX",
+      "ts": "1622000000.002500",
+      "team": "TXXXXXXXX",
+      "edited": {
+        "user": "U214XXXXXXX",
+        "ts": "1622000000.000000"
+      },
+      "blocks": [
+        {
+          "type": "rich_text",
+          "block_id": "xoWk",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "?ping ping"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "event_ts": "1622600000.003200",
+    "ts": "1622600000.003200",
+    "channel_type": "channel"
+  },
+  "type": "event_callback",
+  "event_id": "Ev0XXXXXXX",
+  "event_time": 1622600000,
+  "authed_users": [
+    "U214XXXXXXX"
+  ],
+  "authorizations": [
+    {
+      "enterprise_id": null,
+      "team_id": "TXXXXXXXX",
+      "user_id": "U214XXXXXXX",
+      "is_bot": true,
+      "is_enterprise_install": false
+    }
+  ],
+  "is_ext_shared_channel": false,
+  "event_context": "2-message-T5J4V03V4-000000000-000000000"
+}
+'''.strip()
+
+message_deleted_payload = '''
+{
+  "token": "XXYYZZ",
+  "team_id": "TXXXXXXXX",
+  "api_app_id": "AXXXXXXXXX",
+  "event": {
+    "type": "message",
+    "subtype": "message_deleted",
+    "hidden": true,
+    "deleted_ts": "1622000000.002500",
+    "channel": "C0XXXXXXX",
+    "previous_message": {
+      "client_msg_id": "6dc63734-a2bc-4c3c-0000-000000000000",
+      "type": "message",
+      "text": "nice",
+      "user": "U0XXXXXXX",
+      "ts": "1622000000.002500",
+      "team": "TXXXXXXXX",
+      "edited": {
+        "user": "U214XXXXXXX",
+        "ts": "1622600000.000000"
+      },
+      "blocks": [
+        {
+          "type": "rich_text",
+          "block_id": "mAsp",
+          "elements": [
+            {
+              "type": "rich_text_section",
+              "elements": [
+                {
+                  "type": "text",
+                  "text": "nice"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "event_ts": "1622600000.003300",
+    "ts": "1622600000.003300",
+    "channel_type": "channel"
+  },
+  "type": "event_callback",
+  "event_id": "Ev0XXXXXXX",
+  "event_time": 1622657607,
+  "authed_users": [
+    "U214XXXXXXX"
+  ],
+  "authorizations": [
+    {
+      "enterprise_id": null,
+      "team_id": "TXXXXXXXX",
+      "user_id": "U214XXXXXXX",
+      "is_bot": true,
+      "is_enterprise_install": false
+    }
+  ],
+  "is_ext_shared_channel": false,
+  "event_context": "2-message-TXXXXXXXX-000000000-000000000"
+}
+'''.strip()
+
+message_replied_payload = '''
+{
+  "token": "XXYYZZ",
+  "team_id": "TXXXXXXXX",
+  "api_app_id": "AXXXXXXXXX",
+  "event": {
+    "type": "message",
+    "message": {
+      "type": "message",
+      "user": "U0XXXXXXX",
+      "text": "Was there was there was there what was there was there what was there was there there was there.",
+      "thread_ts": "1482960137.000000",
+      "reply_count": 1,
+      "replies": [
+        {
+          "user": "U0XXXXXXX",
+          "ts": "1483037603.000000"
+        }
+      ],
+      "ts": "1482960137.000000"
+    },
+    "hidden": true,
+    "channel": "C0XXXXXXX",
+    "event_ts": "1483037604.000000",
+    "ts": "1483037604.000000"
+  },
+  "type": "event_callback",
+  "event_context": "EC12345",
+  "event_id": "Ev0XXXXXXX",
+  "event_time": 1234567890,
+  "authed_users": [
+    "U214XXXXXXX"
+  ]
+}
+'''.strip()
+
+unsupported_payload = '''
+{
+    "event": {
+        "type": "unsupported_event_type"
+    }
+}
+'''.strip()

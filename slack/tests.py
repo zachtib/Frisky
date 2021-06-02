@@ -1,6 +1,11 @@
+import json
 from unittest import TestCase
 
+from parameterized import parameterized
+
 from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
+from .errors import UnsupportedSlackEventTypeError
+from .processor import SlackEventProcessor, EventProperties
 from .test_data import *
 
 
@@ -100,3 +105,42 @@ class SlackApiModelsTestCase(TestCase):
         self.assertIsNotNone(convo)
         self.assertIsNone(convo.name)
         self.assertTrue(convo.is_im)
+
+
+class SlackEventProcessorTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.processor = SlackEventProcessor()
+
+    @parameterized.expand([
+        ('reaction_added', None, reaction_added_but_no_item_user_payload),
+        ('message', 'message_sent', message_sent_payload),
+        ('reaction_added', None, reaction_event_payload),
+        ('message', 'message_changed', message_changed_payload),
+        ('message', 'message_deleted', message_deleted_payload),
+        ('message', 'message_replied', message_replied_payload),
+    ])
+    def test_parsing_event_properties(self, event_type, event_subtype, payload_str):
+        expected = EventProperties(
+            event_id='Ev0XXXXXXX',
+            team_id='TXXXXXXXX',
+            channel_id='C0XXXXXXX',
+            user_id='U0XXXXXXX',
+            event_type=event_type,
+            event_subtype=event_subtype,
+        )
+
+        payload = json.loads(payload_str)
+        actual = self.processor.parse_event_properties(payload)
+
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ('message.channel_join', user_joined_payload),
+        ('unsupported_event_type', unsupported_payload),
+    ])
+    def test_parsing_unsupported_events(self, event_type, event_payload):
+        payload = json.loads(event_payload)
+        with self.assertRaises(UnsupportedSlackEventTypeError) as cm:
+            self.processor.parse_event_properties(payload)
+            self.assertEqual(event_type, cm.exception.event_type)
