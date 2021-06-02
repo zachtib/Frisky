@@ -42,7 +42,9 @@ class SlackWrapper:
             self.users[user_id] = user
         return updated_string
 
-    def clean_message_text(self, text) -> str:
+    def clean_message_text(self, text: Optional[str]) -> Optional[str]:
+        if text is None:
+            return None
         text = text.replace('“', '"').replace('”', '"')
         text = self.replace_usernames(text)
         return text
