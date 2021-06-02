@@ -106,6 +106,11 @@ class EventHandlingTestCase(TestCase):
 
     def test_handle_message(self):
         expected = MessageEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.user,
+            users={self.user.user_id: self.user},
+            raw_message='?I like to :poop:',
             username='spengler',
             channel_name='general',
             text='?I like to :poop:',
@@ -135,10 +140,19 @@ class EventHandlingTestCase(TestCase):
     @responses.activate
     def test_handle_reaction(self):
         expected = ReactionEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.user,
+            users={self.user.user_id: self.user},
             emoji='poop',
             username='spengler',
             added=True,
             message=MessageEvent(
+                workspace=self.workspace,
+                channel=self.channel,
+                user=self.user,
+                users={self.user.user_id: self.user},
+                raw_message='I find you punny and would like to smell your nose letter',
                 username='spengler',
                 channel_name='general',
                 text='I find you punny and would like to smell your nose letter',
@@ -176,15 +190,19 @@ class EventHandlingTestCase(TestCase):
 class SlackCliTestCase(TestCase):
 
     def setUp(self) -> None:
-        Workspace.objects.create(kind=Workspace.Kind.SLACK, team_id='TXXXXXXXX', name='Testing',
-                                 domain='testing', access_token='xoxo-my_secret_token')
+        workspace = Workspace.objects.create(kind=Workspace.Kind.SLACK, team_id='TXXXXXXXX', name='Testing',
+                                             domain='testing', access_token='xoxo-my_secret_token')
+        Channel.objects.create(workspace=workspace, channel_id='123', name='general',
+                               is_channel=True, is_group=False, is_private=False, is_im=False)
+        Member.objects.create(workspace=workspace, user_id='W012A3CDE', name='system_user',
+                              real_name='Test User')
 
     @responses.activate
     def test(self):
         responses.add('POST', f'{URL}/chat.postMessage')
 
         call_command('friskcli', '--workspace', 'testing', '--channel', 'general', 'ping')
-        self.assertEqual(b'{"channel": "general", "text": "pong"}', responses.calls[0].request.body)
+        self.assertEqual(b'{"channel": "123", "text": "pong"}', responses.calls[0].request.body)
 
     @responses.activate
     def test_repeat(self):
@@ -193,5 +211,5 @@ class SlackCliTestCase(TestCase):
 
         call_command('friskcli', '--workspace', 'testing', '--channel', 'general', '--repeat', '2', 'ping')
         self.assertEqual(2, len(responses.calls))
-        self.assertEqual(b'{"channel": "general", "text": "pong"}', responses.calls[0].request.body)
-        self.assertEqual(b'{"channel": "general", "text": "pong"}', responses.calls[1].request.body)
+        self.assertEqual(b'{"channel": "123", "text": "pong"}', responses.calls[0].request.body)
+        self.assertEqual(b'{"channel": "123", "text": "pong"}', responses.calls[1].request.body)

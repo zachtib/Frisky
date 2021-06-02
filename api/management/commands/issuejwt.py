@@ -9,6 +9,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '--workspace_id',
+            required=True,
+        )
+        parser.add_argument(
             '--name',
             required=True,
         )
@@ -34,6 +38,7 @@ class Command(BaseCommand):
         if payload is not None:
             api_token = ApiToken.objects.create(name=options['name'])
             payload['uuid'] = str(api_token.uuid)
+            payload['workspace_id'] = options['workspace_id']
             result = jwt.encode(
                 payload=payload,
                 key=settings.JWT_SECRET,

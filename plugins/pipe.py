@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Tuple, Optional, List
 
 from frisky.events import MessageEvent
@@ -40,13 +41,10 @@ class PipePlugin(FriskyPlugin, PluginRepositoryMixin):
             args: List[str] = split_item[1:]
             plugin = self.get_plugin_for_command(command)
 
-            event = MessageEvent(
-                username=message.username,
-                channel_name=message.channel_name,
-                text=item,
-                command=command,
-                args=args
-            )
+            event = dataclasses.replace(message,
+                                        text=item,
+                                        command=command,
+                                        args=args)
             if plugin is None:
                 plugins = self.get_generic_handlers()
                 event = self.convert_message_to_generic(event)

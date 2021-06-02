@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Tuple, Optional
 
 from frisky.events import MessageEvent
@@ -28,10 +29,6 @@ class MemeLearnPlugin(FriskyPlugin, PluginRepositoryMixin):
             meme_message: str = Learn.objects.random(message.args[0]).content
         except ValueError:
             return 'NO SUCH LEARN'
-        return self.get_plugin_for_command('meme').handle_message(MessageEvent(
-            username=message.username,
-            channel_name=message.channel_name,
-            text='',
-            command='meme',
-            args=[message.args[0], '', meme_message],
-        ))
+        new_event = dataclasses.replace(message, text='', raw_message='', command='meme',
+                                        args=[message.args[0], '', meme_message])
+        return self.get_plugin_for_command('meme').handle_message(new_event)

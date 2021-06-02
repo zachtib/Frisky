@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import Optional
 
 from celery import shared_task
 from django.conf import settings
@@ -55,10 +56,16 @@ class SlackWrapper:
                                                response.alt_text)
         return False
 
-    def construct_frisky_message_event(self, message_text) -> MessageEvent:
+    def construct_frisky_message_event(self, message_text, override_sender: Optional[Member] = None) -> MessageEvent:
+        sender_to_use = override_sender or self.sender
         cleaned_text = self.clean_message_text(message_text)
         return MessageEvent(
-            username=self.sender.name,
+            workspace=self.workspace,
+            channel=self.channel,
+            user=sender_to_use,
+            users=self.users,
+            raw_message=message_text,
+            username=sender_to_use.name,
             channel_name=self.channel.name,
             text=cleaned_text,
         )
@@ -69,31 +76,34 @@ class SlackWrapper:
         slack_api_client = SlackApiClient(self.workspace.access_token)
         if self.channel.is_private:
             # We don't grab message contents for private channels
-            cleaned_message_text = None
+            message_text = None
         else:
             message = slack_api_client.get_message(Conversation(id=self.channel.channel_id), event.item.ts)
             if message is not None:
                 if len(message.text) > 0:
                     # Message contains text
-                    cleaned_message_text = self.clean_message_text(message.text)
+                    message_text = message.text
                 elif message.files is not None and len(message.files) > 0:
                     # Message has no text, but it does have attachments. Maybe revisit this
-                    cleaned_message_text = message.files[0].permalink
+                    message_text = message.files[0].permalink
                 else:
                     # Somehow we have a message, but no text or attachments. Weird.
-                    cleaned_message_text = None
+                    message_text = None
             else:
                 # Unable to find message from the api, leave it blank
-                cleaned_message_text = None
+                message_text = None
 
         return ReactionEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.sender,
+            users=self.users,
             emoji=event.reaction,
             username=self.sender.name,
             added=was_added,
-            message=MessageEvent(
-                username=receiving_user.name,
-                channel_name=self.channel.name,
-                text=cleaned_message_text,
+            message=self.construct_frisky_message_event(
+                message_text=message_text,
+                override_sender=receiving_user
             ),
         )
 
@@ -111,25 +121,26 @@ class SlackWrapper:
             reply_channel=lambda response: self.reply(response)
         )
 
+    def handle_cli(self, command):
+        event = self.construct_frisky_message_event(command)
+        slack_api_client = SlackApiClient(self.workspace.access_token)
+        for reply in frisky.handle_message_synchronously(event):
+            if reply is not None:
+                slack_api_client.post_message(Conversation(id=self.channel.channel_id), reply)
+
+    def handle_raw(self, text):
+        message = self.construct_frisky_message_event(text)
+        return frisky.handle_message_synchronously(message)
+
 
 def process_from_cli(workspace_name, channel_name, username, message):
     if not message.startswith(settings.FRISKY_PREFIX):
         message = f'{settings.FRISKY_PREFIX}{message}'
-    message = MessageEvent(
-        username=username,
-        channel_name=channel_name,
-        text=message,
-    )
-    conversation = Conversation(
-        id=channel_name,
-        name=channel_name,
-        is_channel=True,
-    )
     workspace = Workspace.objects.get(domain=workspace_name)
-    slack_api_client = SlackApiClient(workspace.access_token)
-    for reply in frisky.handle_message_synchronously(message):
-        if reply is not None:
-            slack_api_client.post_message(conversation, reply)
+    channel = Channel.objects.get(workspace=workspace, name=channel_name)
+    user = Member.objects.get(workspace=workspace, name=username)
+    wrapper = SlackWrapper(workspace, channel, user)
+    wrapper.handle_cli(message)
 
 
 @shared_task
@@ -162,4 +173,3 @@ def process_slack_event(data: dict):
         wrapper.handle_message(event)
     elif isinstance(event, ReactionAdded):
         wrapper.handle_reaction(event)
-
