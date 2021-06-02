@@ -1,10 +1,13 @@
 import json
 from unittest import TestCase
+from unittest.mock import MagicMock, PropertyMock
 
 from parameterized import parameterized
 
 from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
 from .errors import UnsupportedSlackEventTypeError
+from .events import SlackEventParser, MessageSentEvent, MessageChangedEvent, MessageDeletedEvent, MessageRepliedEvent, \
+    ReactionAddedEvent, ReactionRemovedEvent
 from .processor import SlackEventProcessor, EventProperties
 from .test_data import *
 
@@ -144,3 +147,32 @@ class SlackEventProcessorTestCase(TestCase):
         with self.assertRaises(UnsupportedSlackEventTypeError) as cm:
             self.processor.parse_event_properties(payload)
             self.assertEqual(event_type, cm.exception.event_type)
+
+
+class SlackEventParserTestCase(TestCase):
+    def setUp(self) -> None:
+        self.parser = SlackEventParser()
+
+    @parameterized.expand([
+        (message_sent_payload, 'message', 'message_sent', MessageSentEvent),
+        (message_changed_payload, 'message', 'message_changed', MessageChangedEvent),
+        (message_deleted_payload, 'message', 'message_deleted', MessageDeletedEvent),
+        (message_replied_payload, 'message', 'message_replied', MessageRepliedEvent),
+        (reaction_event_payload, 'reaction_added', None, ReactionAddedEvent),
+        (reaction_removed_payload, 'reaction_removed', None, ReactionRemovedEvent),
+    ])
+    def test_parsing_message_sent(self, payload_str, event_type, event_subtype, expected_type):
+        payload = json.loads(payload_str)
+        event_payload = payload['event']
+
+        properties = MagicMock()
+        type(properties).event_type = PropertyMock(return_value=event_type)
+        type(properties).event_subtype = PropertyMock(return_value=event_subtype)
+
+        event = self.parser.parse_event(properties, event_payload)
+
+        self.assertIsInstance(event, expected_type)
+        self.assertEqual(properties.event_id, event.event_id)
+        self.assertEqual(properties.team_id, event.team_id)
+        self.assertEqual(properties.channel_id, event.channel_id)
+        self.assertEqual(properties.user_id, event.user_id)

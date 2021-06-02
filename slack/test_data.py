@@ -327,6 +327,43 @@ reaction_event_payload = '''
     "event_time": 1234567890
 }'''.strip()
 
+reaction_removed_payload = '''
+{
+    "token": "XXYYZZ",
+    "team_id": "TXXXXXXXX",
+    "api_app_id": "AXXXXXXXXX",
+    "event": {
+        "type": "reaction_removed",
+        "user": "U0XXXXXXX",
+        "reaction": "thumbsup",
+        "item_user": "U0XXXXXXX",
+        "item": {
+            "type": "message",
+            "channel": "C0XXXXXXX",
+            "ts": "1360782400.XXXXXX"
+        },
+        "event_ts": "1360782804.XXXXXX"
+    },
+    "type": "event_callback",
+    "authed_users": [
+            "UXXXXXXX1"
+    ],
+    "authed_teams": [
+            "TXXXXXXXX"
+    ],
+    "authorizations": [
+        {
+            "enterprise_id": "E12345",
+            "team_id": "T12345",
+            "user_id": "U12345",
+            "is_bot": false
+        }
+    ],
+    "event_context": "EC12345",
+    "event_id": "Ev0XXXXXXX",
+    "event_time": 1234567890
+}'''.strip()
+
 user_joined_payload = '''
 {
     "token": "XXYYZZ",
