@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Optional
 
@@ -9,6 +10,8 @@ from frisky.models import Workspace, Channel, Member
 from frisky.responses import FriskyResponse, Image
 from slack.api.client import SlackApiClient
 from slack.api.models import Conversation, ReactionAdded, MessageSent
+
+logger = logging.getLogger(__name__)
 
 frisky = Frisky(
     name=settings.FRISKY_NAME,
