@@ -1,15 +1,26 @@
 import json
-from unittest import TestCase
-from unittest.mock import MagicMock, PropertyMock
+from typing import Callable
+from unittest import mock
+from unittest.mock import MagicMock, PropertyMock, patch
 
+import responses
+from django.core.management import call_command
+from django.test import TestCase
 from parameterized import parameterized
 
-from slack.api.models import Event, ReactionAdded, User, Profile, Conversation
+from frisky.events import ReactionEvent, MessageEvent
+from frisky.models import Member, Channel, Workspace
+from slack.api.models import Event, User, Profile, Conversation
+from .api.models import ReactionAdded, ReactionItem, MessageSent
+from .api.tests import URL
+from .api.tests import USER_OK
 from .errors import UnsupportedSlackEventTypeError
 from .events import SlackEventParser, MessageSentEvent, MessageChangedEvent, MessageDeletedEvent, MessageRepliedEvent, \
     ReactionAddedEvent, ReactionRemovedEvent
 from .processor import SlackEventProcessor, EventProperties
+from .tasks import ingest_from_slack_events_api
 from .test_data import *
+from .wrapper import SlackWrapper
 
 
 class SlackApiModelsTestCase(TestCase):
@@ -176,3 +187,347 @@ class SlackEventParserTestCase(TestCase):
         self.assertEqual(properties.team_id, event.team_id)
         self.assertEqual(properties.channel_id, event.channel_id)
         self.assertEqual(properties.user_id, event.user_id)
+
+
+class SlackEventProcessingTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.workspace = Workspace.objects.create(kind=Workspace.Kind.SLACK, team_id='TXXXXXXXX', name='Testing',
+                                                  domain='testing', access_token='xoxo-my_secret_token')
+        self.channel = Channel.objects.create(workspace=self.workspace, channel_id='C0XXXXXXX', name='general',
+                                              is_channel=True, is_group=False, is_private=False, is_im=False)
+        self.user = Member.objects.create(workspace=self.workspace, user_id='U214XXXXXXX', name='testuser',
+                                          real_name='Test User')
+        self.user2 = Member.objects.create(workspace=self.workspace, user_id='U0XXXXXXX', name='otheruser',
+                                           real_name='Second User')
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_message')
+    def test_processing_message_event(self, handle_message):
+        expected = MessageSent(channel='C0XXXXXXX', user='U0XXXXXXX', text='Live long and prospect.',
+                               ts='1355517523.XXXXXX', event_ts='1355517523.XXXXXX', channel_type='channel')
+        event = json.loads(message_sent_payload)
+        ingest_from_slack_events_api(event)
+        handle_message.assert_called_with(expected)
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_reaction')
+    def test_processing_reaction_event(self, handle_reaction):
+        expected = ReactionAdded(
+            type='reaction_added',
+            user='U0XXXXXXX',
+            reaction='thumbsup',
+            item_user='U0XXXXXXX',
+            event_ts='1360782804.XXXXXX',
+            item=ReactionItem(
+                type='message',
+                channel='C0XXXXXXX',
+                ts='1360782400.XXXXXX'
+            ),
+        )
+
+        event = json.loads(reaction_event_payload)
+        ingest_from_slack_events_api(event)
+
+        handle_reaction.assert_called_once_with(expected)
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_message')
+    def test_processing_user_joined(self, handle_message):
+        event = json.loads(user_joined_payload)
+        with self.assertRaises(UnsupportedSlackEventTypeError):
+            ingest_from_slack_events_api(event)
+
+        handle_message.assert_not_called()
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_message')
+    def test_processing_message_changed(self, handle_message):
+        event = json.loads(message_changed_payload)
+        ingest_from_slack_events_api(event)
+
+        handle_message.assert_not_called()
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_message')
+    def test_processing_message_deleted(self, handle_message):
+        event = json.loads(message_deleted_payload)
+        ingest_from_slack_events_api(event)
+
+        handle_message.assert_not_called()
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_message')
+    def test_processing_message_replied(self, handle_message):
+        event = json.loads(message_replied_payload)
+        ingest_from_slack_events_api(event)
+
+        handle_message.assert_not_called()
+
+    @responses.activate
+    @patch('slack.tasks.SlackWrapper.handle_message')
+    def test_processing_no_item_user(self, handle_message):
+        event = json.loads(reaction_added_but_no_item_user_payload)
+        ingest_from_slack_events_api(event)
+
+        handle_message.assert_not_called()
+
+
+class EventHandlingTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.workspace = Workspace.objects.create(
+            kind=Workspace.Kind.SLACK,
+            team_id='T12345',
+            name='Testing Slack',
+            domain='testing',
+            access_token='xoxo-my_secret_token',
+        )
+        self.channel = Channel.objects.create(workspace=self.workspace, channel_id='123', name='general',
+                                              is_channel=True, is_group=False, is_private=False, is_im=False)
+        self.user = Member.objects.create(workspace=self.workspace, user_id='W012A3CDE', name='spengler',
+                                          real_name='Test User')
+
+        self.wrapper = SlackWrapper(self.workspace, self.channel, self.user)
+
+    @responses.activate
+    def test_username_substitution(self):
+        responses.add('GET', f'{URL}/users.info?user=W012A3CDE', body=USER_OK)
+        result = self.wrapper.replace_usernames('<@W012A3CDE> is a jerk')
+        self.assertEqual('spengler is a jerk', result)
+
+    def test_handle_message(self):
+        expected = MessageEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.user,
+            users={self.user.user_id: self.user},
+            raw_message='?I like to :poop:',
+            username='spengler',
+            channel_name='general',
+            text='?I like to :poop:',
+        )
+        result = None
+
+        def mock_handle_message(_, message: MessageEvent, reply_channel: Callable[[str], bool]):
+            nonlocal result
+            result = message
+
+        patcher = mock.patch(target='frisky.bot.Frisky.handle_message', new=mock_handle_message)
+
+        try:
+            patcher.start()
+            self.wrapper.handle_message(MessageSent(
+                channel='123',
+                user='W012A3CDE',
+                text='?I like to :poop:',
+                ts='123',
+                event_ts='123',
+                channel_type='channel'
+            ))
+            self.assertEqual(expected, result)
+        finally:
+            patcher.stop()
+
+    @responses.activate
+    def test_handle_reaction(self):
+        expected = ReactionEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.user,
+            users={self.user.user_id: self.user},
+            emoji='poop',
+            username='spengler',
+            added=True,
+            message=MessageEvent(
+                workspace=self.workspace,
+                channel=self.channel,
+                user=self.user,
+                users={self.user.user_id: self.user},
+                raw_message='I find you punny and would like to smell your nose letter',
+                username='spengler',
+                channel_name='general',
+                text='I find you punny and would like to smell your nose letter',
+            )
+        )
+        result = None
+
+        def mock_handle_reaction(_, reaction: ReactionEvent, reply_channel: Callable[[str], bool]):
+            nonlocal result
+            result = reaction
+
+        patcher = mock.patch(target='frisky.bot.Frisky.handle_reaction', new=mock_handle_reaction)
+
+        api = f'{URL}/conversations.history?channel=123&oldest=123&latest=123&inclusive=true&limit=1'
+        responses.add('GET', api, body=message)
+        try:
+            patcher.start()
+            self.wrapper.handle_reaction(event=ReactionAdded(
+                type='reaction_added',
+                user='W012A3CDE',
+                item=ReactionItem(
+                    type='message',
+                    channel='123',
+                    ts='123'
+                ),
+                reaction='poop',
+                item_user='W012A3CDE',
+                event_ts='123'
+            ))
+            self.assertEqual(expected, result)
+        finally:
+            patcher.stop()
+
+    @responses.activate
+    @patch('frisky.bot.Frisky.handle_reaction')
+    def test_reactions_in_a_private_channel(self, handle_reaction):
+        api = f'{URL}/conversations.history?channel=C00002&oldest=123&latest=123&inclusive=true&limit=1'
+        private_channel = Channel.objects.create(workspace=self.workspace, channel_id='C00002', name='private',
+                                                 is_channel=True, is_group=False, is_private=True, is_im=False)
+        self.wrapper.channel = private_channel
+        responses.add(responses.GET, api, message)
+
+        self.wrapper.handle_reaction(event=ReactionAdded(
+            type='reaction_added',
+            user='W012A3CDE',
+            item=ReactionItem(
+                type='message',
+                channel='C00002',
+                ts='123'
+            ),
+            reaction='poop',
+            item_user='W012A3CDE',
+            event_ts='123'
+        ))
+
+        handle_reaction.assert_called_once()
+
+    @responses.activate
+    @patch('frisky.bot.Frisky.get_plugins_for_reaction')
+    def test_that_reactions_in_a_private_channel_blank_message_contents(self, get_plugins_for_reaction):
+        api = f'{URL}/conversations.history?channel=C00002&oldest=123&latest=123&inclusive=true&limit=1'
+        private_channel = Channel.objects.create(workspace=self.workspace, channel_id='C00002', name='private',
+                                                 is_channel=True, is_group=False, is_private=True, is_im=False)
+        self.wrapper.channel = private_channel
+        responses.add(responses.GET, api, message)
+        mock_reply = MagicMock()
+        self.wrapper.reply = mock_reply
+
+        mock_plugin = MagicMock()
+        get_plugins_for_reaction.return_value = [mock_plugin]
+        mock_plugin.handle_reaction = MagicMock()
+
+        self.wrapper.handle_reaction(event=ReactionAdded(
+            type='reaction_added',
+            user='W012A3CDE',
+            item=ReactionItem(
+                type='message',
+                channel='C00002',
+                ts='123'
+            ),
+            reaction='poop',
+            item_user='W012A3CDE',
+            event_ts='123'
+        ))
+
+        mock_plugin.handle_reaction.assert_called_once()
+        actual: ReactionEvent = mock_plugin.handle_reaction.call_args[0][0]
+        self.assertIsNone(actual.message.text)
+        self.assertIsNone(actual.message.raw_message)
+
+
+class SlackCliTestCase(TestCase):
+
+    def setUp(self) -> None:
+        workspace = Workspace.objects.create(kind=Workspace.Kind.SLACK, team_id='TXXXXXXXX', name='Testing',
+                                             domain='testing', access_token='xoxo-my_secret_token')
+        Channel.objects.create(workspace=workspace, channel_id='123', name='general',
+                               is_channel=True, is_group=False, is_private=False, is_im=False)
+        Member.objects.create(workspace=workspace, user_id='W012A3CDE', name='system_user',
+                              real_name='Test User')
+
+    @responses.activate
+    def test(self):
+        responses.add('POST', f'{URL}/chat.postMessage')
+
+        call_command('friskcli', '--workspace', 'testing', '--channel', 'general', 'ping')
+        self.assertEqual(b'{"channel": "123", "text": "pong"}', responses.calls[0].request.body)
+
+    @responses.activate
+    def test_repeat(self):
+        responses.add('POST', f'{URL}/chat.postMessage')
+        responses.add('POST', f'{URL}/chat.postMessage')
+
+        call_command('friskcli', '--workspace', 'testing', '--channel', 'general', '--repeat', '2', 'ping')
+        self.assertEqual(2, len(responses.calls))
+        self.assertEqual(b'{"channel": "123", "text": "pong"}', responses.calls[0].request.body)
+        self.assertEqual(b'{"channel": "123", "text": "pong"}', responses.calls[1].request.body)
+
+
+class SlackViewsTestCase(TestCase):
+    EVENTS_URL = '/slack/events/'
+
+    @responses.activate
+    @patch('slack.views.ingest_from_slack_events_api.delay')
+    def test_message_payload_with_celery_correctly_enqueues_task(self, process_slack_event):
+        payload_dict = json.loads(event_payload)
+        with self.settings(ENABLE_CELERY_QUEUE=True):
+            response = self.client.post(
+                self.EVENTS_URL,
+                data=event_payload,
+                content_type='application/json',
+            )
+        self.assertEqual(200, response.status_code)
+        process_slack_event.assert_called_once_with(payload_dict)
+
+    @responses.activate
+    @patch('slack.views.ingest_from_slack_events_api')
+    def test_message_payload_without_celery(self, process_slack_event):
+        payload_dict = json.loads(event_payload)
+        with self.settings(ENABLE_CELERY_QUEUE=False):
+            response = self.client.post(
+                self.EVENTS_URL,
+                data=event_payload,
+                content_type='application/json',
+            )
+        self.assertEqual(200, response.status_code)
+        process_slack_event.assert_called_once_with(payload_dict)
+
+    @responses.activate
+    @patch('slack.views.ingest_from_slack_events_api.delay')
+    def test_reaction_payload_with_celery_correctly_enqueues_task(self, process_slack_event):
+        payload_dict = json.loads(reaction_event_payload)
+        with self.settings(ENABLE_CELERY_QUEUE=True):
+            response = self.client.post(
+                self.EVENTS_URL,
+                data=reaction_event_payload,
+                content_type='application/json',
+            )
+        self.assertEqual(200, response.status_code)
+        process_slack_event.assert_called_once_with(payload_dict)
+
+    @responses.activate
+    @patch('slack.views.ingest_from_slack_events_api')
+    def test_reaction_payload_without_celery(self, process_slack_event):
+        payload_dict = json.loads(reaction_event_payload)
+        with self.settings(ENABLE_CELERY_QUEUE=False):
+            response = self.client.post(
+                self.EVENTS_URL,
+                data=reaction_event_payload,
+                content_type='application/json',
+            )
+        self.assertEqual(200, response.status_code)
+        process_slack_event.assert_called_once_with(payload_dict)
+
+    @responses.activate
+    def test_message_payload_without_celery_calls_into_processor(self):
+        responses.add(responses.GET, 'https://slack.com/api/team.info?team=TXXXXXXXX', slack_team_ok)
+        responses.add(responses.GET, 'https://slack.com/api/conversations.info?channel=C0XXXXXXX', channel_ok)
+        responses.add(responses.GET, 'https://slack.com/api/users.info?user=U214XXXXXXX', user_ok_response)
+        with self.settings(ENABLE_CELERY_QUEUE=False, SLACK_ACCESS_TOKEN='my-token'):
+            response = self.client.post(
+                self.EVENTS_URL,
+                data=event_payload,
+                content_type='application/json',
+            )
+        self.assertEqual(200, response.status_code)
