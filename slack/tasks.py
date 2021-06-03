@@ -4,7 +4,7 @@ from celery import shared_task
 from django.conf import settings
 
 from frisky.models import Workspace, Channel, Member
-from slack.api.models import Event, ReactionAdded, MessageSent
+from slack.events import SlackEventParser
 from slack.processor import SlackEventProcessor, EventProperties
 from slack.wrapper import SlackWrapper
 
@@ -40,14 +40,10 @@ def ingest_from_slack_events_api(payload: dict):
     channel = Channel.objects.get_or_fetch_by_workspace_and_id(workspace, properties.channel_id)
     member = Member.objects.get_or_fetch_by_workspace_and_id(workspace, properties.user_id)
 
-    event_wrapper: Event = Event.from_dict(payload)
-    event = event_wrapper.get_event()
+    parser = SlackEventParser()
+    event = parser.parse_event(properties, payload['event'])
 
     # Now, create the wrapper instance
     wrapper = SlackWrapper(workspace, channel, member)
-
     # And process the event
-    if isinstance(event, MessageSent):
-        wrapper.handle_message(event)
-    elif isinstance(event, ReactionAdded):
-        wrapper.handle_reaction(event)
+    wrapper.handle_event(event)

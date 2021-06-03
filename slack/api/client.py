@@ -48,11 +48,14 @@ class SlackApiClient(object):
             return result[0]
         return None
 
-    def get_message(self, conversation: Conversation, timestamp: str) -> Optional[Message]:
+    def get_message_by_timestamp(self, channel_id: str, timestamp: str) -> Optional[Message]:
         return cache.get_or_set(
-            key=Message.create_key(conversation.id, timestamp),
-            default=lambda: self.__api_get_single_message(conversation.id, timestamp)
+            key=Message.create_key(channel_id, timestamp),
+            default=lambda: self.__api_get_single_message(channel_id, timestamp)
         )
+
+    def get_message(self, conversation: Conversation, timestamp: str) -> Optional[Message]:
+        return self.get_message_by_timestamp(conversation.id, timestamp)
 
     def get_message_raw(self, conversation: str, timestamp: str) -> dict:
         return requests.get(

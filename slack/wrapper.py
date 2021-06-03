@@ -10,6 +10,7 @@ from frisky.models import Workspace, Channel, Member
 from frisky.responses import FriskyResponse, Image
 from slack.api.client import SlackApiClient
 from slack.api.models import Conversation, ReactionAdded, MessageSent
+from slack.events import SlackEvent, ReactionAddedEvent, ReactionRemovedEvent, MessageSentEvent
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,18 @@ class SlackWrapper:
     USER_ID_PATTERN = re.compile(r'<@(?P<user_id>\w+)>')
 
     def __init__(self, workspace: Workspace, channel: Channel, sender: Member):
+        self.frisky = Frisky(
+            name=settings.FRISKY_NAME,
+            prefix=settings.FRISKY_PREFIX,
+            ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
+        )
         self.workspace = workspace
         self.channel = channel
         self.sender = sender
         self.users = {
             sender.user_id: sender,
         }
+        self.slack_api_client = SlackApiClient(self.workspace.access_token)
 
     def replace_usernames(self, input_string) -> str:
         updated_string: str = input_string
@@ -72,12 +79,12 @@ class SlackWrapper:
     def construct_frisky_reaction_event(self, event: ReactionAdded) -> ReactionEvent:
         receiving_user = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, event.item_user)
         was_added = event.type == 'reaction_added'
-        slack_api_client = SlackApiClient(self.workspace.access_token)
+
         if self.channel.is_private:
             # We don't grab message contents for private channels
             message_text = None
         else:
-            message = slack_api_client.get_message(Conversation(id=self.channel.channel_id), event.item.ts)
+            message = self.slack_api_client.get_message(Conversation(id=self.channel.channel_id), event.item.ts)
             if message is not None:
                 if len(message.text) > 0:
                     # Message contains text
@@ -106,6 +113,54 @@ class SlackWrapper:
             ),
         )
 
+    def get_message_text(self, timestamp) -> Optional[str]:
+        if not self.channel.is_private:
+            message = self.slack_api_client.get_message_by_timestamp(self.channel.channel_id, timestamp)
+            if message is not None:
+                if len(message.text) > 0:
+                    # Message contains text
+                    return message.text
+                elif message.files is not None and len(message.files) > 0:
+                    # Message has no text, but it does have attachments. Maybe revisit this
+                    return message.files[0].permalink
+        return None
+
+    def create_frisky_reaction_added_event(self, event: ReactionAddedEvent) -> ReactionEvent:
+        item_user = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, event.item_user_id)
+        message_text = self.get_message_text(event.item_ts)
+
+        return ReactionEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.sender,
+            users=self.users,
+            emoji=event.reaction,
+            username=self.sender.name,
+            added=True,
+            message=self.construct_frisky_message_event(
+                message_text=message_text,
+                override_sender=item_user
+            ),
+        )
+
+    def create_frisky_reaction_removed_event(self, event: ReactionRemovedEvent) -> ReactionEvent:
+        item_user = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, event.item_user_id)
+        message_text = self.get_message_text(event.item_ts)
+
+        return ReactionEvent(
+            workspace=self.workspace,
+            channel=self.channel,
+            user=self.sender,
+            users=self.users,
+            emoji=event.reaction,
+            username=self.sender.name,
+            added=False,
+            message=self.construct_frisky_message_event(
+                message_text=message_text,
+                override_sender=item_user
+            ),
+        )
+
     def handle_message(self, event: MessageSent):
         if not event.text.startswith(settings.FRISKY_PREFIX):
             return
@@ -130,3 +185,24 @@ class SlackWrapper:
     def handle_raw(self, text):
         message = self.construct_frisky_message_event(text)
         return frisky.handle_message_synchronously(message)
+
+    def handle_event(self, event: SlackEvent):
+        if isinstance(event, ReactionAddedEvent):
+            frisky.handle_reaction(
+                self.create_frisky_reaction_added_event(event),
+                reply_channel=lambda response: self.reply(response)
+            )
+        elif isinstance(event, ReactionRemovedEvent):
+            frisky.handle_reaction(
+                self.create_frisky_reaction_removed_event(event),
+                reply_channel=lambda response: self.reply(response)
+            )
+        elif isinstance(event, MessageSentEvent):
+            if not event.text.startswith(settings.FRISKY_PREFIX):
+                return
+            frisky.handle_message(
+                self.construct_frisky_message_event(event.text),
+                reply_channel=lambda response: self.reply(response)
+            )
+        else:
+            logger.warning(f"Asked to handle an unsupported event type: {type(event)}")

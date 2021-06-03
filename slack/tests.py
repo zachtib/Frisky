@@ -188,6 +188,18 @@ class SlackEventParserTestCase(TestCase):
         self.assertEqual(properties.channel_id, event.channel_id)
         self.assertEqual(properties.user_id, event.user_id)
 
+    @parameterized.expand([
+        ('message', 'user_joined'),
+        ('asdf', None),
+    ])
+    def test_unsupported_event_parsing(self, event_type, event_subtype):
+        properties = MagicMock()
+        type(properties).event_type = PropertyMock(return_value=event_type)
+        type(properties).event_subtype = PropertyMock(return_value=event_subtype)
+
+        with self.assertRaises(UnsupportedSlackEventTypeError):
+            self.parser.parse_event(properties, {})
+
 
 class SlackEventProcessingTestCase(TestCase):
 
@@ -202,46 +214,37 @@ class SlackEventProcessingTestCase(TestCase):
                                            real_name='Second User')
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_message')
-    def test_processing_message_event(self, handle_message):
-        expected = MessageSent(channel='C0XXXXXXX', user='U0XXXXXXX', text='Live long and prospect.',
-                               ts='1355517523.XXXXXX', event_ts='1355517523.XXXXXX', channel_type='channel')
+    @patch('slack.wrapper.SlackWrapper.handle_event')
+    def test_processing_message_event(self, handle_event):
+        expected = MessageSentEvent(event_id='Ev0XXXXXXX', team_id='TXXXXXXXX', channel_id='C0XXXXXXX',
+                                    user_id='U0XXXXXXX', event_ts='1355517523.XXXXXX', text='Live long and prospect.')
         event = json.loads(message_sent_payload)
         ingest_from_slack_events_api(event)
-        handle_message.assert_called_with(expected)
+        handle_event.assert_called_with(expected)
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_reaction')
-    def test_processing_reaction_event(self, handle_reaction):
-        expected = ReactionAdded(
-            type='reaction_added',
-            user='U0XXXXXXX',
-            reaction='thumbsup',
-            item_user='U0XXXXXXX',
-            event_ts='1360782804.XXXXXX',
-            item=ReactionItem(
-                type='message',
-                channel='C0XXXXXXX',
-                ts='1360782400.XXXXXX'
-            ),
-        )
+    @patch('slack.wrapper.SlackWrapper.handle_event')
+    def test_processing_reaction_event(self, handle_event):
+        expected = ReactionAddedEvent(event_id='Ev0XXXXXXX', team_id='TXXXXXXXX', channel_id='C0XXXXXXX',
+                                      user_id='U0XXXXXXX', event_ts='1360782804.XXXXXX', reaction='thumbsup',
+                                      item_user_id='U0XXXXXXX', item_ts='U0XXXXXXX')
 
         event = json.loads(reaction_event_payload)
         ingest_from_slack_events_api(event)
 
-        handle_reaction.assert_called_once_with(expected)
+        handle_event.assert_called_once_with(expected)
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_message')
-    def test_processing_user_joined(self, handle_message):
+    @patch('slack.wrapper.SlackWrapper.handle_event')
+    def test_processing_user_joined(self, handle_event):
         event = json.loads(user_joined_payload)
         with self.assertRaises(UnsupportedSlackEventTypeError):
             ingest_from_slack_events_api(event)
 
-        handle_message.assert_not_called()
+        handle_event.assert_not_called()
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_message')
+    @patch('slack.wrapper.SlackWrapper.handle_event')
     def test_processing_message_changed(self, handle_message):
         event = json.loads(message_changed_payload)
         ingest_from_slack_events_api(event)
@@ -249,7 +252,7 @@ class SlackEventProcessingTestCase(TestCase):
         handle_message.assert_not_called()
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_message')
+    @patch('slack.wrapper.SlackWrapper.handle_event')
     def test_processing_message_deleted(self, handle_message):
         event = json.loads(message_deleted_payload)
         ingest_from_slack_events_api(event)
@@ -257,7 +260,7 @@ class SlackEventProcessingTestCase(TestCase):
         handle_message.assert_not_called()
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_message')
+    @patch('slack.wrapper.SlackWrapper.handle_event')
     def test_processing_message_replied(self, handle_message):
         event = json.loads(message_replied_payload)
         ingest_from_slack_events_api(event)
@@ -265,7 +268,7 @@ class SlackEventProcessingTestCase(TestCase):
         handle_message.assert_not_called()
 
     @responses.activate
-    @patch('slack.tasks.SlackWrapper.handle_message')
+    @patch('slack.wrapper.SlackWrapper.handle_event')
     def test_processing_no_item_user(self, handle_message):
         event = json.loads(reaction_added_but_no_item_user_payload)
         ingest_from_slack_events_api(event)
