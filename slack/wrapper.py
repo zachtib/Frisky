@@ -84,7 +84,7 @@ class SlackWrapper:
             # We don't grab message contents for private channels
             message_text = None
         else:
-            message = self.slack_api_client.get_message(Conversation(id=self.channel.channel_id), event.item.ts)
+            message = self.slack_api_client.get_message(self.channel.channel_id, event.item.ts)
             if message is not None:
                 if len(message.text) > 0:
                     # Message contains text
@@ -115,7 +115,7 @@ class SlackWrapper:
 
     def get_message_text(self, timestamp) -> Optional[str]:
         if not self.channel.is_private:
-            message = self.slack_api_client.get_message_by_timestamp(self.channel.channel_id, timestamp)
+            message = self.slack_api_client.get_message(self.channel.channel_id, timestamp)
             if message is not None:
                 if len(message.text) > 0:
                     # Message contains text

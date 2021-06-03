@@ -73,11 +73,11 @@ class TestClient:
             rm.add('GET', api, body=json.dumps(payload))
             if not payload['ok']:
                 rm.add('POST', f'{URL}/chat.postMessage')
-            assert client.get_message(Conversation(id=cid, name='test'), ts) == expected
+            assert client.get_message(cid, ts) == expected
             assert 'Authorization' in rm.calls[0].request.headers
             # Should be from cache, because we in a requests mock context, if we hit the API again the test wil fail
             # with a connection issue
-            assert client.get_message(Conversation(id=cid, name='test'), ts) == expected
+            assert client.get_message(cid, ts) == expected
 
     @pytest.mark.parametrize('uid, payload, expected', [
         ('test_ok', USER_OK, USER_OK_MODEL),
