@@ -10,7 +10,8 @@ from parameterized import parameterized
 
 from frisky.events import ReactionEvent, MessageEvent
 from frisky.models import Member, Channel, Workspace
-from slack.api.models import Event, User, Profile, Conversation
+from frisky.responses import Image
+from slack.api.models import User, Profile, Conversation
 from .api.models import ReactionAdded, ReactionItem, MessageSent
 from .api.tests import URL
 from .api.tests import USER_OK
@@ -24,18 +25,6 @@ from .wrapper import SlackWrapper
 
 
 class SlackApiModelsTestCase(TestCase):
-
-    def test_event_deserialization(self):
-        event: Event = Event.from_json(reg_event_json)
-
-        self.assertEqual(event.token, "z26uFbvR1xHJEdHE1OQiO6t8")
-        self.assertEqual(event.event_id, "Ev9UQ52YNA")
-
-    def test_event_item_deserialization(self):
-        event_wrapper: Event = Event.from_json(item_event_json)
-
-        event = event_wrapper.get_event()
-        self.assertTrue(isinstance(event, ReactionAdded))
 
     def test_user_deserialization_from_null(self):
         with self.assertRaises(AttributeError):
@@ -199,6 +188,39 @@ class SlackEventParserTestCase(TestCase):
 
         with self.assertRaises(UnsupportedSlackEventTypeError):
             self.parser.parse_event(properties, {})
+
+
+class SlackWrapperTestCase(TestCase):
+
+    def setUp(self) -> None:
+        self.workspace = Workspace.objects.create(kind=Workspace.Kind.SLACK, team_id='TXXXXXXXX', name='Testing',
+                                                  domain='testing', access_token='xoxo-my_secret_token')
+        self.channel = Channel.objects.create(workspace=self.workspace, channel_id='C0XXXXXXX', name='general',
+                                              is_channel=True, is_group=False, is_private=False, is_im=False)
+        self.user = Member.objects.create(workspace=self.workspace, user_id='U214XXXXXXX', name='testuser',
+                                          real_name='Test User')
+        self.wrapper = SlackWrapper(self.workspace, self.channel, self.user)
+
+    @responses.activate
+    def test_reply_channel(self):
+        responses.add(responses.POST, "https://slack.com/api/chat.postMessage")
+
+        self.wrapper.reply("Pong")
+
+        request = responses.calls[0].request
+
+        self.assertEqual(b'{"channel": "C0XXXXXXX", "text": "Pong"}', request.body)
+
+    @responses.activate
+    def test_reply_with_image(self):
+        image = Image("https://example.com/cat.jpg")
+        responses.add(responses.POST, "https://slack.com/api/chat.postMessage")
+        self.wrapper.reply(image)
+        request = responses.calls[0].request
+        self.assertEqual(
+            b'{"channel": "C0XXXXXXX", "blocks": [{"type": "image", "image_url": "https://example.com/cat.jpg",' +
+            b' "alt_text": "Image"}]}',
+            request.body)
 
 
 class SlackEventProcessingTestCase(TestCase):
