@@ -17,7 +17,7 @@ from .api.tests import URL
 from .api.tests import USER_OK
 from .errors import UnsupportedSlackEventTypeError
 from .events import SlackEventParser, MessageSentEvent, MessageChangedEvent, MessageDeletedEvent, MessageRepliedEvent, \
-    ReactionAddedEvent, ReactionRemovedEvent
+    ReactionAddedEvent, ReactionRemovedEvent, SlackEvent
 from .processor import SlackEventProcessor, EventProperties
 from .tasks import ingest_from_slack_events_api
 from .test_data import *
@@ -190,39 +190,6 @@ class SlackEventParserTestCase(TestCase):
             self.parser.parse_event(properties, {})
 
 
-class SlackWrapperTestCase(TestCase):
-
-    def setUp(self) -> None:
-        self.workspace = Workspace.objects.create(kind=Workspace.Kind.SLACK, team_id='TXXXXXXXX', name='Testing',
-                                                  domain='testing', access_token='xoxo-my_secret_token')
-        self.channel = Channel.objects.create(workspace=self.workspace, channel_id='C0XXXXXXX', name='general',
-                                              is_channel=True, is_group=False, is_private=False, is_im=False)
-        self.user = Member.objects.create(workspace=self.workspace, user_id='U214XXXXXXX', name='testuser',
-                                          real_name='Test User')
-        self.wrapper = SlackWrapper(self.workspace, self.channel, self.user)
-
-    @responses.activate
-    def test_reply_channel(self):
-        responses.add(responses.POST, "https://slack.com/api/chat.postMessage")
-
-        self.wrapper.reply("Pong")
-
-        request = responses.calls[0].request
-
-        self.assertEqual(b'{"channel": "C0XXXXXXX", "text": "Pong"}', request.body)
-
-    @responses.activate
-    def test_reply_with_image(self):
-        image = Image("https://example.com/cat.jpg")
-        responses.add(responses.POST, "https://slack.com/api/chat.postMessage")
-        self.wrapper.reply(image)
-        request = responses.calls[0].request
-        self.assertEqual(
-            b'{"channel": "C0XXXXXXX", "blocks": [{"type": "image", "image_url": "https://example.com/cat.jpg",' +
-            b' "alt_text": "Image"}]}',
-            request.body)
-
-
 class SlackEventProcessingTestCase(TestCase):
 
     def setUp(self) -> None:
@@ -298,7 +265,7 @@ class SlackEventProcessingTestCase(TestCase):
         handle_message.assert_not_called()
 
 
-class EventHandlingTestCase(TestCase):
+class SlackWrapperTestCase(TestCase):
 
     def setUp(self) -> None:
         self.workspace = Workspace.objects.create(
@@ -312,7 +279,8 @@ class EventHandlingTestCase(TestCase):
                                               is_channel=True, is_group=False, is_private=False, is_im=False)
         self.user = Member.objects.create(workspace=self.workspace, user_id='W012A3CDE', name='spengler',
                                           real_name='Test User')
-
+        self.second_user = Member.objects.create(workspace=self.workspace, user_id='W012A3CDF', name='spangles',
+                                                 real_name='Testier User')
         self.wrapper = SlackWrapper(self.workspace, self.channel, self.user)
 
     @responses.activate
@@ -428,6 +396,12 @@ class EventHandlingTestCase(TestCase):
         handle_reaction.assert_called_once()
 
     @responses.activate
+    def test_that_get_message_in_private_channel_returns_none(self):
+        self.channel.is_private = True
+        actual = self.wrapper.get_message_text("123")
+        self.assertIsNone(actual)
+
+    @responses.activate
     @patch('frisky.bot.Frisky.get_plugins_for_reaction')
     def test_that_reactions_in_a_private_channel_blank_message_contents(self, get_plugins_for_reaction):
         api = f'{URL}/conversations.history?channel=C00002&oldest=123&latest=123&inclusive=true&limit=1'
@@ -459,6 +433,158 @@ class EventHandlingTestCase(TestCase):
         actual: ReactionEvent = mock_plugin.handle_reaction.call_args[0][0]
         self.assertIsNone(actual.message.text)
         self.assertIsNone(actual.message.raw_message)
+
+    @responses.activate
+    def test_reply_channel(self):
+        responses.add(responses.POST, "https://slack.com/api/chat.postMessage")
+
+        self.wrapper.reply("Pong")
+
+        request = responses.calls[0].request
+
+        self.assertEqual(b'{"channel": "123", "text": "Pong"}', request.body)
+
+    @responses.activate
+    def test_reply_with_image(self):
+        image = Image("https://example.com/cat.jpg")
+        responses.add(responses.POST, "https://slack.com/api/chat.postMessage")
+        self.wrapper.reply(image)
+        request = responses.calls[0].request
+        self.assertEqual(
+            b'{"channel": "123", "blocks": [{"type": "image", "image_url": "https://example.com/cat.jpg",' +
+            b' "alt_text": "Image"}]}',
+            request.body)
+
+    @responses.activate
+    def test_replying_none_returns_false_and_makes_no_network_call(self):
+        result = self.wrapper.reply(None)
+        self.assertFalse(result)
+
+    @responses.activate
+    def test_handle_unsupported_event_type_does_not_get_sent_to_frisky(self):
+        event = SlackEvent(event_id="E123", team_id=self.workspace.team_id, channel_id=self.channel.channel_id,
+                           user_id=self.user.user_id, event_ts="12345.67890")
+        mock_frisky = MagicMock()
+        self.wrapper.frisky = mock_frisky
+        mock_handle_message = MagicMock()
+        mock_frisky.handle_message = mock_handle_message
+
+        self.wrapper.handle_event(event)
+
+        mock_handle_message.assert_not_called()
+
+    @responses.activate
+    def test_handle_message_without_prefix_does_not_get_sent_to_frisky(self):
+        event = MessageSentEvent(event_id="E123", team_id=self.workspace.team_id, channel_id=self.channel.channel_id,
+                                 user_id=self.user.user_id, event_ts="12345.67890", text="Hello, World")
+        mock_frisky = MagicMock()
+        self.wrapper.frisky = mock_frisky
+        mock_handle_message = MagicMock()
+        mock_frisky.handle_message = mock_handle_message
+
+        self.wrapper.handle_event(event)
+
+        mock_handle_message.assert_not_called()
+
+    @responses.activate
+    def test_get_message_text_with_files(self):
+        responses.add("GET", "https://slack.com/api/conversations.history?channel=123&oldest=123&latest=123" +
+                      "&inclusive=true&limit=1", message_with_files)
+        actual = self.wrapper.get_message_text("123")
+        self.assertEqual("this_is_a_link", actual)
+
+    @responses.activate
+    def test_handle_message_called_directly_without_prefix_does_not_get_sent_to_frisky(self):
+        event = MessageSent("", "", "Hi There", "", "", "")
+        mock_frisky = MagicMock()
+        self.wrapper.frisky = mock_frisky
+        mock_handle_message = MagicMock()
+        mock_frisky.handle_message = mock_handle_message
+
+        self.wrapper.handle_message(event)
+
+        mock_handle_message.assert_not_called()
+
+    @responses.activate
+    def test_handle_event_message_sent_routes_to_frisky(self):
+        event = MessageSentEvent(event_id="E123", team_id=self.workspace.team_id, channel_id=self.channel.channel_id,
+                                 user_id=self.user.user_id, event_ts="12345.67890", text="?hello")
+
+        mock_frisky = MagicMock()
+        self.wrapper.frisky = mock_frisky
+        mock_handle_message = MagicMock()
+        mock_frisky.handle_message = mock_handle_message
+
+        self.wrapper.handle_event(event)
+
+        mock_handle_message.assert_called_once()
+        actual: MessageEvent = mock_handle_message.call_args[0][0]
+
+        self.assertEqual(self.workspace, actual.workspace)
+        self.assertEqual(self.channel, actual.channel)
+        self.assertEqual(self.user, actual.user)
+        self.assertEqual("?hello", actual.text)
+
+    @responses.activate
+    def test_handle_event_reaction_added_routes_to_frisky(self):
+        event = ReactionAddedEvent(event_id="E123", team_id=self.workspace.team_id, channel_id=self.channel.channel_id,
+                                   user_id=self.user.user_id, event_ts="12345.67890", reaction="upvote",
+                                   item_user_id=self.second_user.user_id, item_ts="12345.67890")
+
+        mock_frisky = MagicMock()
+        self.wrapper.frisky = mock_frisky
+        mock_handle_reaction = MagicMock()
+        mock_frisky.handle_reaction = mock_handle_reaction
+
+        responses.add("GET", "https://slack.com/api/conversations.history?channel=123&oldest=12345.67890&latest=" +
+                      "12345.67890&inclusive=true&limit=1", message)
+
+        self.wrapper.handle_event(event)
+
+        mock_handle_reaction.assert_called_once()
+        actual: ReactionEvent = mock_handle_reaction.call_args[0][0]
+
+        self.assertEqual(self.workspace, actual.workspace)
+        self.assertEqual(self.channel, actual.channel)
+        self.assertEqual(self.user, actual.user)
+        self.assertEqual(True, actual.added)
+        self.assertEqual("upvote", actual.emoji)
+        expected_users = {
+            self.user.user_id: self.user,
+            self.second_user.user_id: self.second_user,
+        }
+        self.assertDictEqual(expected_users, actual.users)
+
+    @responses.activate
+    def test_handle_event_reaction_removed_routes_to_frisky(self):
+        event = ReactionRemovedEvent(event_id="E123", team_id=self.workspace.team_id,
+                                     channel_id=self.channel.channel_id,
+                                     user_id=self.user.user_id, event_ts="12345.67890", reaction="upvote",
+                                     item_user_id=self.second_user.user_id, item_ts="12345.67890")
+
+        mock_frisky = MagicMock()
+        self.wrapper.frisky = mock_frisky
+        mock_handle_reaction = MagicMock()
+        mock_frisky.handle_reaction = mock_handle_reaction
+
+        responses.add("GET", "https://slack.com/api/conversations.history?channel=123&oldest=12345.67890&latest=" +
+                      "12345.67890&inclusive=true&limit=1", message)
+
+        self.wrapper.handle_event(event)
+
+        mock_handle_reaction.assert_called_once()
+        actual: ReactionEvent = mock_handle_reaction.call_args[0][0]
+
+        self.assertEqual(self.workspace, actual.workspace)
+        self.assertEqual(self.channel, actual.channel)
+        self.assertEqual(self.user, actual.user)
+        self.assertEqual(False, actual.added)
+        self.assertEqual("upvote", actual.emoji)
+        expected_users = {
+            self.user.user_id: self.user,
+            self.second_user.user_id: self.second_user,
+        }
+        self.assertDictEqual(expected_users, actual.users)
 
 
 class SlackCliTestCase(TestCase):

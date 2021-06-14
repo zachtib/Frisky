@@ -665,6 +665,32 @@ message = """
 }
 """
 
+message_with_files = """
+{
+    "ok": true,
+    "latest": "1512085950.000216",
+    "messages": [
+        {
+            "type": "message",
+            "user": "U012AB3CDE",
+            "text": "",
+            "ts": "1512085950.000216",
+            "files": [
+                {
+                    "id": "123",
+                    "permalink": "this_is_a_link"
+                }
+            ]
+        }
+    ],
+    "has_more": true,
+    "pin_count": 0,
+    "response_metadata": {
+        "next_cursor": "bmV4dF90czoxNTEyMzU2NTI2MDAwMTMw"
+    }
+}
+"""
+
 event_payload = '''
 {
     "token": "XXYYZZ",

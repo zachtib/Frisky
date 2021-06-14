@@ -14,12 +14,6 @@ from slack.events import SlackEvent, ReactionAddedEvent, ReactionRemovedEvent, M
 
 logger = logging.getLogger(__name__)
 
-frisky = Frisky(
-    name=settings.FRISKY_NAME,
-    prefix=settings.FRISKY_PREFIX,
-    ignored_channels=settings.FRISKY_IGNORED_CHANNELS,
-)
-
 
 class SlackWrapper:
     USER_ID_PATTERN = re.compile(r'<@(?P<user_id>\w+)>')
@@ -127,6 +121,7 @@ class SlackWrapper:
 
     def create_frisky_reaction_added_event(self, event: ReactionAddedEvent) -> ReactionEvent:
         item_user = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, event.item_user_id)
+        self.users[item_user.user_id] = item_user
         message_text = self.get_message_text(event.item_ts)
 
         return ReactionEvent(
@@ -145,6 +140,7 @@ class SlackWrapper:
 
     def create_frisky_reaction_removed_event(self, event: ReactionRemovedEvent) -> ReactionEvent:
         item_user = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, event.item_user_id)
+        self.users[item_user.user_id] = item_user
         message_text = self.get_message_text(event.item_ts)
 
         return ReactionEvent(
@@ -164,13 +160,13 @@ class SlackWrapper:
     def handle_message(self, event: MessageSent):
         if not event.text.startswith(settings.FRISKY_PREFIX):
             return
-        frisky.handle_message(
+        self.frisky.handle_message(
             self.construct_frisky_message_event(event.text),
             reply_channel=lambda response: self.reply(response)
         )
 
     def handle_reaction(self, event: ReactionAdded):
-        frisky.handle_reaction(
+        self.frisky.handle_reaction(
             self.construct_frisky_reaction_event(event),
             reply_channel=lambda response: self.reply(response)
         )
@@ -178,29 +174,29 @@ class SlackWrapper:
     def handle_cli(self, command):
         event = self.construct_frisky_message_event(command)
         slack_api_client = SlackApiClient(self.workspace.access_token)
-        for reply in frisky.handle_message_synchronously(event):
+        for reply in self.frisky.handle_message_synchronously(event):
             if reply is not None:
                 slack_api_client.post_message(Conversation(id=self.channel.channel_id), reply)
 
     def handle_raw(self, text):
         message = self.construct_frisky_message_event(text)
-        return frisky.handle_message_synchronously(message)
+        return self.frisky.handle_message_synchronously(message)
 
     def handle_event(self, event: SlackEvent):
         if isinstance(event, ReactionAddedEvent):
-            frisky.handle_reaction(
+            self.frisky.handle_reaction(
                 self.create_frisky_reaction_added_event(event),
                 reply_channel=lambda response: self.reply(response)
             )
         elif isinstance(event, ReactionRemovedEvent):
-            frisky.handle_reaction(
+            self.frisky.handle_reaction(
                 self.create_frisky_reaction_removed_event(event),
                 reply_channel=lambda response: self.reply(response)
             )
         elif isinstance(event, MessageSentEvent):
             if not event.text.startswith(settings.FRISKY_PREFIX):
                 return
-            frisky.handle_message(
+            self.frisky.handle_message(
                 self.construct_frisky_message_event(event.text),
                 reply_channel=lambda response: self.reply(response)
             )
