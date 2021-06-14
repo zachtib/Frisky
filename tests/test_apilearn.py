@@ -127,3 +127,11 @@ class ApiLearnTestCase(FriskyTestCase):
 
     def test_nonexistant_api(self):
         self.assertIsNone(self.send_message('?get_api xyzzy'))
+
+    def test_str_on_null_element(self):
+        learn = ApiLearn.objects.create(label="foo", url="https://example.com/api/")
+        self.assertEqual("foo: https://example.com/api/", str(learn))
+
+    def test_str_on_nonnull_element(self):
+        learn = ApiLearn.objects.create(label="foo", element="display", url="https://example.com/api/")
+        self.assertEqual("foo: display from https://example.com/api/", str(learn))
