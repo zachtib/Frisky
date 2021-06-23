@@ -79,6 +79,54 @@ class SlackApiModelsTestCase(TestCase):
         )
         self.assertEqual(user.get_short_name(), 'unknown')
 
+    def test_user_realname_with_no_values(self):
+        user = User(
+            id='',
+            name='',
+            real_name='',
+            team_id='',
+            profile=Profile(
+                real_name='',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual(user.get_real_name(), 'unknown')
+
+    def test_user_realname_with_no_normalizedvalues(self):
+        user = User(
+            id='',
+            name='',
+            real_name='',
+            team_id='',
+            profile=Profile(
+                real_name='expected',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual("expected", user.get_real_name())
+
+    def test_user_realname_with_no_profile(self):
+        user = User(
+            id='',
+            name='',
+            real_name='expected',
+            team_id='',
+            profile=Profile(
+                real_name='',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual("expected", user.get_real_name())
+
     def test_cache_key_creation(self):
         self.assertEqual('User:W012A3CDE', User.create_key('W012A3CDE'))
 
