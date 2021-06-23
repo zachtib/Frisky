@@ -131,6 +131,27 @@ class Member(models.Model):
     def __str__(self):
         return f'{self.name} in {str(self.workspace)}'
 
+    def force_refresh(self):
+        workspace = self.workspace
+        if workspace.kind == Workspace.Kind.SLACK:
+            slack_client = SlackApiClient(workspace.access_token, enable_emergency_log=False)
+            fetched_user = slack_client.get_user(self.user_id, skip_cache=True)
+            if fetched_user is None:
+                return
+            display_name = fetched_user.get_short_name()
+            real_name = fetched_user.get_real_name()
+            should_save = False
+            if self.name != display_name:
+                self.name = display_name
+                should_save = True
+            if self.real_name != real_name:
+                self.real_name = real_name
+                should_save = True
+            if should_save:
+                self.save()
+        else:
+            raise NotImplementedError(f'Fetching is not implemented for Workspace Kind {workspace.kind}')
+
     class Meta:
         unique_together = ('workspace_id', 'user_id')
 

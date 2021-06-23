@@ -54,7 +54,15 @@ class SlackApiClient(object):
             default=lambda: self.__api_get_single_message(channel_id, timestamp)
         )
 
-    def get_user(self, user_id) -> Optional[User]:
+    def get_user(self, user_id, skip_cache: bool = False) -> Optional[User]:
+        """
+        https://api.slack.com/methods/user.info
+        :param user_id: The id of the User to fetch
+        :param skip_cache: override this to skip the Django cache
+        :return: A User object if the user is found, else None
+        """
+        if skip_cache:
+            return self.__get(User, 'users.info', 'user', user=user_id)
         return cache.get_or_set(
             key=User.create_key(user_id),
             default=lambda: self.__get(User, 'users.info', 'user', user=user_id)
