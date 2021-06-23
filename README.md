@@ -20,6 +20,21 @@ end-to-end. However, a test case class is provided to more easily test simple pl
 When running locally, Frisky uses a sqlite database by default. If you wish to use a Postgres database, you will need
 to install the psycopg2 bindings.
 
+## Frisky 'Flow'
+
+1. Ingest
+   1. Slack Events come in via `/slack/events/`
+   1. API Requests come in via `/api/response/`
+   1. Console Events come in via `friskcli`
+1. Processing
+1. Wrapped Frisky instance
+1. Response
+
+
+1. Slack Events API hits `/slack/events`:
+   1. The events view returns a 200 response, and then passes the payload to `slack.tasks.process_slack_event`
+   1. The payload is parsed by `slack.tasks.parse_event_properties`
+
 ## Writing a plugin
 To create a plugin, add a python file underneath the `plugins/` directory. Inside this file, import and extend the base
 frisky plugin `frisky.plugins.FriskyPlugin`.  This class contains the base functionality you'll need for a new plugin.

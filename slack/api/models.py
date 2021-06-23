@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -144,73 +144,6 @@ class Message(BaseModel):
     text: str
     ts: str
     files: Optional[List[File]] = None
-
-
-@dataclass
-class RateLimitedEvent(DataClassJsonMixin):
-    """
-    {
-        "token": "Jhj5dZrVaK7ZwHHjRyZWjbDl",
-        "type": "app_rate_limited",
-        "team_id": "T123456",
-        "minute_rate_limited": 1518467820,
-        "api_app_id": "A123456"
-    }
-    """
-    token: str
-    type: str
-    team_id: str
-    minute_rate_limited: int
-    api_app_id: str
-
-
-@dataclass
-class Event(BaseModel):
-    """
-    The Slack Event wrapper. An example:
-
-    {
-            "token": "z26uFbvR1xHJEdHE1OQiO6t8",
-            "team_id": "T061EG9RZ",
-            "api_app_id": "A0FFV41KK",
-            "event": {
-                    "type": "reaction_added",
-                    "user": "U061F1EUR",
-                    "item": {
-                            "type": "message",
-                            "channel": "C061EG9SL",
-                            "ts": "1464196127.000002"
-                    },
-                    "reaction": "slightly_smiling_face",
-                    "item_user": "U0M4RL1NY",
-                    "event_ts": "1465244570.336841"
-            },
-            "type": "event_callback",
-            "authed_users": [
-                    "U061F7AUR"
-            ],
-            "event_id": "Ev9UQ52YNA",
-            "event_time": 1234567890
-    }
-    """
-    token: str
-    team_id: str
-    api_app_id: str
-    event: Dict[str, any]
-    type: str
-    authed_users: List[str]
-    event_id: str
-    event_time: int
-
-    def get_event(self):
-        event_type = self.event.get('type', None)
-        subtype = self.event.get('subtype', None)
-        if event_type == 'reaction_added' or event_type == 'reaction_removed':
-            return ReactionAdded.from_dict(self.event)
-        elif event_type == 'message' and subtype != 'message_changed':
-            return MessageSent.from_dict(self.event)
-
-        return None
 
 
 @dataclass

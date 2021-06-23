@@ -10,6 +10,7 @@ pytest = "*"
 pytest-django = "*"
 pylint = "*"
 pylint-django = "*"
+parameterized = "==0.8.1"
 
 [packages]
 django = "==3.2.4"
