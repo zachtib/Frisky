@@ -53,6 +53,16 @@ class SlackApiModelsTestCase(TestCase):
         user_obj.profile.display_name = ''
         self.assertEqual('Real Name Normalized', user_obj.get_short_name())
 
+    def test_use_with_weird_profile_short_name(self):
+        user_obj: User = User.from_json(user_with_nonstandard_profile)
+        short_name = user_obj.get_short_name()
+        self.assertEqual("flastname", short_name)
+
+    def test_use_with_weird_profile2_short_name(self):
+        user_obj: User = User.from_json(user_with_nonstandard_profile2)
+        short_name = user_obj.get_short_name()
+        self.assertEqual("firstname", short_name)
+
     def test_user_shortname_with_no_values(self):
         user = User(
             id='',
@@ -68,6 +78,54 @@ class SlackApiModelsTestCase(TestCase):
             )
         )
         self.assertEqual(user.get_short_name(), 'unknown')
+
+    def test_user_realname_with_no_values(self):
+        user = User(
+            id='',
+            name='',
+            real_name='',
+            team_id='',
+            profile=Profile(
+                real_name='',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual(user.get_real_name(), 'unknown')
+
+    def test_user_realname_with_no_normalizedvalues(self):
+        user = User(
+            id='',
+            name='',
+            real_name='',
+            team_id='',
+            profile=Profile(
+                real_name='expected',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual("expected", user.get_real_name())
+
+    def test_user_realname_with_no_profile(self):
+        user = User(
+            id='',
+            name='',
+            real_name='expected',
+            team_id='',
+            profile=Profile(
+                real_name='',
+                display_name='',
+                real_name_normalized='',
+                display_name_normalized='',
+                team=''
+            )
+        )
+        self.assertEqual("expected", user.get_real_name())
 
     def test_cache_key_creation(self):
         self.assertEqual('User:W012A3CDE', User.create_key('W012A3CDE'))
