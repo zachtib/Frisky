@@ -38,6 +38,13 @@ class Frisky(object):
                 for item_name, item in inspect.getmembers(submodule):
                     if inspect.isclass(item) and item is not FriskyPlugin and issubclass(item, FriskyPlugin):
                         self.__load_plugin_from_class(name, item)
+                try:
+                    submodule_plugin = importlib.import_module(f'{module}.{name}.plugin')
+                    for item_name, item in inspect.getmembers(submodule_plugin):
+                        if inspect.isclass(item) and item is not FriskyPlugin and issubclass(item, FriskyPlugin):
+                            self.__load_plugin_from_class(name, item)
+                except ModuleNotFoundError:
+                    pass
         for plugin in self.__loaded_plugins.values():
             if isinstance(plugin, PluginRepositoryMixin):
                 plugin.loaded_plugins = self.__loaded_plugins
@@ -66,6 +73,9 @@ class Frisky(object):
 
     def get_plugins_for_reaction(self, reaction: str) -> List[FriskyPlugin]:
         return self.__reaction_handlers.get(reaction, list())
+
+    def get_loaded_plugins(self) -> List[FriskyPlugin]:
+        return list(self.__loaded_plugins.values())
 
     @staticmethod
     def convert_message_to_generic(message: MessageEvent) -> MessageEvent:
