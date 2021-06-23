@@ -38,6 +38,8 @@ INSTALLED_APPS = [
 
     'frisky',
 
+    'plugins.betterstonks',
+
     'api',
     'apilearns',
     'learns',

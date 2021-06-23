@@ -1,5 +1,6 @@
 from frisky.test import FriskyTestCase
-from plugins.stonk2.plugin import StonksPlugin
+from plugins.betterstonks.models import BetterStonkGame
+from plugins.betterstonks.plugin import StonksPlugin
 
 
 class StonkGameTestCase(FriskyTestCase):
@@ -14,3 +15,8 @@ class StonkGameTestCase(FriskyTestCase):
     def test_this_is_tested(self):
         result = self.send_message("?stonkifyme")
         self.assertEqual("Hello, there", result)
+
+    def test_db(self):
+        BetterStonkGame.objects.create(self.channel, 1000.00)
+        games = BetterStonkGame.objects.all()
+        self.assertEqual(1, games.count())
