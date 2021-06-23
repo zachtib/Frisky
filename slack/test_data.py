@@ -834,3 +834,103 @@ user_ok_response = '''
         "has_2fa": false
     }
 }'''.strip()
+
+user_with_nonstandard_profile = '''
+{
+    "id": "123456",
+    "team_id": "123456",
+    "name": "lastnamefm",
+    "deleted": false,
+    "color": "43761b",
+    "real_name": "Firstname Lastname",
+    "tz": "America\/New_York",
+    "tz_label": "Eastern Daylight Time",
+    "tz_offset": -14400,
+    "profile": {
+      "title": "",
+      "phone": "",
+      "skype": "",
+      "real_name": "Firstname Lastname",
+      "real_name_normalized": "Firstname Lastname",
+      "display_name": "flastname",
+      "display_name_normalized": "flastname",
+      "fields": null,
+      "status_text": "",
+      "status_emoji": ":snacks:",
+      "status_expiration": 0,
+      "avatar_hash": "12345",
+      "image_original": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_original.png",
+      "is_custom_image": true,
+      "first_name": "Firstname",
+      "last_name": "Lastname",
+      "image_24": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_24.png",
+      "image_32": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_32.png",
+      "image_48": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_48.png",
+      "image_72": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_72.png",
+      "image_192": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_192.png",
+      "image_512": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_512.png",
+      "image_1024": "https:\/\/avatars.slack-edge.com\/2020-08-18\/unique_id3_1024.png",
+      "status_text_canonical": "",
+      "team": "123456"
+    },
+    "is_admin": false,
+    "is_owner": false,
+    "is_primary_owner": false,
+    "is_restricted": false,
+    "is_ultra_restricted": false,
+    "is_bot": false,
+    "is_app_user": false,
+    "updated": 1622001842,
+    "is_email_confirmed": true
+}
+'''.strip()
+
+user_with_nonstandard_profile2 = '''
+{
+    "id": "123",
+    "team_id": "123",
+    "name": "onlinehandle007",
+    "deleted": false,
+    "color": "4d5e26",
+    "real_name": "firstname",
+    "tz": "America\/New_York",
+    "tz_label": "Eastern Daylight Time",
+    "tz_offset": -14400,
+    "profile": {
+      "title": "AQ at Starway",
+      "phone": "123-456-7890",
+      "skype": "",
+      "real_name": "firstname",
+      "real_name_normalized": "firstname",
+      "display_name": "",
+      "display_name_normalized": "",
+      "fields": null,
+      "status_text": "",
+      "status_emoji": ":christmas_tree:",
+      "status_expiration": 0,
+      "avatar_hash": "123",
+      "image_original": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_original.jpg",
+      "is_custom_image": true,
+      "first_name": "firstname",
+      "last_name": "",
+      "image_24": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_24.jpg",
+      "image_32": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_32.jpg",
+      "image_48": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_48.jpg",
+      "image_72": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_72.jpg",
+      "image_192": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_192.jpg",
+      "image_512": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_512.jpg",
+      "image_1024": "https:\/\/avatars.slack-edge.com\/2020-10-19\/12345678_1024.jpg",
+      "status_text_canonical": "",
+      "team": "1234"
+    },
+    "is_admin": false,
+    "is_owner": false,
+    "is_primary_owner": false,
+    "is_restricted": false,
+    "is_ultra_restricted": false,
+    "is_bot": false,
+    "is_app_user": false,
+    "updated": 1608858907,
+    "is_email_confirmed": true
+}
+'''.strip()

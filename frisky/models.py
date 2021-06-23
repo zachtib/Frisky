@@ -91,8 +91,8 @@ class MemberManager(models.Manager):
                 slack_client = SlackApiClient(workspace.access_token, enable_emergency_log=False)
                 refreshed_user = slack_client.get_user(member.user_id)
                 if refreshed_user is not None:
-                    member.name = refreshed_user.name
-                    member.real_name = refreshed_user.real_name
+                    member.name = refreshed_user.get_short_name()
+                    member.real_name = refreshed_user.get_real_name()
                     member.save()
                 else:
                     logger.warning(f'Failed to refresh Slack User {member.user_id}')
@@ -109,8 +109,8 @@ class MemberManager(models.Manager):
             new_member = self.create(
                 workspace=workspace,
                 user_id=user_id,
-                name=fetched_user.name,
-                real_name=fetched_user.real_name,
+                name=fetched_user.get_short_name(),
+                real_name=fetched_user.get_real_name(),
             )
             return new_member
         else:

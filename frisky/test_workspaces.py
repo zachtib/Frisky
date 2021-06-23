@@ -184,8 +184,8 @@ class FriskyMemberTestCase(TestCase):
         responses.add(responses.GET, url='https://slack.com/api/users.info?user=W012A3CDE', body=user_ok_response)
         member = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, 'W012A3CDE')
         self.assertEqual('W012A3CDE', member.user_id)
-        self.assertEqual('spengler', member.name)
-        self.assertEqual('Egon Spengler', member.real_name)
+        self.assertEqual('displaynamenormalized', member.name)
+        self.assertEqual('Real Name Normalized', member.real_name)
 
     @responses.activate
     def test_getting_member_when_it_is_expired(self):
@@ -195,8 +195,8 @@ class FriskyMemberTestCase(TestCase):
                                                       tzinfo=timezone.utc)
             member = Member.objects.get_or_fetch_by_workspace_and_id(self.workspace, 'W012A3CDF')
         self.assertEqual('W012A3CDF', member.user_id)
-        self.assertEqual('spengler', member.name)
-        self.assertEqual('Egon Spengler', member.real_name)
+        self.assertEqual('displaynamenormalized', member.name)
+        self.assertEqual('Real Name Normalized', member.real_name)
 
     @responses.activate
     def test_getting_expired_member_returns_even_if_api_fails(self):

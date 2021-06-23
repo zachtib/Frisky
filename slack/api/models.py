@@ -112,7 +112,19 @@ class User(BaseModel):
                 return name
         if self.name is not None and self.name != '':
             return self.name
-        return 'unknown'
+        return "unknown"
+
+    def get_real_name(self):
+        if self.profile is not None:
+            name = self.profile.real_name_normalized
+            if name is not None and name != '':
+                return name
+            name = self.profile.real_name
+            if name is not None and name != '':
+                return name
+        if self.real_name is not None and self.real_name != '':
+            return self.real_name
+        return "unknown"
 
 
 @dataclass

@@ -53,6 +53,16 @@ class SlackApiModelsTestCase(TestCase):
         user_obj.profile.display_name = ''
         self.assertEqual('Real Name Normalized', user_obj.get_short_name())
 
+    def test_use_with_weird_profile_short_name(self):
+        user_obj: User = User.from_json(user_with_nonstandard_profile)
+        short_name = user_obj.get_short_name()
+        self.assertEqual("flastname", short_name)
+
+    def test_use_with_weird_profile2_short_name(self):
+        user_obj: User = User.from_json(user_with_nonstandard_profile2)
+        short_name = user_obj.get_short_name()
+        self.assertEqual("firstname", short_name)
+
     def test_user_shortname_with_no_values(self):
         user = User(
             id='',
