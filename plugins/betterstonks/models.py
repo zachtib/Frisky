@@ -5,4 +5,4 @@ from frisky.models import Channel
 
 class BetterStonkGame(models.Model):
     channel = models.ForeignKey(Channel, null=True, on_delete=models.SET_NULL)
-    starting_balance = models.DecimalField(max_digits=19, decimal_places=2)
+    starting_balnance = models.DecimalField(max_digits=19, decimal_places=4)

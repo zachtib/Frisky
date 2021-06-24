@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
+from app.plugin_loader import load_plugins
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -26,6 +28,8 @@ DEBUG = os.environ.get('DEBUG', '0') == '1'
 
 ALLOWED_HOSTS = []
 
+FRISKY_PLUGIN_DIRECTORY = "plugins"
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,8 +42,6 @@ INSTALLED_APPS = [
 
     'frisky',
 
-    'plugins.betterstonks',
-
     'api',
     'apilearns',
     'learns',
@@ -49,6 +51,8 @@ INSTALLED_APPS = [
     'stonkgame',
     'votes',
 ]
+
+INSTALLED_APPS.extend(load_plugins(plugin_path=FRISKY_PLUGIN_DIRECTORY))
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
