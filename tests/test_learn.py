@@ -7,6 +7,10 @@ from plugins.learn import LearnPlugin
 
 class LearnTestCase(FriskyTestCase):
 
+    def setUp(self) -> None:
+        super().setUp()
+        self.private_channel = self.get_channel("secret")
+
     def test_help(self):
         result = self.send_message("?help learn")
         assert all(s in result for s in ['?lc', '?learn_count', ':brain:', '?learn'])
