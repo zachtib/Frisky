@@ -9,7 +9,7 @@ class LearnTestCase(FriskyTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.private_channel = self.get_channel("secret")
+        self.private_channel = self.get_channel("secret", private=True)
 
     def test_help(self):
         result = self.send_message("?help learn")
@@ -36,8 +36,8 @@ class LearnTestCase(FriskyTestCase):
         self.assertEqual(self.send_reaction('brain', 'jim', 'jarjar'), 'Okay, learned jarjar')
 
     def test_learn_free_zone(self):
-        self.assertEqual(self.send_reaction('brain', 'george', 'john', reacted_message=None),
-                         'This is a learning-free zone!')
+        response = self.send_reaction('brain', 'george', 'john', channel="secret", reacted_message=None)
+        self.assertEqual('This is a learning-free zone!', response)
 
     def test_get_nonexistant_learn(self):
         self.assertRaises(ValueError, lambda: Learn.objects.random('?xyzzy'))

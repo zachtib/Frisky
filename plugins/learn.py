@@ -31,7 +31,7 @@ class LearnPlugin(FriskyPlugin):
     }
 
     def reaction_brain(self, reaction: ReactionEvent) -> Optional[str]:
-        if not reaction.message.channel.is_private:
+        if not reaction.message.channel.is_private and reaction.message.text is not None:
             return self.create_new_learn(reaction.message.username, reaction.message.text)
         return 'This is a learning-free zone!'
 

@@ -274,7 +274,7 @@ class SlackEventProcessingTestCase(TestCase):
     def test_processing_reaction_event(self, handle_event):
         expected = ReactionAddedEvent(event_id='Ev0XXXXXXX', team_id='TXXXXXXXX', channel_id='C0XXXXXXX',
                                       user_id='U0XXXXXXX', event_ts='1360782804.XXXXXX', reaction='thumbsup',
-                                      item_user_id='U0XXXXXXX', item_ts='U0XXXXXXX')
+                                      item_user_id='U0XXXXXXX', item_ts='1360782400.XXXXXX')
 
         event = json.loads(reaction_event_payload)
         ingest_from_slack_events_api(event)
