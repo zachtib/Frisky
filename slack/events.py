@@ -118,7 +118,7 @@ class SlackEventParser(object):
                 event_ts=payload['event_ts'],
                 reaction=payload['reaction'],
                 item_user_id=payload['item_user'],
-                item_ts=payload['item_user'],
+                item_ts=payload['item']['ts'],
             )
         elif properties.event_type == 'reaction_removed':
             return ReactionRemovedEvent(
@@ -129,7 +129,7 @@ class SlackEventParser(object):
                 event_ts=payload['event_ts'],
                 reaction=payload['reaction'],
                 item_user_id=payload['item_user'],
-                item_ts=payload['item_user'],
+                item_ts=payload['item']['ts'],
             )
         else:
             # This is an event type we don't handle (yet)

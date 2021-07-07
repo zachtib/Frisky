@@ -20,13 +20,13 @@ class FriskyTestCase(TestCase):
         self.channel = self.get_channel('testing')
         self.member = self.get_user('dummyuser', 'Dummy User')
 
-    def get_channel(self, name: str) -> Channel:
+    def get_channel(self, name: str, private: bool = False) -> Channel:
         if name in self.channels:
             return self.channels[name]
         next_int_id = len(self.channels) + 1
         next_id = f'C{next_int_id:05d}'
         channel = Channel.objects.create(workspace=self.workspace, channel_id=next_id, name=name,
-                                         is_channel=True, is_group=False, is_private=False, is_im=False)
+                                         is_channel=True, is_group=False, is_private=private, is_im=False)
         self.channels[channel.name] = channel
         return channel
 
