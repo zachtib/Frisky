@@ -13,7 +13,7 @@ pylint-django = "*"
 parameterized = "==0.8.1"
 
 [packages]
-django = "==3.2.4"
+django = "==3.2.13"
 gunicorn = "*"
 requests = "~=2.22"
 celery = "~=4.4"
